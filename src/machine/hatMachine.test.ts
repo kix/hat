@@ -145,7 +145,10 @@ describe('setup', () => {
 
   it('draws new team names from the dictionary once it has loaded', () => {
     const actor = createActor(hatMachine).start();
-    actor.send({ type: 'DICTIONARY_LOADED', entries: [{ word: 'Особоеслово', difficulty: 'easy' }] });
+    actor.send({
+      type: 'DICTIONARY_LOADED',
+      entries: [{ word: 'Особоеслово', difficulty: 'easy', frequency: 0, levenshtein_zipf_frequency: 0 }],
+    });
     actor.send({ type: 'ADD_TEAM' });
     const [team] = actor.getSnapshot().context.teams;
     expect(team.name.endsWith('Особоеслово')).toBe(true);
@@ -186,7 +189,9 @@ describe('generateTeamName', () => {
   });
 
   it('draws the noun from the dictionary once one is loaded', () => {
-    const dictionaryEntries = [{ word: 'Уникальноеслово', difficulty: 'easy' as const }];
+    const dictionaryEntries = [
+      { word: 'Уникальноеслово', difficulty: 'easy' as const, frequency: 0, levenshtein_zipf_frequency: 0 },
+    ];
     const name = generateTeamName(dictionaryEntries);
     expect(name.endsWith('Уникальноеслово')).toBe(true);
   });
