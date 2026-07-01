@@ -94,6 +94,20 @@ describe('setup', () => {
     actor.send({ type: 'ADD_TEAM' });
     expect(actor.getSnapshot().context.teams).toHaveLength(MAX_TEAMS);
   });
+
+  it('fires rememberPlayerNames on START_GAME with the names as typed, not the "Игрок N" fallback', () => {
+    const rememberPlayerNames = vi.fn();
+    const actor = createActor(hatMachine.provide({ actions: { rememberPlayerNames } })).start();
+    addTeam(actor, 'Аня', 'Боря');
+    actor.send({ type: 'ADD_TEAM' }); // second team, player names left blank
+    actor.send({ type: 'START_GAME' });
+
+    expect(rememberPlayerNames).toHaveBeenCalledTimes(1);
+    const seenContext = rememberPlayerNames.mock.calls[0][0].context;
+    const [teamA, teamB] = seenContext.teams;
+    expect(teamA.players.map((p: { name: string }) => p.name)).toEqual(['Аня', 'Боря']);
+    expect(teamB.players.map((p: { name: string }) => p.name)).toEqual(['', '']); // not yet backfilled
+  });
 });
 
 describe('sound and vibration settings', () => {

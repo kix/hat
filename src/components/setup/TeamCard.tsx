@@ -1,7 +1,7 @@
 import { IconDice5, IconTrash } from '@tabler/icons-react';
 import { ActionIcon, Autocomplete, Card, Group, Stack, Text, TextInput } from '@mantine/core';
 import type { HatEvent, Team } from '../../machine/hatMachine';
-import { getStoredPlayerNames, rememberPlayerName } from '../../utils/playerNamesStore';
+import { getStoredPlayerNames } from '../../utils/playerNamesStore';
 
 interface TeamCardProps {
   team: Team;
@@ -61,7 +61,6 @@ export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
                   name: value,
                 })
               }
-              onBlur={() => rememberPlayerName(player.name)}
             />
           ))}
         </Group>

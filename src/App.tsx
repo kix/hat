@@ -1,8 +1,9 @@
 import { useMemo, useRef } from 'react';
 import { useMachine } from '@xstate/react';
-import { hatMachine, type Settings } from './machine/hatMachine';
+import { hatMachine, type HatContext, type Settings } from './machine/hatMachine';
 import { useGameSounds } from './sounds/useGameSounds';
 import { vibrate } from './utils/haptics';
+import { rememberPlayerName } from './utils/playerNamesStore';
 import { SetupScreen } from './components/setup/SetupScreen';
 import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
 import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
@@ -40,6 +41,13 @@ function App() {
           },
           playGameOverSound: () => {
             if (settingsRef.current?.soundEnabled) sounds.playGameOver();
+          },
+          rememberPlayerNames: ({ context }: { context: HatContext }) => {
+            for (const team of context.teams) {
+              for (const player of team.players) {
+                rememberPlayerName(player.name);
+              }
+            }
           },
         },
       }),
