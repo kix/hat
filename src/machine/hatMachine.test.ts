@@ -35,12 +35,28 @@ describe('setup', () => {
     expect(actor.getSnapshot().value).toBe('setup');
   });
 
-  it('refuses to start when a player name is blank', () => {
+  it('allows starting with blank player names, defaulting them to "Игрок N"', () => {
+    const actor = createActor(hatMachine).start();
+    addTeam(actor, 'Аня', 'Боря');
+    actor.send({ type: 'ADD_TEAM' }); // second team, player names left blank
+    actor.send({ type: 'START_GAME' });
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toBe('roundIntro');
+    const [, blankTeam] = snapshot.context.teams;
+    expect(blankTeam.players[0].name).toBe('Игрок 1');
+    expect(blankTeam.players[1].name).toBe('Игрок 2');
+  });
+
+  it('leaves a filled-in player name untouched', () => {
     const actor = createActor(hatMachine).start();
     addTeam(actor, 'Аня', 'Боря');
     actor.send({ type: 'ADD_TEAM' });
+    const teamB = actor.getSnapshot().context.teams[1];
+    actor.send({ type: 'UPDATE_PLAYER_NAME', teamId: teamB.id, playerId: teamB.players[0].id, name: 'Вика' });
     actor.send({ type: 'START_GAME' });
-    expect(actor.getSnapshot().value).toBe('setup');
+    const [, startedTeamB] = actor.getSnapshot().context.teams;
+    expect(startedTeamB.players[0].name).toBe('Вика');
+    expect(startedTeamB.players[1].name).toBe('Игрок 2');
   });
 
   it('starts the game and fills the hat once teams are valid', () => {

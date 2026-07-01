@@ -90,6 +90,17 @@ function createTeam(): Team {
   };
 }
 
+// Player names are optional in setup; anyone left blank gets the same
+// "Игрок N" placeholder shown in the input as their real name for the game.
+function fillBlankPlayerNames(team: Team): Team {
+  return {
+    ...team,
+    players: team.players.map((player, index) =>
+      player.name.trim().length > 0 ? player : { ...player, name: `Игрок ${index + 1}` },
+    ) as [Player, Player],
+  };
+}
+
 export function createInitialContext(): HatContext {
   return {
     teams: [],
@@ -272,10 +283,7 @@ export const hatMachine = setup({
           })),
         },
         START_GAME: {
-          guard: ({ context }) =>
-            context.teams.length >= 2 &&
-            context.teams.every((team) => team.players.every((player) => player.name.trim().length > 0)) &&
-            context.settings.difficulties.length > 0,
+          guard: ({ context }) => context.teams.length >= 2 && context.settings.difficulties.length > 0,
           actions: assign(({ context }) => {
             const pool = dictionary.filter((entry) => context.settings.difficulties.includes(entry.difficulty));
             const wordCount = Math.min(context.settings.wordCount, pool.length);
@@ -286,6 +294,7 @@ export const hatMachine = setup({
               history: [],
               currentWord: null,
               wordShownAt: null,
+              teams: context.teams.map(fillBlankPlayerNames),
             };
           }),
           target: 'roundIntro',

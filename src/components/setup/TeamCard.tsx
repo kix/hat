@@ -42,6 +42,7 @@ export function TeamCard({ team, send }: TeamCardProps) {
               key={player.id}
               aria-label={`Игрок ${index + 1}`}
               placeholder={`Игрок ${index + 1}`}
+              description={player.name.trim().length === 0 ? 'Вы не представились!' : undefined}
               value={player.name}
               onChange={(event) =>
                 send({
