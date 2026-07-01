@@ -19,6 +19,9 @@ function App() {
     () =>
       hatMachine.provide({
         actions: {
+          playRoundStartSound: () => {
+            if (settingsRef.current?.soundEnabled) sounds.playRoundStart();
+          },
           playTickSound: () => {
             if (settingsRef.current?.soundEnabled) sounds.playTick();
             if (settingsRef.current?.vibrationEnabled) vibrate(10);

@@ -4,11 +4,13 @@ import {
   playGameOverBeep,
   playGuessedBeep,
   playLowHatGuessedBeep,
+  playRoundStartBeep,
   playSkipBeep,
   playTickBeep,
 } from './beeps';
 
 export interface GameSounds {
+  playRoundStart: () => void;
   playTick: () => void;
   playGuessed: () => void;
   playLowHatGuessed: () => void;
@@ -31,6 +33,7 @@ export function useGameSounds(): GameSounds {
     play(ctx);
   }, []);
 
+  const playRoundStart = useCallback(() => withContext(playRoundStartBeep), [withContext]);
   const playTick = useCallback(() => withContext(playTickBeep), [withContext]);
   const playGuessed = useCallback(() => withContext(playGuessedBeep), [withContext]);
   const playLowHatGuessed = useCallback(() => withContext(playLowHatGuessedBeep), [withContext]);
@@ -38,5 +41,5 @@ export function useGameSounds(): GameSounds {
   const playFoul = useCallback(() => withContext(playFoulBeep), [withContext]);
   const playGameOver = useCallback(() => withContext(playGameOverBeep), [withContext]);
 
-  return { playTick, playGuessed, playLowHatGuessed, playSkip, playFoul, playGameOver };
+  return { playRoundStart, playTick, playGuessed, playLowHatGuessed, playSkip, playFoul, playGameOver };
 }

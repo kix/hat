@@ -302,6 +302,41 @@ describe('game over sound', () => {
   });
 });
 
+describe('round start sound', () => {
+  it('plays once a round starts, and not before', () => {
+    const playRoundStartSound = vi.fn();
+    const actor = createActor(hatMachine.provide({ actions: { playRoundStartSound } })).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+    expect(playRoundStartSound).not.toHaveBeenCalled();
+
+    actor.send({ type: 'START_ROUND' });
+    expect(actor.getSnapshot().value).toBe('roundPlaying');
+    expect(playRoundStartSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('plays again for each subsequent round', () => {
+    vi.useFakeTimers();
+    const playRoundStartSound = vi.fn();
+    const actor = createActor(hatMachine.provide({ actions: { playRoundStartSound } })).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 10 });
+    actor.send({ type: 'START_GAME' });
+
+    actor.send({ type: 'START_ROUND' }); // team A's round
+    expect(playRoundStartSound).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(30_000); // times out, hands off to team B
+
+    actor.send({ type: 'START_ROUND' }); // team B's round
+    expect(playRoundStartSound).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+});
+
 describe('round timer', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());

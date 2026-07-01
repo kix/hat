@@ -23,6 +23,13 @@ function beep(ctx: AudioContext, { freq, durationMs, type = 'sine', gain = 0.2, 
   oscillator.stop(stopAt);
 }
 
+// A short "on your marks, go!" cue — a distinct square-wave timbre no other
+// sound in the app uses — announcing that a round has just started.
+export function playRoundStartBeep(ctx: AudioContext): void {
+  beep(ctx, { freq: 523, durationMs: 90, type: 'square', gain: 0.15 });
+  beep(ctx, { freq: 784, durationMs: 180, type: 'square', gain: 0.18, delayMs: 100 });
+}
+
 export function playTickBeep(ctx: AudioContext): void {
   beep(ctx, { freq: 880, durationMs: 90, type: 'sine', gain: 0.15 });
 }

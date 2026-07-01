@@ -195,6 +195,7 @@ export const hatMachine = setup({
     }),
   },
   actions: {
+    playRoundStartSound: () => {},
     playTickSound: () => {},
     playGuessedSound: () => {},
     playLowHatGuessedSound: () => {},
@@ -320,6 +321,7 @@ export const hatMachine = setup({
     },
 
     roundPlaying: {
+      entry: 'playRoundStartSound',
       invoke: { src: 'ticker' },
       on: {
         TICK: {
