@@ -4,6 +4,7 @@ import { hatMachine, type HatContext, type Settings } from './machine/hatMachine
 import { useGameSounds } from './sounds/useGameSounds';
 import { vibrate } from './utils/haptics';
 import { rememberPlayerName } from './utils/playerNamesStore';
+import { ScreenTransition } from './components/ScreenTransition';
 import { SetupScreen } from './components/setup/SetupScreen';
 import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
 import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
@@ -56,10 +57,30 @@ function App() {
   const [state, send] = useMachine(machine);
   settingsRef.current = state.context.settings;
 
-  if (state.matches('setup')) return <SetupScreen context={state.context} send={send} />;
-  if (state.matches('roundIntro')) return <RoundIntroScreen context={state.context} send={send} />;
-  if (state.matches('roundPlaying')) return <RoundPlayingScreen context={state.context} send={send} />;
-  if (state.matches('gameOver')) return <GameOverScreen context={state.context} send={send} />;
+  if (state.matches('setup'))
+    return (
+      <ScreenTransition key="setup">
+        <SetupScreen context={state.context} send={send} />
+      </ScreenTransition>
+    );
+  if (state.matches('roundIntro'))
+    return (
+      <ScreenTransition key="roundIntro">
+        <RoundIntroScreen context={state.context} send={send} />
+      </ScreenTransition>
+    );
+  if (state.matches('roundPlaying'))
+    return (
+      <ScreenTransition key="roundPlaying">
+        <RoundPlayingScreen context={state.context} send={send} />
+      </ScreenTransition>
+    );
+  if (state.matches('gameOver'))
+    return (
+      <ScreenTransition key="gameOver">
+        <GameOverScreen context={state.context} send={send} />
+      </ScreenTransition>
+    );
   return null;
 }
 
