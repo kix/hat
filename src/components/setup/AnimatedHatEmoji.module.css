@@ -1,0 +1,14 @@
+@keyframes tilt {
+  0%,
+  100% {
+    transform: rotate(-12deg) translateY(0);
+  }
+  50% {
+    transform: rotate(12deg) translateY(-4px);
+  }
+}
+
+.hat {
+  display: inline-block;
+  animation: tilt 1.6s ease-in-out infinite;
+}
