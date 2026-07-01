@@ -25,7 +25,11 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
 
       <WordDisplay word={context.currentWord.word} />
 
-      <ActionButtons allowSkip={context.settings.allowSkip} send={send} />
+      <ActionButtons
+        allowSkip={context.settings.allowSkip}
+        vibrationEnabled={context.settings.vibrationEnabled}
+        send={send}
+      />
     </div>
   );
 }

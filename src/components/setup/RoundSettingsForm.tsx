@@ -1,6 +1,7 @@
 import { Chip, Group, NumberInput, SegmentedControl, Stack, Switch, Text } from '@mantine/core';
 import { dictionary, type DifficultyLevel } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
+import { vibrate } from '../../utils/haptics';
 
 interface RoundSettingsFormProps {
   settings: Settings;
@@ -55,6 +56,25 @@ export function RoundSettingsForm({ settings, send }: RoundSettingsFormProps) {
         label="Разрешить пропуск слова"
         checked={settings.allowSkip}
         onChange={(event) => send({ type: 'SET_ALLOW_SKIP', allowSkip: event.currentTarget.checked })}
+      />
+
+      <Switch
+        label="Звук"
+        checked={settings.soundEnabled}
+        onChange={(event) => send({ type: 'SET_SOUND_ENABLED', soundEnabled: event.currentTarget.checked })}
+      />
+
+      <Switch
+        label="Вибрация"
+        checked={settings.vibrationEnabled}
+        onChange={(event) => {
+          const vibrationEnabled = event.currentTarget.checked;
+          send({ type: 'SET_VIBRATION_ENABLED', vibrationEnabled });
+          // Chrome only allows navigator.vibrate() during a user gesture — call
+          // it right here, synchronously in this click handler, so later calls
+          // triggered from timers/game events are allowed to actually vibrate.
+          if (vibrationEnabled) vibrate(50);
+        }}
       />
 
       <NumberInput

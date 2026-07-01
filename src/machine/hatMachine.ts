@@ -42,6 +42,8 @@ export interface Settings {
   wordCount: number;
   difficulties: DifficultyLevel[];
   rolesMode: RolesMode;
+  soundEnabled: boolean;
+  vibrationEnabled: boolean;
 }
 
 export interface HatContext {
@@ -66,6 +68,8 @@ export type HatEvent =
   | { type: 'SET_WORD_COUNT'; wordCount: number }
   | { type: 'SET_DIFFICULTIES'; difficulties: DifficultyLevel[] }
   | { type: 'SET_ROLES_MODE'; rolesMode: RolesMode }
+  | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
+  | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
   | { type: 'START_GAME' }
   | { type: 'START_ROUND' }
   | { type: 'WORD_GUESSED' }
@@ -95,6 +99,8 @@ export function createInitialContext(): HatContext {
       wordCount: 20,
       difficulties: ['easy', 'medium', 'hard'],
       rolesMode: 'alternate',
+      soundEnabled: true,
+      vibrationEnabled: false,
     },
     hat: [],
     currentWord: null,
@@ -253,6 +259,16 @@ export const hatMachine = setup({
         SET_ROLES_MODE: {
           actions: assign(({ context, event }) => ({
             settings: { ...context.settings, rolesMode: event.rolesMode },
+          })),
+        },
+        SET_SOUND_ENABLED: {
+          actions: assign(({ context, event }) => ({
+            settings: { ...context.settings, soundEnabled: event.soundEnabled },
+          })),
+        },
+        SET_VIBRATION_ENABLED: {
+          actions: assign(({ context, event }) => ({
+            settings: { ...context.settings, vibrationEnabled: event.vibrationEnabled },
           })),
         },
         START_GAME: {

@@ -5,12 +5,13 @@ import styles from './ActionButtons.module.css';
 
 interface ActionButtonsProps {
   allowSkip: boolean;
+  vibrationEnabled: boolean;
   send: (event: HatEvent) => void;
 }
 
-export function ActionButtons({ allowSkip, send }: ActionButtonsProps) {
+export function ActionButtons({ allowSkip, vibrationEnabled, send }: ActionButtonsProps) {
   function act(event: HatEvent, vibrationMs: number) {
-    vibrate(vibrationMs);
+    if (vibrationEnabled) vibrate(vibrationMs);
     send(event);
   }
 

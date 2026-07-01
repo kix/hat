@@ -67,6 +67,24 @@ describe('setup', () => {
   });
 });
 
+describe('sound and vibration settings', () => {
+  it('defaults sound on and vibration off', () => {
+    const actor = createActor(hatMachine).start();
+    const { settings } = actor.getSnapshot().context;
+    expect(settings.soundEnabled).toBe(true);
+    expect(settings.vibrationEnabled).toBe(false);
+  });
+
+  it('toggles independently via SET_SOUND_ENABLED / SET_VIBRATION_ENABLED', () => {
+    const actor = createActor(hatMachine).start();
+    actor.send({ type: 'SET_SOUND_ENABLED', soundEnabled: false });
+    actor.send({ type: 'SET_VIBRATION_ENABLED', vibrationEnabled: true });
+    const { settings } = actor.getSnapshot().context;
+    expect(settings.soundEnabled).toBe(false);
+    expect(settings.vibrationEnabled).toBe(true);
+  });
+});
+
 describe('generateTeamName', () => {
   it('produces a non-empty "adjective noun" string', () => {
     const name = generateTeamName();
