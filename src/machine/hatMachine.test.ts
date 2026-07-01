@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createActor } from 'xstate';
-import { hatMachine, type Team, type WordRecord } from './hatMachine';
+import { hatMachine, MAX_TEAMS, type Team, type WordRecord } from './hatMachine';
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
 import { getTeamScore, scoreDeltaForResult } from '../utils/scoring';
@@ -80,6 +80,17 @@ describe('setup', () => {
     expect(snapshot.context.hat).toHaveLength(30);
     expect(snapshot.context.settings.wordCount).toBe(30);
     expect(snapshot.context.hat.every((entry) => entry.difficulty === 'easy')).toBe(true);
+  });
+
+  it(`refuses to add more than ${MAX_TEAMS} teams`, () => {
+    const actor = createActor(hatMachine).start();
+    for (let i = 0; i < MAX_TEAMS; i++) {
+      actor.send({ type: 'ADD_TEAM' });
+    }
+    expect(actor.getSnapshot().context.teams).toHaveLength(MAX_TEAMS);
+
+    actor.send({ type: 'ADD_TEAM' });
+    expect(actor.getSnapshot().context.teams).toHaveLength(MAX_TEAMS);
   });
 });
 

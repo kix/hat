@@ -8,6 +8,8 @@ import { isHatRunningLow } from '../utils/lowHat';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
+export const MAX_TEAMS = 6;
+
 export type RolesMode = 'alternate' | 'fixed';
 export type WordResult = 'guessed' | 'skipped' | 'foul' | 'timeout';
 
@@ -211,6 +213,7 @@ export const hatMachine = setup({
     setup: {
       on: {
         ADD_TEAM: {
+          guard: ({ context }) => context.teams.length < MAX_TEAMS,
           actions: assign(({ context }) => ({
             teams: [...context.teams, createTeam()],
           })),
