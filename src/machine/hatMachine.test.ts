@@ -104,18 +104,36 @@ describe('setup', () => {
     expect(snapshot.context.hat).toHaveLength(20);
   });
 
-  it('clamps wordCount to the size of the selected dictionary pool', () => {
-    const easyPoolSize = dictionary.filter((entry) => entry.difficulty === 'easy').length;
+  it('clamps wordCount to the size of the whole dictionary', () => {
     const actor = startActor();
     addTeam(actor, 'Аня', 'Боря');
     addTeam(actor, 'Вика', 'Гриша');
-    actor.send({ type: 'SET_DIFFICULTIES', difficulties: ['easy'] });
-    actor.send({ type: 'SET_WORD_COUNT', wordCount: easyPoolSize + 1 });
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: dictionary.length + 1 });
     actor.send({ type: 'START_GAME' });
     const snapshot = actor.getSnapshot();
-    expect(snapshot.context.hat).toHaveLength(easyPoolSize);
-    expect(snapshot.context.settings.wordCount).toBe(easyPoolSize);
-    expect(snapshot.context.hat.every((entry) => entry.difficulty === 'easy')).toBe(true);
+    expect(snapshot.context.hat).toHaveLength(dictionary.length);
+    expect(snapshot.context.settings.wordCount).toBe(dictionary.length);
+  });
+
+  it('biases word selection toward the requested difficulty level', () => {
+    function drawHat(difficultyLevel: number) {
+      const actor = startActor();
+      addTeam(actor, 'Аня', 'Боря');
+      addTeam(actor, 'Вика', 'Гриша');
+      actor.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel });
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 500 });
+      actor.send({ type: 'START_GAME' });
+      return actor.getSnapshot().context.hat;
+    }
+    const average = (hat: ReturnType<typeof drawHat>, pick: (entry: (typeof hat)[number]) => number) =>
+      hat.reduce((sum, entry) => sum + pick(entry), 0) / hat.length;
+
+    const easyHat = drawHat(0);
+    const hardHat = drawHat(1);
+
+    // Harder words skew longer and rarer (lower Zipf frequency) than easier ones.
+    expect(average(hardHat, (entry) => entry.word.length)).toBeGreaterThan(average(easyHat, (entry) => entry.word.length));
+    expect(average(easyHat, (entry) => entry.frequency)).toBeGreaterThan(average(hardHat, (entry) => entry.frequency));
   });
 
   it(`refuses to add more than ${MAX_TEAMS} teams`, () => {

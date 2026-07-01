@@ -27,9 +27,6 @@ export function getSetupValidity(context: HatContext): SetupValidity {
   if (context.teams.length < 2) {
     reasons.push('Нужно как минимум 2 команды');
   }
-  if (context.settings.difficulties.length === 0) {
-    reasons.push('Выберите хотя бы одну сложность слов');
-  }
   for (const team of context.teams) {
     const duplicateReason = getDuplicateNameReason(team);
     if (duplicateReason) {

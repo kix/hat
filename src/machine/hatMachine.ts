@@ -43,7 +43,9 @@ export interface Settings {
   roundDurationSec: 30 | 60 | 120;
   allowSkip: boolean;
   wordCount: number;
-  difficulties: DifficultyLevel[];
+  // 0 (easiest) to 1 (hardest) — see pickRandom in utils/shuffle.ts for how
+  // this is weighed against each word's length and frequency.
+  difficultyLevel: number;
   rolesMode: RolesMode;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
@@ -72,7 +74,7 @@ export type HatEvent =
   | { type: 'SET_ROUND_DURATION'; roundDurationSec: 30 | 60 | 120 }
   | { type: 'SET_ALLOW_SKIP'; allowSkip: boolean }
   | { type: 'SET_WORD_COUNT'; wordCount: number }
-  | { type: 'SET_DIFFICULTIES'; difficulties: DifficultyLevel[] }
+  | { type: 'SET_DIFFICULTY_LEVEL'; difficultyLevel: number }
   | { type: 'SET_ROLES_MODE'; rolesMode: RolesMode }
   | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
@@ -115,7 +117,7 @@ export function createInitialContext(): HatContext {
       roundDurationSec: 60,
       allowSkip: false,
       wordCount: 20,
-      difficulties: ['easy', 'medium', 'hard'],
+      difficultyLevel: 0.5,
       rolesMode: 'alternate',
       soundEnabled: true,
       vibrationEnabled: false,
@@ -281,9 +283,9 @@ export const hatMachine = setup({
             settings: { ...context.settings, wordCount: event.wordCount },
           })),
         },
-        SET_DIFFICULTIES: {
+        SET_DIFFICULTY_LEVEL: {
           actions: assign(({ context, event }) => ({
-            settings: { ...context.settings, difficulties: event.difficulties },
+            settings: { ...context.settings, difficultyLevel: event.difficultyLevel },
           })),
         },
         SET_ROLES_MODE: {
@@ -304,7 +306,6 @@ export const hatMachine = setup({
         START_GAME: {
           guard: ({ context }) =>
             context.teams.length >= 2 &&
-            context.settings.difficulties.length > 0 &&
             context.dictionary !== null &&
             context.teams.every((team) => !getDuplicateNameReason(team)),
           actions: [
@@ -313,12 +314,13 @@ export const hatMachine = setup({
             // placeholders for anyone left blank.
             'rememberPlayerNames',
             assign(({ context }) => {
-              const pool = (context.dictionary ?? []).filter((entry) =>
-                context.settings.difficulties.includes(entry.difficulty),
-              );
+              // No difficulty-tag filtering — the whole dictionary is the pool,
+              // and pickRandom weighs each word's difficulty (length, frequency,
+              // Levenshtein-neighbour frequency) against the difficulty slider.
+              const pool = context.dictionary ?? [];
               const wordCount = Math.min(context.settings.wordCount, pool.length);
               return {
-                hat: pickRandom(pool, wordCount),
+                hat: pickRandom(pool, wordCount, context.settings.difficultyLevel),
                 settings: { ...context.settings, wordCount },
                 currentTeamIndex: 0,
                 history: [],
