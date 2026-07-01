@@ -2,7 +2,7 @@ import { Button, Container, Divider, Stack } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { RoleAnnouncement } from './RoleAnnouncement';
 import { Scoreboard } from './Scoreboard';
-import { PreviousRoundWords } from './PreviousRoundWords';
+import { PreviousRoundWords } from '../shared/PreviousRoundWords';
 
 interface RoundIntroScreenProps {
   context: HatContext;

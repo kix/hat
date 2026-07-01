@@ -49,16 +49,20 @@ export interface LastRoundRecap {
   guessed: WordRecord[];
 }
 
-// The team shown on the roundIntro screen is the *next* team to play; this
-// looks one slot back in turn order to recap the round that just finished.
-// Returns null before anyone has played a round yet (game just started).
-export function getLastRoundRecap(teams: Team[], history: History, currentTeamIndex: number): LastRoundRecap | null {
-  if (teams.length === 0) return null;
-  const lastTeamIndex = (currentTeamIndex - 1 + teams.length) % teams.length;
-  const team = teams[lastTeamIndex];
-  if (team.roundsPlayed === 0) return null;
+// Derived from the last history entry rather than currentTeamIndex/
+// roundsPlayed: those only advance via roundEnd's entry action, which is
+// skipped when a guess/skip/foul empties the hat mid-round and jumps
+// straight to gameOver — so they can't be trusted to identify "the team
+// whose round just ended" in every case. The last history record always can:
+// it belongs to whichever team/round most recently had a word resolved.
+// Returns null before any word has been resolved yet (game just started).
+export function getLastRoundRecap(teams: Team[], history: History): LastRoundRecap | null {
+  if (history.length === 0) return null;
+  const lastRecord = history[history.length - 1];
+  const team = teams.find((candidate) => candidate.id === lastRecord.teamId);
+  if (!team) return null;
 
-  return { team, guessed: getGuessedWordsForRound(history, team.id, team.roundsPlayed - 1) };
+  return { team, guessed: getGuessedWordsForRound(history, team.id, lastRecord.roundIndex) };
 }
 
 // Words the currently-playing team has guessed so far *this* round (i.e. the
