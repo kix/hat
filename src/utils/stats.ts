@@ -38,6 +38,27 @@ export function getEasiestWord(history: History): WordRecord | null {
   return guessed.reduce((fastest, record) => (record.timeMs < fastest.timeMs ? record : fastest));
 }
 
+export interface LastRoundRecap {
+  team: Team;
+  guessed: WordRecord[];
+}
+
+// The team shown on the roundIntro screen is the *next* team to play; this
+// looks one slot back in turn order to recap the round that just finished.
+// Returns null before anyone has played a round yet (game just started).
+export function getLastRoundRecap(teams: Team[], history: History, currentTeamIndex: number): LastRoundRecap | null {
+  if (teams.length === 0) return null;
+  const lastTeamIndex = (currentTeamIndex - 1 + teams.length) % teams.length;
+  const team = teams[lastTeamIndex];
+  if (team.roundsPlayed === 0) return null;
+
+  const roundIndex = team.roundsPlayed - 1;
+  const guessed = history.filter(
+    (record) => record.teamId === team.id && record.roundIndex === roundIndex && record.result === 'guessed',
+  );
+  return { team, guessed };
+}
+
 export interface HintedWord {
   word: string;
   strugglingTeamId: string;

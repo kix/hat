@@ -3,6 +3,7 @@ import { dictionary, type DictionaryEntry, type DifficultyLevel } from '../data/
 import { pickRandom } from '../utils/shuffle';
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
+import { generateId } from '../utils/id';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
@@ -74,11 +75,11 @@ export type HatEvent =
 
 function createTeam(): Team {
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     name: generateTeamName(),
     players: [
-      { id: crypto.randomUUID(), name: '' },
-      { id: crypto.randomUUID(), name: '' },
+      { id: generateId(), name: '' },
+      { id: generateId(), name: '' },
     ],
     roundsPlayed: 0,
   };

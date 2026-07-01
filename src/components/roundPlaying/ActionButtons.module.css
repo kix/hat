@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-lg);
+  padding: var(--mantine-spacing-md);
+  padding-bottom: max(var(--mantine-spacing-md), env(safe-area-inset-bottom));
+  background: var(--mantine-color-body);
+  position: sticky;
+  bottom: 0;
+  user-select: none;
+}
+
+.secondaryRow {
+  display: flex;
+  gap: var(--mantine-spacing-md);
+  justify-content: center;
+}
+
+.secondaryRow > * {
+  flex: 1;
+  min-height: 44px;
+}
+
+/* Above phone width, there's no thumb-reach constraint: lay the buttons out
+   in a normal centered row instead of a sticky bottom stack. */
+@media (min-width: 480px) {
+  .container {
+    position: static;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: center;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .secondaryRow {
+    flex: 0 0 auto;
+  }
+}

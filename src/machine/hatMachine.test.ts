@@ -4,7 +4,14 @@ import { hatMachine, type Team, type WordRecord } from './hatMachine';
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
 import { getTeamScore, scoreDeltaForResult } from '../utils/scoring';
-import { getBestPlayer, getEasiestWord, getHardestWord, getHintedWords, sortTeamsByScore } from '../utils/stats';
+import {
+  getBestPlayer,
+  getEasiestWord,
+  getHardestWord,
+  getHintedWords,
+  getLastRoundRecap,
+  sortTeamsByScore,
+} from '../utils/stats';
 
 function remainingWordCount(context: { hat: unknown[]; currentWord: unknown }): number {
   return context.hat.length + (context.currentWord ? 1 : 0);
@@ -416,5 +423,77 @@ describe('getHintedWords (pure function)', () => {
       record({ teamId: teamB.id, result: 'guessed', timeMs: 20_000 }),
     ];
     expect(getHintedWords(teams, history)).toHaveLength(0);
+  });
+});
+
+describe('getLastRoundRecap', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('returns null before any round has been played', () => {
+    const actor = createActor(hatMachine).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'START_GAME' });
+
+    const { context } = actor.getSnapshot();
+    expect(getLastRoundRecap(context.teams, context.history, context.currentTeamIndex)).toBeNull();
+  });
+
+  it('recaps the words the previous team guessed once their round times out', () => {
+    const actor = createActor(hatMachine).start();
+    const teamA = addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+
+    actor.send({ type: 'START_ROUND' });
+    actor.send({ type: 'WORD_GUESSED' });
+    actor.send({ type: 'WORD_GUESSED' });
+    vi.advanceTimersByTime(30_000); // times out on the 3rd word, hands off to team B
+
+    const { context } = actor.getSnapshot();
+    const recap = getLastRoundRecap(context.teams, context.history, context.currentTeamIndex);
+    expect(recap?.team.id).toBe(teamA.id);
+    expect(recap?.guessed).toHaveLength(2);
+    expect(recap?.guessed.every((record) => record.result === 'guessed')).toBe(true);
+  });
+
+  it('reports an empty list when the team guessed nothing that round (pure function)', () => {
+    const team: Team = {
+      id: 'a',
+      name: 'A',
+      players: [
+        { id: 'a1', name: 'A1' },
+        { id: 'a2', name: 'A2' },
+      ],
+      roundsPlayed: 1,
+    };
+    const other: Team = {
+      id: 'b',
+      name: 'B',
+      players: [
+        { id: 'b1', name: 'B1' },
+        { id: 'b2', name: 'B2' },
+      ],
+      roundsPlayed: 0,
+    };
+    const history: WordRecord[] = [
+      {
+        word: 'Кошка',
+        difficulty: 'easy',
+        teamId: team.id,
+        describerId: team.players[0].id,
+        guesserId: team.players[1].id,
+        result: 'foul',
+        timeMs: 1000,
+        roundIndex: 0,
+      },
+    ];
+
+    const recap = getLastRoundRecap([team, other], history, 1);
+    expect(recap?.team.id).toBe(team.id);
+    expect(recap?.guessed).toEqual([]);
   });
 });
