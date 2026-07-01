@@ -11,6 +11,7 @@
 }
 
 .hero {
+  position: relative;
   background: linear-gradient(120deg, #ff8a80, #ff80ab, #b388ff, #82b1ff);
   background-size: 300% 300%;
   animation: gradientShift 10s ease infinite;
