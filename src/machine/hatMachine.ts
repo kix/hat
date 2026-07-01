@@ -204,6 +204,7 @@ export const hatMachine = setup({
     playSkipSound: () => {},
     playFoulSound: () => {},
     playGameOverSound: () => {},
+    rememberPlayerNames: () => {},
   },
 }).createMachine({
   id: 'hat',
@@ -288,19 +289,25 @@ export const hatMachine = setup({
         },
         START_GAME: {
           guard: ({ context }) => context.teams.length >= 2 && context.settings.difficulties.length > 0,
-          actions: assign(({ context }) => {
-            const pool = dictionary.filter((entry) => context.settings.difficulties.includes(entry.difficulty));
-            const wordCount = Math.min(context.settings.wordCount, pool.length);
-            return {
-              hat: pickRandom(pool, wordCount),
-              settings: { ...context.settings, wordCount },
-              currentTeamIndex: 0,
-              history: [],
-              currentWord: null,
-              wordShownAt: null,
-              teams: context.teams.map(fillBlankPlayerNames),
-            };
-          }),
+          actions: [
+            // Fires before the assign below, so it sees the names as the
+            // user actually typed them — not yet backfilled with "Игрок N"
+            // placeholders for anyone left blank.
+            'rememberPlayerNames',
+            assign(({ context }) => {
+              const pool = dictionary.filter((entry) => context.settings.difficulties.includes(entry.difficulty));
+              const wordCount = Math.min(context.settings.wordCount, pool.length);
+              return {
+                hat: pickRandom(pool, wordCount),
+                settings: { ...context.settings, wordCount },
+                currentTeamIndex: 0,
+                history: [],
+                currentWord: null,
+                wordShownAt: null,
+                teams: context.teams.map(fillBlankPlayerNames),
+              };
+            }),
+          ],
           target: 'roundIntro',
         },
       },

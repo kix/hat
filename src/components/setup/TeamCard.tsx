@@ -1,12 +1,15 @@
 import { IconDice5, IconTrash } from '@tabler/icons-react';
-import { ActionIcon, Card, Group, Stack, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Autocomplete, Card, Group, Stack, Text, TextInput } from '@mantine/core';
 import type { HatEvent, Team } from '../../machine/hatMachine';
+import { getStoredPlayerNames } from '../../utils/playerNamesStore';
 
 interface TeamCardProps {
   team: Team;
   teamNumber: number;
   send: (event: HatEvent) => void;
 }
+
+const MIN_CHARS_FOR_SUGGESTIONS = 2;
 
 export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
   return (
@@ -43,18 +46,19 @@ export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
         </Group>
         <Group gap="xs" grow>
           {team.players.map((player, index) => (
-            <TextInput
+            <Autocomplete
               key={player.id}
               aria-label={`Игрок ${index + 1}`}
               placeholder={`Игрок ${index + 1}`}
               description={player.name.trim().length === 0 ? 'Вы не представились!' : undefined}
               value={player.name}
-              onChange={(event) =>
+              data={player.name.trim().length >= MIN_CHARS_FOR_SUGGESTIONS ? getStoredPlayerNames() : []}
+              onChange={(value) =>
                 send({
                   type: 'UPDATE_PLAYER_NAME',
                   teamId: team.id,
                   playerId: player.id,
-                  name: event.currentTarget.value,
+                  name: value,
                 })
               }
             />
