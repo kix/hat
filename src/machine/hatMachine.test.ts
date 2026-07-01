@@ -120,6 +120,18 @@ describe('setup', () => {
     actor.send({ type: 'ADD_TEAM' });
     expect(actor.getSnapshot().context.teams).toHaveLength(MAX_TEAMS);
   });
+
+  it('draws new team names from the dictionary once it has loaded', () => {
+    const actor = createActor(hatMachine).start();
+    actor.send({ type: 'DICTIONARY_LOADED', entries: [{ word: 'Особоеслово', difficulty: 'easy' }] });
+    actor.send({ type: 'ADD_TEAM' });
+    const [team] = actor.getSnapshot().context.teams;
+    expect(team.name.endsWith('Особоеслово')).toBe(true);
+
+    actor.send({ type: 'REGENERATE_TEAM_NAME', teamId: team.id });
+    const [regenerated] = actor.getSnapshot().context.teams;
+    expect(regenerated.name.endsWith('Особоеслово')).toBe(true);
+  });
 });
 
 describe('sound and vibration settings', () => {
@@ -141,9 +153,20 @@ describe('sound and vibration settings', () => {
 });
 
 describe('generateTeamName', () => {
-  it('produces a non-empty "adjective noun" string', () => {
+  it('produces a non-empty "adjective noun" string without a dictionary', () => {
     const name = generateTeamName();
     expect(name).toMatch(/^\S+ \S+$/);
+  });
+
+  it('produces a non-empty "adjective noun" string with an empty dictionary', () => {
+    const name = generateTeamName([]);
+    expect(name).toMatch(/^\S+ \S+$/);
+  });
+
+  it('draws the noun from the dictionary once one is loaded', () => {
+    const dictionaryEntries = [{ word: 'Уникальноеслово', difficulty: 'easy' as const }];
+    const name = generateTeamName(dictionaryEntries);
+    expect(name.endsWith('Уникальноеслово')).toBe(true);
   });
 });
 

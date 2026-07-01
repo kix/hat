@@ -84,10 +84,10 @@ export type HatEvent =
   | { type: 'TICK' }
   | { type: 'RESTART' };
 
-function createTeam(): Team {
+function createTeam(dictionaryEntries: DictionaryEntry[] | null): Team {
   return {
     id: generateId(),
-    name: generateTeamName(),
+    name: generateTeamName(dictionaryEntries),
     players: [
       { id: generateId(), name: '' },
       { id: generateId(), name: '' },
@@ -228,7 +228,7 @@ export const hatMachine = setup({
         ADD_TEAM: {
           guard: ({ context }) => context.teams.length < MAX_TEAMS,
           actions: assign(({ context }) => ({
-            teams: [...context.teams, createTeam()],
+            teams: [...context.teams, createTeam(context.dictionary)],
           })),
         },
         REMOVE_TEAM: {
@@ -246,7 +246,7 @@ export const hatMachine = setup({
         REGENERATE_TEAM_NAME: {
           actions: assign(({ context, event }) => ({
             teams: context.teams.map((team) =>
-              team.id === event.teamId ? { ...team, name: generateTeamName() } : team,
+              team.id === event.teamId ? { ...team, name: generateTeamName(context.dictionary) } : team,
             ),
           })),
         },
