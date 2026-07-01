@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Container, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { getBestPlayer, getEasiestWord, getHardestWord } from '../../utils/stats';
+import { useAuthSession } from '../../auth/useAuthSession';
+import { syncPreferencesToSupabase } from '../../auth/syncPreferences';
 import { ResultBanner } from './ResultBanner';
 import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
@@ -18,10 +20,21 @@ export function GameOverScreen({ context, send }: GameOverScreenProps) {
   const bestPlayer = getBestPlayer(context.teams, context.history);
   const hardestWord = getHardestWord(context.history);
   const easiestWord = getEasiestWord(context.history);
+  const session = useAuthSession();
 
   useEffect(() => {
     confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
   }, []);
+
+  // Runs once per finished game, as soon as the session (if any) is known —
+  // session starts out null on mount and fills in shortly after.
+  const syncedRef = useRef(false);
+  useEffect(() => {
+    if (session?.user.id && !syncedRef.current) {
+      syncedRef.current = true;
+      void syncPreferencesToSupabase(session.user.id);
+    }
+  }, [session]);
 
   return (
     <Container size="xs" py="lg">
