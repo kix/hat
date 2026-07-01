@@ -1,6 +1,7 @@
 import { Group } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { RoundTimer } from './RoundTimer';
+import { HatCountBadge } from './HatCountBadge';
 import { WordDisplay } from './WordDisplay';
 import { ActionButtons } from './ActionButtons';
 
@@ -14,7 +15,8 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
 
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      <Group justify="center" py="md">
+      <Group justify="center" align="center" gap="lg" py="md">
+        <HatCountBadge hatLength={context.hat.length} />
         <RoundTimer timeRemainingSec={context.timeRemainingSec} roundDurationSec={context.settings.roundDurationSec} />
       </Group>
 
