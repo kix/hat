@@ -56,6 +56,7 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
       <ActionButtons
         allowSkip={context.settings.allowSkip}
         vibrationEnabled={context.settings.vibrationEnabled}
+        wordShownAt={context.wordShownAt}
         send={handleSend}
       />
     </div>
