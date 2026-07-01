@@ -34,7 +34,7 @@ export function SetupScreen({ context, send }: SetupScreenProps) {
           <Title order={3} mb="sm">
             Настройки
           </Title>
-          <RoundSettingsForm settings={context.settings} send={send} />
+          <RoundSettingsForm settings={context.settings} dictionary={context.dictionary} send={send} />
         </div>
 
         <StartGameButton context={context} send={send} />

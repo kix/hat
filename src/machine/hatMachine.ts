@@ -1,5 +1,5 @@
 import { assign, enqueueActions, fromCallback, setup } from 'xstate';
-import { dictionary, type DictionaryEntry, type DifficultyLevel } from '../data/dictionary';
+import type { DictionaryEntry, DifficultyLevel } from '../data/dictionary';
 import { pickRandom } from '../utils/shuffle';
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
@@ -51,6 +51,9 @@ export interface Settings {
 export interface HatContext {
   teams: Team[];
   settings: Settings;
+  // The word dictionary is loaded asynchronously (see App.tsx) and reported
+  // in via DICTIONARY_LOADED — null until then. Starting a game requires it.
+  dictionary: DictionaryEntry[] | null;
   hat: DictionaryEntry[];
   currentWord: DictionaryEntry | null;
   wordShownAt: number | null;
@@ -72,6 +75,7 @@ export type HatEvent =
   | { type: 'SET_ROLES_MODE'; rolesMode: RolesMode }
   | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
+  | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }
   | { type: 'START_GAME' }
   | { type: 'START_ROUND' }
   | { type: 'WORD_GUESSED' }
@@ -115,6 +119,7 @@ export function createInitialContext(): HatContext {
       soundEnabled: true,
       vibrationEnabled: false,
     },
+    dictionary: null,
     hat: [],
     currentWord: null,
     wordShownAt: null,
@@ -209,6 +214,14 @@ export const hatMachine = setup({
   id: 'hat',
   context: createInitialContext(),
   initial: 'setup',
+  // Handled globally (not scoped to `setup`) since the dictionary load is
+  // kicked off once, independently of whatever state the app happens to be
+  // in when the network/import resolves.
+  on: {
+    DICTIONARY_LOADED: {
+      actions: assign(({ event }) => ({ dictionary: event.entries })),
+    },
+  },
   states: {
     setup: {
       on: {
@@ -287,9 +300,12 @@ export const hatMachine = setup({
           })),
         },
         START_GAME: {
-          guard: ({ context }) => context.teams.length >= 2 && context.settings.difficulties.length > 0,
+          guard: ({ context }) =>
+            context.teams.length >= 2 && context.settings.difficulties.length > 0 && context.dictionary !== null,
           actions: assign(({ context }) => {
-            const pool = dictionary.filter((entry) => context.settings.difficulties.includes(entry.difficulty));
+            const pool = (context.dictionary ?? []).filter((entry) =>
+              context.settings.difficulties.includes(entry.difficulty),
+            );
             const wordCount = Math.min(context.settings.wordCount, pool.length);
             return {
               hat: pickRandom(pool, wordCount),

@@ -9,16 +9,29 @@ interface StartGameButtonProps {
 
 export function StartGameButton({ context, send }: StartGameButtonProps) {
   const { canStart, reasons } = getSetupValidity(context);
+  const dictionaryLoading = context.dictionary === null;
 
   return (
     <Stack gap="xs" align="center">
-      <Button size="lg" fullWidth disabled={!canStart} onClick={() => send({ type: 'START_GAME' })}>
+      <Button
+        size="lg"
+        fullWidth
+        disabled={!canStart || dictionaryLoading}
+        loading={dictionaryLoading}
+        onClick={() => send({ type: 'START_GAME' })}
+      >
         Начать игру
       </Button>
-      {!canStart && (
+      {dictionaryLoading ? (
         <Text size="sm" c="dimmed" ta="center">
-          {reasons.join(' · ')}
+          Загружаем словарь…
         </Text>
+      ) : (
+        !canStart && (
+          <Text size="sm" c="dimmed" ta="center">
+            {reasons.join(' · ')}
+          </Text>
+        )
       )}
     </Stack>
   );
