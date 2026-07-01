@@ -3,6 +3,8 @@ body {
   margin: 0;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #root {
