@@ -2,6 +2,7 @@ import { IconDice5, IconTrash } from '@tabler/icons-react';
 import { ActionIcon, Autocomplete, Card, Group, Stack, Text, TextInput } from '@mantine/core';
 import type { HatEvent, Team } from '../../machine/hatMachine';
 import { getStoredPlayerNames } from '../../utils/playerNamesStore';
+import { getDuplicateNameReason } from '../../utils/setupValidity';
 
 interface TeamCardProps {
   team: Team;
@@ -12,6 +13,8 @@ interface TeamCardProps {
 const MIN_CHARS_FOR_SUGGESTIONS = 2;
 
 export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
+  const duplicateNameReason = getDuplicateNameReason(team);
+
   return (
     <Card withBorder padding="md">
       <Stack gap="sm">
@@ -50,7 +53,9 @@ export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
               key={player.id}
               aria-label={`Игрок ${index + 1}`}
               placeholder={`Игрок ${index + 1}`}
-              description={player.name.trim().length === 0 ? 'Вы не представились!' : undefined}
+              description={
+                player.name.trim().length === 0 ? 'Вы не представились!' : (duplicateNameReason ?? undefined)
+              }
               value={player.name}
               data={player.name.trim().length >= MIN_CHARS_FOR_SUGGESTIONS ? getStoredPlayerNames() : []}
               onChange={(value) =>

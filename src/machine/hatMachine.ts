@@ -5,6 +5,7 @@ import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
 import { generateId } from '../utils/id';
 import { isHatRunningLow } from '../utils/lowHat';
+import { getDuplicateNameReason } from '../utils/setupValidity';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
@@ -288,7 +289,10 @@ export const hatMachine = setup({
           })),
         },
         START_GAME: {
-          guard: ({ context }) => context.teams.length >= 2 && context.settings.difficulties.length > 0,
+          guard: ({ context }) =>
+            context.teams.length >= 2 &&
+            context.settings.difficulties.length > 0 &&
+            context.teams.every((team) => !getDuplicateNameReason(team)),
           actions: [
             // Fires before the assign below, so it sees the names as the
             // user actually typed them — not yet backfilled with "Игрок N"

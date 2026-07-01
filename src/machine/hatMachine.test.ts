@@ -36,6 +36,14 @@ describe('setup', () => {
     expect(actor.getSnapshot().value).toBe('setup');
   });
 
+  it('refuses to start when two players in the same team have the same name', () => {
+    const actor = createActor(hatMachine).start();
+    addTeam(actor, 'Аня', 'аня');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'START_GAME' });
+    expect(actor.getSnapshot().value).toBe('setup');
+  });
+
   it('allows starting with blank player names, defaulting them to "Игрок N"', () => {
     const actor = createActor(hatMachine).start();
     addTeam(actor, 'Аня', 'Боря');
