@@ -1,7 +1,9 @@
 import { Group } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
+import { getCurrentRoundGuessedCount } from '../../utils/stats';
 import { RoundTimer } from './RoundTimer';
 import { HatCountBadge } from './HatCountBadge';
+import { RoundGuessedCount } from './RoundGuessedCount';
 import { WordDisplay } from './WordDisplay';
 import { ActionButtons } from './ActionButtons';
 
@@ -18,6 +20,7 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
       <Group justify="center" align="center" gap="lg" py="md">
         <HatCountBadge hatLength={context.hat.length} />
         <RoundTimer timeRemainingSec={context.timeRemainingSec} roundDurationSec={context.settings.roundDurationSec} />
+        <RoundGuessedCount count={getCurrentRoundGuessedCount(context.teams, context.history, context.currentTeamIndex)} />
       </Group>
 
       <WordDisplay word={context.currentWord.word} />

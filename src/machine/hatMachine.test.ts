@@ -6,6 +6,7 @@ import { getCurrentRoles } from '../utils/roles';
 import { getTeamScore, scoreDeltaForResult } from '../utils/scoring';
 import {
   getBestPlayer,
+  getCurrentRoundGuessedCount,
   getEasiestWord,
   getHardestWord,
   getHintedWords,
@@ -568,5 +569,35 @@ describe('getLastRoundRecap', () => {
     const recap = getLastRoundRecap([team, other], history, 1);
     expect(recap?.team.id).toBe(team.id);
     expect(recap?.guessed).toEqual([]);
+  });
+});
+
+describe('getCurrentRoundGuessedCount', () => {
+  it('is 0 before any word has been guessed this round', () => {
+    const actor = createActor(hatMachine).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+
+    const { context } = actor.getSnapshot();
+    expect(getCurrentRoundGuessedCount(context.teams, context.history, context.currentTeamIndex)).toBe(0);
+  });
+
+  it('counts only the words guessed in the round currently in progress', () => {
+    const actor = createActor(hatMachine).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+
+    actor.send({ type: 'WORD_GUESSED' });
+    actor.send({ type: 'WORD_FOUL' }); // does not count toward "guessed"
+    actor.send({ type: 'WORD_GUESSED' });
+
+    const { context } = actor.getSnapshot();
+    expect(getCurrentRoundGuessedCount(context.teams, context.history, context.currentTeamIndex)).toBe(2);
   });
 });
