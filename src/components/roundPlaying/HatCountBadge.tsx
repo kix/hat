@@ -7,14 +7,20 @@ interface HatCountBadgeProps {
 }
 
 export function HatCountBadge({ hatLength }: HatCountBadgeProps) {
-  if (!isHatRunningLow(hatLength)) return null;
+  const low = isHatRunningLow(hatLength);
 
   return (
     <Stack gap={0} align="center">
       <Text size="xs" c="dimmed">
         В шляпе
       </Text>
-      <Text component="span" fw={700} size="xl" c="orange" className={styles.count}>
+      <Text
+        component="span"
+        fw={700}
+        size="xl"
+        c={low ? 'orange' : undefined}
+        className={low ? styles.count : undefined}
+      >
         {hatLength}
       </Text>
     </Stack>
