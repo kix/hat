@@ -4,6 +4,7 @@ import { pickRandom } from '../utils/shuffle';
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
 import { generateId } from '../utils/id';
+import { isHatRunningLow } from '../utils/lowHat';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
@@ -179,6 +180,7 @@ export const hatMachine = setup({
   actions: {
     playTickSound: () => {},
     playGuessedSound: () => {},
+    playLowHatGuessedSound: () => {},
     playSkipSound: () => {},
     playFoulSound: () => {},
   },
@@ -306,8 +308,12 @@ export const hatMachine = setup({
         WORD_GUESSED: [
           {
             guard: ({ context }) => isHatEmpty(context),
-            actions: [assign(({ context }) => resolveWord(context, 'guessed')), 'playGuessedSound'],
+            actions: [assign(({ context }) => resolveWord(context, 'guessed')), 'playLowHatGuessedSound'],
             target: 'gameOver',
+          },
+          {
+            guard: ({ context }) => isHatRunningLow(context.hat.length),
+            actions: [assign(({ context }) => resolveWord(context, 'guessed')), 'playLowHatGuessedSound'],
           },
           {
             actions: [assign(({ context }) => resolveWord(context, 'guessed')), 'playGuessedSound'],

@@ -32,6 +32,14 @@ export function playGuessedBeep(ctx: AudioContext): void {
   beep(ctx, { freq: 990, durationMs: 150, type: 'sine', gain: 0.2, delayMs: 90 });
 }
 
+// A brighter three-note run (instead of guessed's two notes) to signal the
+// hat is almost empty — the game is about to end.
+export function playLowHatGuessedBeep(ctx: AudioContext): void {
+  beep(ctx, { freq: 784, durationMs: 90, type: 'sine', gain: 0.2 });
+  beep(ctx, { freq: 988, durationMs: 90, type: 'sine', gain: 0.2, delayMs: 80 });
+  beep(ctx, { freq: 1319, durationMs: 160, type: 'sine', gain: 0.22, delayMs: 160 });
+}
+
 export function playSkipBeep(ctx: AudioContext): void {
   beep(ctx, { freq: 440, durationMs: 140, type: 'triangle', gain: 0.15 });
 }

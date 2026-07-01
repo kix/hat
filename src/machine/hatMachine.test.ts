@@ -194,6 +194,62 @@ describe('round play', () => {
   });
 });
 
+describe('low-hat guessed sound', () => {
+  it('plays the normal guessed sound while the hat still has 5+ words left', () => {
+    const playGuessedSound = vi.fn();
+    const playLowHatGuessedSound = vi.fn();
+    const actor = createActor(
+      hatMachine.provide({ actions: { playGuessedSound, playLowHatGuessedSound } }),
+    ).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 6 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' }); // hat: 5 remaining
+
+    actor.send({ type: 'WORD_GUESSED' }); // guarded on pre-action hat.length === 5
+    expect(playGuessedSound).toHaveBeenCalledTimes(1);
+    expect(playLowHatGuessedSound).not.toHaveBeenCalled();
+  });
+
+  it('plays the low-hat sound once fewer than 5 words remain', () => {
+    const playGuessedSound = vi.fn();
+    const playLowHatGuessedSound = vi.fn();
+    const actor = createActor(
+      hatMachine.provide({ actions: { playGuessedSound, playLowHatGuessedSound } }),
+    ).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 6 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' }); // hat: 5 remaining
+
+    actor.send({ type: 'WORD_GUESSED' }); // hat.length was 5 -> normal sound, hat now 4
+    actor.send({ type: 'WORD_GUESSED' }); // hat.length was 4 -> low-hat sound
+
+    expect(playGuessedSound).toHaveBeenCalledTimes(1);
+    expect(playLowHatGuessedSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('plays the low-hat sound on the final guess that empties the hat', () => {
+    const playGuessedSound = vi.fn();
+    const playLowHatGuessedSound = vi.fn();
+    const actor = createActor(
+      hatMachine.provide({ actions: { playGuessedSound, playLowHatGuessedSound } }),
+    ).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 1 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' }); // hat: 0 remaining, currentWord holds the only word
+
+    actor.send({ type: 'WORD_GUESSED' });
+    expect(actor.getSnapshot().value).toBe('gameOver');
+    expect(playLowHatGuessedSound).toHaveBeenCalledTimes(1);
+    expect(playGuessedSound).not.toHaveBeenCalled();
+  });
+});
+
 describe('round timer', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());

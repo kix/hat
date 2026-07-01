@@ -19,6 +19,7 @@ function App() {
             vibrate(10);
           },
           playGuessedSound: sounds.playGuessed,
+          playLowHatGuessedSound: sounds.playLowHatGuessed,
           playSkipSound: sounds.playSkip,
           playFoulSound: sounds.playFoul,
         },
