@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { Container, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { getBestPlayer, getEasiestWord, getHardestWord } from '../../utils/stats';
@@ -16,6 +18,10 @@ export function GameOverScreen({ context, send }: GameOverScreenProps) {
   const bestPlayer = getBestPlayer(context.teams, context.history);
   const hardestWord = getHardestWord(context.history);
   const easiestWord = getEasiestWord(context.history);
+
+  useEffect(() => {
+    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+  }, []);
 
   return (
     <Container size="xs" py="lg">
