@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createActor } from 'xstate';
 import { hatMachine, MAX_TEAMS, type Team, type WordRecord } from './hatMachine';
+import { dictionary } from '../data/dictionary';
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
 import { getTeamScore, scoreDeltaForResult } from '../utils/scoring';
@@ -70,15 +71,16 @@ describe('setup', () => {
   });
 
   it('clamps wordCount to the size of the selected dictionary pool', () => {
+    const easyPoolSize = dictionary.filter((entry) => entry.difficulty === 'easy').length;
     const actor = createActor(hatMachine).start();
     addTeam(actor, 'Аня', 'Боря');
     addTeam(actor, 'Вика', 'Гриша');
     actor.send({ type: 'SET_DIFFICULTIES', difficulties: ['easy'] });
-    actor.send({ type: 'SET_WORD_COUNT', wordCount: 999 });
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: easyPoolSize + 1 });
     actor.send({ type: 'START_GAME' });
     const snapshot = actor.getSnapshot();
-    expect(snapshot.context.hat).toHaveLength(30);
-    expect(snapshot.context.settings.wordCount).toBe(30);
+    expect(snapshot.context.hat).toHaveLength(easyPoolSize);
+    expect(snapshot.context.settings.wordCount).toBe(easyPoolSize);
     expect(snapshot.context.hat.every((entry) => entry.difficulty === 'easy')).toBe(true);
   });
 
