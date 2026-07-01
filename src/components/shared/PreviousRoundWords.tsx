@@ -7,7 +7,7 @@ interface PreviousRoundWordsProps {
 }
 
 export function PreviousRoundWords({ context }: PreviousRoundWordsProps) {
-  const recap = getLastRoundRecap(context.teams, context.history, context.currentTeamIndex);
+  const recap = getLastRoundRecap(context.teams, context.history);
   if (!recap) return null;
 
   return (

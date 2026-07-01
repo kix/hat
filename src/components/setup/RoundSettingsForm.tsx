@@ -1,4 +1,5 @@
 import { Chip, Group, NumberInput, SegmentedControl, Stack, Switch, Text } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { dictionary, type DifficultyLevel } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
 
@@ -15,6 +16,9 @@ const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
 
 export function RoundSettingsForm({ settings, send }: RoundSettingsFormProps) {
   const poolSize = dictionary.filter((entry) => settings.difficulties.includes(entry.difficulty)).length;
+  // Laptops/desktops (mouse-primary, fine pointer) have no vibration motor —
+  // no point showing a setting that can't do anything there.
+  const isTouchDevice = useMediaQuery('(pointer: coarse)', undefined, { getInitialValueInEffect: false });
 
   return (
     <Stack gap="md">
@@ -63,18 +67,20 @@ export function RoundSettingsForm({ settings, send }: RoundSettingsFormProps) {
         onChange={(event) => send({ type: 'SET_SOUND_ENABLED', soundEnabled: event.currentTarget.checked })}
       />
 
-      <Switch
-        label="Вибрация"
-        checked={settings.vibrationEnabled}
-        onChange={(event) => {
-          const vibrationEnabled = event.currentTarget.checked;
-          send({ type: 'SET_VIBRATION_ENABLED', vibrationEnabled });
-          // Chrome only allows navigator.vibrate() during a user gesture — call
-          // it right here, synchronously in this click handler, so later calls
-          // triggered from timers/game events are allowed to actually vibrate.
-          if (vibrationEnabled) navigator.vibrate([50, 50, 50]);
-        }}
-      />
+      {isTouchDevice && (
+        <Switch
+          label="Вибрация"
+          checked={settings.vibrationEnabled}
+          onChange={(event) => {
+            const vibrationEnabled = event.currentTarget.checked;
+            send({ type: 'SET_VIBRATION_ENABLED', vibrationEnabled });
+            // Chrome only allows navigator.vibrate() during a user gesture — call
+            // it right here, synchronously in this click handler, so later calls
+            // triggered from timers/game events are allowed to actually vibrate.
+            if (vibrationEnabled) navigator.vibrate([50, 50, 50]);
+          }}
+        />
+      )}
 
       <NumberInput
         label="Количество слов в шляпе"

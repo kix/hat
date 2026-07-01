@@ -5,6 +5,7 @@ import { ResultBanner } from './ResultBanner';
 import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
 import { PlayAgainButton } from './PlayAgainButton';
+import { PreviousRoundWords } from '../shared/PreviousRoundWords';
 
 interface GameOverScreenProps {
   context: HatContext;
@@ -24,6 +25,8 @@ export function GameOverScreen({ context, send }: GameOverScreenProps) {
         </Title>
 
         <ResultBanner context={context} />
+
+        <PreviousRoundWords context={context} />
 
         <SimpleGrid cols={1} spacing="sm">
           {bestPlayer && (
