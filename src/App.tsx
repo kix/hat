@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useMachine } from '@xstate/react';
 import { hatMachine, type HatContext, type Settings } from './machine/hatMachine';
 import { useGameSounds } from './sounds/useGameSounds';
@@ -56,6 +56,15 @@ function App() {
   );
   const [state, send] = useMachine(machine);
   settingsRef.current = state.context.settings;
+
+  // The dictionary is ~2.7MB, so it's split into its own chunk and fetched
+  // only once the UI has already painted, instead of blocking the initial
+  // bundle. START_GAME stays disabled (with a spinner) until this resolves.
+  useEffect(() => {
+    void import('./data/dictionary').then((module) => {
+      send({ type: 'DICTIONARY_LOADED', entries: module.dictionary });
+    });
+  }, [send]);
 
   if (state.matches('setup'))
     return (

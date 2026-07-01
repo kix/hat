@@ -1,10 +1,11 @@
 import { Chip, Group, NumberInput, SegmentedControl, Stack, Switch, Text } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
-import { dictionary, type DifficultyLevel } from '../../data/dictionary';
+import type { DictionaryEntry, DifficultyLevel } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
 
 interface RoundSettingsFormProps {
   settings: Settings;
+  dictionary: DictionaryEntry[] | null;
   send: (event: HatEvent) => void;
 }
 
@@ -14,8 +15,8 @@ const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
   hard: 'Сложные',
 };
 
-export function RoundSettingsForm({ settings, send }: RoundSettingsFormProps) {
-  const poolSize = dictionary.filter((entry) => settings.difficulties.includes(entry.difficulty)).length;
+export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsFormProps) {
+  const poolSize = dictionary?.filter((entry) => settings.difficulties.includes(entry.difficulty)).length ?? null;
   // Laptops/desktops (mouse-primary, fine pointer) have no vibration motor —
   // no point showing a setting that can't do anything there.
   const isTouchDevice = useMediaQuery('(pointer: coarse)', undefined, { getInitialValueInEffect: false });
@@ -107,7 +108,7 @@ export function RoundSettingsForm({ settings, send }: RoundSettingsFormProps) {
           </Group>
         </Chip.Group>
         <Text size="xs" c="dimmed" mt={4}>
-          Доступно слов: {poolSize}
+          {poolSize === null ? 'Словарь загружается…' : `Доступно слов: ${poolSize}`}
         </Text>
       </div>
     </Stack>
