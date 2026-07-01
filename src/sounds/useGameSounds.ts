@@ -1,5 +1,12 @@
 import { useCallback, useRef } from 'react';
-import { playFoulBeep, playGuessedBeep, playLowHatGuessedBeep, playSkipBeep, playTickBeep } from './beeps';
+import {
+  playFoulBeep,
+  playGameOverBeep,
+  playGuessedBeep,
+  playLowHatGuessedBeep,
+  playSkipBeep,
+  playTickBeep,
+} from './beeps';
 
 export interface GameSounds {
   playTick: () => void;
@@ -7,6 +14,7 @@ export interface GameSounds {
   playLowHatGuessed: () => void;
   playSkip: () => void;
   playFoul: () => void;
+  playGameOver: () => void;
 }
 
 export function useGameSounds(): GameSounds {
@@ -28,6 +36,7 @@ export function useGameSounds(): GameSounds {
   const playLowHatGuessed = useCallback(() => withContext(playLowHatGuessedBeep), [withContext]);
   const playSkip = useCallback(() => withContext(playSkipBeep), [withContext]);
   const playFoul = useCallback(() => withContext(playFoulBeep), [withContext]);
+  const playGameOver = useCallback(() => withContext(playGameOverBeep), [withContext]);
 
-  return { playTick, playGuessed, playLowHatGuessed, playSkip, playFoul };
+  return { playTick, playGuessed, playLowHatGuessed, playSkip, playFoul, playGameOver };
 }

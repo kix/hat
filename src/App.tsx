@@ -22,6 +22,7 @@ function App() {
           playLowHatGuessedSound: sounds.playLowHatGuessed,
           playSkipSound: sounds.playSkip,
           playFoulSound: sounds.playFoul,
+          playGameOverSound: sounds.playGameOver,
         },
       }),
     [sounds],

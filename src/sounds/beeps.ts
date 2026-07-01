@@ -47,3 +47,11 @@ export function playSkipBeep(ctx: AudioContext): void {
 export function playFoulBeep(ctx: AudioContext): void {
   beep(ctx, { freq: 180, durationMs: 220, type: 'sawtooth', gain: 0.18 });
 }
+
+// A short four-note fanfare announcing the game has ended.
+export function playGameOverBeep(ctx: AudioContext): void {
+  beep(ctx, { freq: 523, durationMs: 150, type: 'triangle', gain: 0.2 });
+  beep(ctx, { freq: 659, durationMs: 150, type: 'triangle', gain: 0.2, delayMs: 150 });
+  beep(ctx, { freq: 784, durationMs: 150, type: 'triangle', gain: 0.2, delayMs: 300 });
+  beep(ctx, { freq: 1047, durationMs: 400, type: 'triangle', gain: 0.22, delayMs: 450 });
+}

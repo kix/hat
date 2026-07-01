@@ -183,6 +183,7 @@ export const hatMachine = setup({
     playLowHatGuessedSound: () => {},
     playSkipSound: () => {},
     playFoulSound: () => {},
+    playGameOverSound: () => {},
   },
 }).createMachine({
   id: 'hat',
@@ -367,6 +368,7 @@ export const hatMachine = setup({
     },
 
     gameOver: {
+      entry: 'playGameOverSound',
       on: {
         RESTART: {
           target: 'setup',

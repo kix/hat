@@ -250,6 +250,23 @@ describe('low-hat guessed sound', () => {
   });
 });
 
+describe('game over sound', () => {
+  it('plays once the game ends, and not before', () => {
+    const playGameOverSound = vi.fn();
+    const actor = createActor(hatMachine.provide({ actions: { playGameOverSound } })).start();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 1 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+    expect(playGameOverSound).not.toHaveBeenCalled();
+
+    actor.send({ type: 'WORD_GUESSED' });
+    expect(actor.getSnapshot().value).toBe('gameOver');
+    expect(playGameOverSound).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('round timer', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
