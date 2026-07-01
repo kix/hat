@@ -12,4 +12,12 @@ body {
 
 button {
   touch-action: manipulation;
+  transition: filter 100ms ease;
+}
+
+/* Mantine already nudges buttons down by 1px on press (.mantine-active); this
+   adds a noticeable darken on top of that so a tap always reads as "pressed"
+   even on outline/light-variant buttons where the 1px shift alone is subtle. */
+button:active {
+  filter: brightness(0.85);
 }
