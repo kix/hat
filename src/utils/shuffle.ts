@@ -11,9 +11,9 @@ const MAX_MEANINGFUL_WORD_LENGTH = 16;
 // common its nearest spelling-neighbours are, and a slice of pure noise so
 // the same difficulty setting doesn't draw the exact same words every game.
 const DIFFICULTY_WEIGHTS = {
-  length: 0.5,
-  frequency: 0.28,
-  levenshteinFrequency: 0.15,
+  length: 0.7,
+  frequency: 0.15,
+  levenshteinFrequency: 0.08,
   randomness: 0.07,
 } as const;
 
