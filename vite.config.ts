@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 const DICTIONARY_PATH = fileURLToPath(new URL('./src/data/dictionary.ts', import.meta.url))
 const RARE_WORD_FREQUENCY = 0.05
@@ -84,10 +85,60 @@ function wordCurationPlugin(): Plugin {
   }
 }
 
+// The dictionary chunk is the largest asset by far (see App.tsx) — raise the
+// precache limit well above it so workbox doesn't silently drop it and skip
+// caching the one file offline play actually depends on.
+const MAX_PRECACHE_ENTRY_BYTES = 8 * 1024 * 1024
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '/hat/',
-  plugins: [react(), wordCurationPlugin()],
+  plugins: [
+    react(),
+    wordCurationPlugin(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      devOptions: { enabled: true, type: 'module' },
+      manifest: {
+        name: 'Шляпа',
+        short_name: 'Шляпа',
+        description: 'Игра «Шляпа» — угадывайте слова по подсказкам команды. Работает без интернета.',
+        lang: 'ru',
+        start_url: '/hat/',
+        scope: '/hat/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#1a1b1e',
+        icons: [
+          { src: 'icon-any-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-any-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        maximumFileSizeToCacheInBytes: MAX_PRECACHE_ENTRY_BYTES,
+        navigateFallback: '/hat/index.html',
+        // Lets the game keep working offline after the fonts are fetched
+        // once — same recipe Workbox documents for Google Fonts.
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'google-fonts-stylesheets' },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-webfonts',
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+    }),
+  ],
   server: {
     port: process.env.PORT ? Number(process.env.PORT) : 5173,
   },
