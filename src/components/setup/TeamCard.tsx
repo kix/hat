@@ -7,12 +7,13 @@ import { getDuplicateNameReason } from '../../utils/setupValidity';
 interface TeamCardProps {
   team: Team;
   teamNumber: number;
+  canRemove: boolean;
   send: (event: HatEvent) => void;
 }
 
 const MIN_CHARS_FOR_SUGGESTIONS = 2;
 
-export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
+export function TeamCard({ team, teamNumber, canRemove, send }: TeamCardProps) {
   const duplicateNameReason = getDuplicateNameReason(team);
 
   return (
@@ -42,6 +43,7 @@ export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
             variant="light"
             color="red"
             size="lg"
+            disabled={!canRemove}
             onClick={() => send({ type: 'REMOVE_TEAM', teamId: team.id })}
           >
             <IconTrash size={20} />

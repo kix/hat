@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createActor } from 'xstate';
-import { hatMachine, MAX_TEAMS, type Team, type WordRecord } from './hatMachine';
+import { hatMachine, MAX_TEAMS, MIN_TEAMS, type Team, type WordRecord } from './hatMachine';
 import { dictionary } from '../data/dictionary';
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
@@ -28,13 +28,23 @@ function startActor(machine: typeof hatMachine = hatMachine): ReturnType<typeof 
   return actor;
 }
 
-function addTeam(actor: ReturnType<typeof createActor<typeof hatMachine>>, player1: string, player2: string): Team {
-  actor.send({ type: 'ADD_TEAM' });
+// Fills player names into the app's already-present default teams (MIN_TEAMS
+// of them at startup), adding more via ADD_TEAM only if more pairs than that
+// are requested.
+function setupTeams(
+  actor: ReturnType<typeof createActor<typeof hatMachine>>,
+  ...playerPairs: [string, string][]
+): Team[] {
+  while (actor.getSnapshot().context.teams.length < playerPairs.length) {
+    actor.send({ type: 'ADD_TEAM' });
+  }
   const { teams } = actor.getSnapshot().context;
-  const team = teams[teams.length - 1];
-  actor.send({ type: 'UPDATE_PLAYER_NAME', teamId: team.id, playerId: team.players[0].id, name: player1 });
-  actor.send({ type: 'UPDATE_PLAYER_NAME', teamId: team.id, playerId: team.players[1].id, name: player2 });
-  return actor.getSnapshot().context.teams.find((t) => t.id === team.id)!;
+  return playerPairs.map(([player1, player2], index) => {
+    const team = teams[index];
+    actor.send({ type: 'UPDATE_PLAYER_NAME', teamId: team.id, playerId: team.players[0].id, name: player1 });
+    actor.send({ type: 'UPDATE_PLAYER_NAME', teamId: team.id, playerId: team.players[1].id, name: player2 });
+    return actor.getSnapshot().context.teams.find((t) => t.id === team.id)!;
+  });
 }
 
 describe('setup', () => {
@@ -45,8 +55,7 @@ describe('setup', () => {
 
   it('refuses to start before the dictionary has loaded, even with valid teams', () => {
     const actor = createActor(hatMachine).start(); // no startActor() — dictionary stays null
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'START_GAME' });
     expect(actor.getSnapshot().value).toBe('setup');
 
@@ -55,25 +64,28 @@ describe('setup', () => {
     expect(actor.getSnapshot().value).toBe('roundIntro');
   });
 
-  it('refuses to start with fewer than 2 teams', () => {
-    const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    actor.send({ type: 'START_GAME' });
-    expect(actor.getSnapshot().value).toBe('setup');
+  it(`starts with exactly ${MIN_TEAMS} teams already added`, () => {
+    const actor = createActor(hatMachine).start();
+    expect(actor.getSnapshot().context.teams).toHaveLength(MIN_TEAMS);
+  });
+
+  it(`refuses to remove a team below the ${MIN_TEAMS}-team minimum`, () => {
+    const actor = createActor(hatMachine).start();
+    const [teamA] = actor.getSnapshot().context.teams;
+    actor.send({ type: 'REMOVE_TEAM', teamId: teamA.id });
+    expect(actor.getSnapshot().context.teams).toHaveLength(MIN_TEAMS);
   });
 
   it('refuses to start when two players in the same team have the same name', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'аня');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'аня'], ['Вика', 'Гриша']);
     actor.send({ type: 'START_GAME' });
     expect(actor.getSnapshot().value).toBe('setup');
   });
 
   it('allows starting with blank player names, defaulting them to "Игрок N"', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    actor.send({ type: 'ADD_TEAM' }); // second team, player names left blank
+    setupTeams(actor, ['Аня', 'Боря']); // second (default) team's names left blank
     actor.send({ type: 'START_GAME' });
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toBe('roundIntro');
@@ -84,8 +96,7 @@ describe('setup', () => {
 
   it('leaves a filled-in player name untouched', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    actor.send({ type: 'ADD_TEAM' });
+    setupTeams(actor, ['Аня', 'Боря']);
     const teamB = actor.getSnapshot().context.teams[1];
     actor.send({ type: 'UPDATE_PLAYER_NAME', teamId: teamB.id, playerId: teamB.players[0].id, name: 'Вика' });
     actor.send({ type: 'START_GAME' });
@@ -96,8 +107,7 @@ describe('setup', () => {
 
   it('starts the game and fills the hat once teams are valid', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'START_GAME' });
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toBe('roundIntro');
@@ -109,8 +119,7 @@ describe('setup', () => {
     // dictionary the pool — anywhere below that, the eligible pool (and thus
     // the clamp) is smaller. See "excludes 0-frequency words..." below.
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: 1 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: dictionary.length + 1 });
     actor.send({ type: 'START_GAME' });
@@ -124,16 +133,14 @@ describe('setup', () => {
     expect(zeroFrequencyCount).toBeGreaterThan(0);
 
     const belowMax = startActor();
-    addTeam(belowMax, 'Аня', 'Боря');
-    addTeam(belowMax, 'Вика', 'Гриша');
+    setupTeams(belowMax, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     belowMax.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: 0.9 });
     belowMax.send({ type: 'SET_WORD_COUNT', wordCount: 2000 });
     belowMax.send({ type: 'START_GAME' });
     expect(belowMax.getSnapshot().context.hat.some((entry) => entry.frequency === 0)).toBe(false);
 
     const atMax = startActor();
-    addTeam(atMax, 'Аня', 'Боря');
-    addTeam(atMax, 'Вика', 'Гриша');
+    setupTeams(atMax, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     atMax.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: 1 });
     atMax.send({ type: 'SET_WORD_COUNT', wordCount: 2000 });
     atMax.send({ type: 'START_GAME' });
@@ -143,8 +150,7 @@ describe('setup', () => {
   it('biases word selection toward the requested difficulty level', () => {
     function drawHat(difficultyLevel: number) {
       const actor = startActor();
-      addTeam(actor, 'Аня', 'Боря');
-      addTeam(actor, 'Вика', 'Гриша');
+      setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
       actor.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel });
       actor.send({ type: 'SET_WORD_COUNT', wordCount: 500 });
       actor.send({ type: 'START_GAME' });
@@ -163,7 +169,7 @@ describe('setup', () => {
 
   it(`refuses to add more than ${MAX_TEAMS} teams`, () => {
     const actor = startActor();
-    for (let i = 0; i < MAX_TEAMS; i++) {
+    for (let i = actor.getSnapshot().context.teams.length; i < MAX_TEAMS; i++) {
       actor.send({ type: 'ADD_TEAM' });
     }
     expect(actor.getSnapshot().context.teams).toHaveLength(MAX_TEAMS);
@@ -175,8 +181,7 @@ describe('setup', () => {
   it('fires rememberPlayerNames on START_GAME with the names as typed, not the "Игрок N" fallback', () => {
     const rememberPlayerNames = vi.fn();
     const actor = startActor(hatMachine.provide({ actions: { rememberPlayerNames } }));
-    addTeam(actor, 'Аня', 'Боря');
-    actor.send({ type: 'ADD_TEAM' }); // second team, player names left blank
+    setupTeams(actor, ['Аня', 'Боря']); // second (default) team's names left blank
     actor.send({ type: 'START_GAME' });
 
     expect(rememberPlayerNames).toHaveBeenCalledTimes(1);
@@ -192,12 +197,13 @@ describe('setup', () => {
       type: 'DICTIONARY_LOADED',
       entries: [{ word: 'Особоеслово', difficulty: 'easy', frequency: 0, levenshtein_zipf_frequency: 0 }],
     });
-    actor.send({ type: 'ADD_TEAM' });
-    const [team] = actor.getSnapshot().context.teams;
+    actor.send({ type: 'ADD_TEAM' }); // the 2 default teams predate DICTIONARY_LOADED; this one doesn't
+    const { teams } = actor.getSnapshot().context;
+    const team = teams[teams.length - 1];
     expect(team.name.endsWith('Особоеслово')).toBe(true);
 
     actor.send({ type: 'REGENERATE_TEAM_NAME', teamId: team.id });
-    const [regenerated] = actor.getSnapshot().context.teams;
+    const regenerated = actor.getSnapshot().context.teams.find((t) => t.id === team.id)!;
     expect(regenerated.name.endsWith('Особоеслово')).toBe(true);
   });
 });
@@ -251,8 +257,7 @@ describe('roles rotation', () => {
 
   it('alternates describer/guesser between a team\'s successive rounds', () => {
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    const [teamA] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ROLES_MODE', rolesMode: 'alternate' });
     actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 10 });
@@ -273,8 +278,7 @@ describe('roles rotation', () => {
 
   it('keeps fixed roles across a team\'s successive rounds', () => {
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    const [teamA] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ROLES_MODE', rolesMode: 'fixed' });
     actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 10 });
@@ -292,8 +296,7 @@ describe('roles rotation', () => {
 describe('round play', () => {
   it('runs a full game to completion via WORD_GUESSED and picks the correct winner', () => {
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    const teamB = addTeam(actor, 'Вика', 'Гриша');
+    const [teamA, teamB] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 4 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -314,8 +317,7 @@ describe('round play', () => {
 
   it('ignores WORD_SKIPPED when skipping is disallowed', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ALLOW_SKIP', allowSkip: false });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
@@ -331,8 +333,7 @@ describe('round play', () => {
 
   it('penalizes the team by 1 point on WORD_SKIPPED when allowed', () => {
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    const [teamA] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ALLOW_SKIP', allowSkip: true });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
@@ -347,8 +348,7 @@ describe('round play', () => {
 
   it('penalizes the team by 1 point on WORD_FOUL', () => {
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    const [teamA] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -366,8 +366,7 @@ describe('low-hat guessed sound', () => {
     const playGuessedSound = vi.fn();
     const playLowHatGuessedSound = vi.fn();
     const actor = startActor(hatMachine.provide({ actions: { playGuessedSound, playLowHatGuessedSound } }));
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 6 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' }); // hat: 5 remaining
@@ -381,8 +380,7 @@ describe('low-hat guessed sound', () => {
     const playGuessedSound = vi.fn();
     const playLowHatGuessedSound = vi.fn();
     const actor = startActor(hatMachine.provide({ actions: { playGuessedSound, playLowHatGuessedSound } }));
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 6 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' }); // hat: 5 remaining
@@ -398,8 +396,7 @@ describe('low-hat guessed sound', () => {
     const playGuessedSound = vi.fn();
     const playLowHatGuessedSound = vi.fn();
     const actor = startActor(hatMachine.provide({ actions: { playGuessedSound, playLowHatGuessedSound } }));
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 1 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' }); // hat: 0 remaining, currentWord holds the only word
@@ -415,8 +412,7 @@ describe('game over sound', () => {
   it('plays once the game ends, and not before', () => {
     const playGameOverSound = vi.fn();
     const actor = startActor(hatMachine.provide({ actions: { playGameOverSound } }));
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 1 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -432,8 +428,7 @@ describe('round start sound', () => {
   it('plays once a round starts, and not before', () => {
     const playRoundStartSound = vi.fn();
     const actor = startActor(hatMachine.provide({ actions: { playRoundStartSound } }));
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     expect(playRoundStartSound).not.toHaveBeenCalled();
@@ -447,8 +442,7 @@ describe('round start sound', () => {
     vi.useFakeTimers();
     const playRoundStartSound = vi.fn();
     const actor = startActor(hatMachine.provide({ actions: { playRoundStartSound } }));
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 10 });
     actor.send({ type: 'START_GAME' });
@@ -469,8 +463,7 @@ describe('round timer', () => {
 
   it('returns a timed-out word to the hat instead of discarding it', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
@@ -493,8 +486,7 @@ describe('round timer', () => {
 describe('remaining word count after each action', () => {
   it('WORD_GUESSED removes the word from the hat for good', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -506,8 +498,7 @@ describe('remaining word count after each action', () => {
 
   it('WORD_SKIPPED (when allowed) removes the word from the hat for good', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ALLOW_SKIP', allowSkip: true });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
@@ -520,8 +511,7 @@ describe('remaining word count after each action', () => {
 
   it('WORD_FOUL removes the word from the hat for good', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -533,8 +523,7 @@ describe('remaining word count after each action', () => {
 
   it('DELETE_WORD removes the word from the hat and from the dictionary itself', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -551,8 +540,7 @@ describe('remaining word count after each action', () => {
 
   it('MARK_WORD_RARE sets the current word\'s frequency to 0.05 without advancing the round', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -572,8 +560,7 @@ describe('remaining word count after each action', () => {
   it('a timeout keeps the word in play — remaining count is unchanged', () => {
     vi.useFakeTimers();
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
@@ -621,8 +608,7 @@ describe('gameOver stats', () => {
 
   function playScenario() {
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    const teamB = addTeam(actor, 'Вика', 'Гриша');
+    const [teamA, teamB] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ROLES_MODE', rolesMode: 'fixed' });
     actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 6 });
@@ -739,8 +725,7 @@ describe('getLastRoundRecap', () => {
 
   it('returns null before any round has been played', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'START_GAME' });
 
     const { context } = actor.getSnapshot();
@@ -749,8 +734,7 @@ describe('getLastRoundRecap', () => {
 
   it('recaps the words the previous team guessed once their round times out', () => {
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    const [teamA] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
@@ -772,8 +756,7 @@ describe('getLastRoundRecap', () => {
     // empties the hat, skipping roundEnd's entry action entirely — so
     // currentTeamIndex/roundsPlayed are NOT advanced for this final round.
     const actor = startActor();
-    const teamA = addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    const [teamA] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 2 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -829,8 +812,7 @@ describe('getLastRoundRecap', () => {
 describe('getCurrentRoundGuessedCount', () => {
   it('is 0 before any word has been guessed this round', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
@@ -841,8 +823,7 @@ describe('getCurrentRoundGuessedCount', () => {
 
   it('counts only the words guessed in the round currently in progress', () => {
     const actor = startActor();
-    addTeam(actor, 'Аня', 'Боря');
-    addTeam(actor, 'Вика', 'Гриша');
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });

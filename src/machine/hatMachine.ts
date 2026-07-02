@@ -11,6 +11,7 @@ import { isLocalDevEnvironment } from '../utils/isLocalDevEnvironment';
 export type { DifficultyLevel } from '../data/dictionary';
 
 export const MAX_TEAMS = 6;
+export const MIN_TEAMS = 2;
 
 export type RolesMode = 'alternate' | 'fixed';
 export type WordResult = 'guessed' | 'skipped' | 'foul' | 'timeout';
@@ -115,7 +116,9 @@ function fillBlankPlayerNames(team: Team): Team {
 
 export function createInitialContext(): HatContext {
   return {
-    teams: [],
+    // Two teams are always present so the game can start right away — this
+    // is also MIN_TEAMS, so REMOVE_TEAM refuses to drop below it.
+    teams: [createTeam(null), createTeam(null)],
     settings: {
       roundDurationSec: 60,
       allowSkip: false,
@@ -275,6 +278,7 @@ export const hatMachine = setup({
           })),
         },
         REMOVE_TEAM: {
+          guard: ({ context }) => context.teams.length > MIN_TEAMS,
           actions: assign(({ context, event }) => ({
             teams: context.teams.filter((team) => team.id !== event.teamId),
           })),
