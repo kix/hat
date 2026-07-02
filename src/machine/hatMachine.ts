@@ -84,6 +84,7 @@ export type HatEvent =
   | { type: 'WORD_GUESSED' }
   | { type: 'WORD_SKIPPED' }
   | { type: 'WORD_FOUL' }
+  | { type: 'DELETE_WORD' }
   | { type: 'TICK' }
   | { type: 'RESTART' };
 
@@ -191,6 +192,23 @@ function resolveTimeout(context: HatContext): Partial<HatContext> {
 
 function isHatEmpty(context: HatContext): boolean {
   return context.hat.length === 0;
+}
+
+// Dev-only word-list curation (see DeleteWordButton and vite.config.ts's
+// delete-word middleware): drops the current word from the dictionary
+// outright, so it can't be drawn again, and advances to the next one.
+// Unlike resolveWord, this doesn't record a WordRecord — it isn't a real
+// guess/skip/foul, just editorial removal.
+function deleteCurrentWord(context: HatContext): Partial<HatContext> {
+  const currentWord = context.currentWord;
+  if (!currentWord) return {};
+  const dictionary = (context.dictionary ?? []).filter((entry) => entry.word !== currentWord.word);
+
+  const [nextWord, ...rest] = context.hat;
+  if (!nextWord) {
+    return { dictionary, currentWord: null, wordShownAt: null };
+  }
+  return { dictionary, hat: rest, currentWord: nextWord, wordShownAt: Date.now() };
 }
 
 export const hatMachine = setup({
@@ -316,12 +334,15 @@ export const hatMachine = setup({
             assign(({ context }) => {
               // No difficulty-tag filtering — the whole dictionary is the pool,
               // and pickRandom weighs each word's difficulty (length, frequency,
-              // Levenshtein-neighbour frequency) against the difficulty slider.
+              // Levenshtein-neighbour frequency) against the difficulty slider,
+              // excluding 0-frequency words below max difficulty. wordCount is
+              // clamped to however many it actually managed to draw, since that
+              // exclusion can shrink the eligible pool below the full dictionary.
               const pool = context.dictionary ?? [];
-              const wordCount = Math.min(context.settings.wordCount, pool.length);
+              const hat = pickRandom(pool, context.settings.wordCount, context.settings.difficultyLevel);
               return {
-                hat: pickRandom(pool, wordCount, context.settings.difficultyLevel),
-                settings: { ...context.settings, wordCount },
+                hat,
+                settings: { ...context.settings, wordCount: hat.length },
                 currentTeamIndex: 0,
                 history: [],
                 currentWord: null,
@@ -398,6 +419,17 @@ export const hatMachine = setup({
           },
           {
             actions: [assign(({ context }) => resolveWord(context, 'foul')), 'playFoulSound'],
+          },
+        ],
+        DELETE_WORD: [
+          {
+            guard: ({ context }) => import.meta.env.DEV && isHatEmpty(context),
+            actions: assign(({ context }) => deleteCurrentWord(context)),
+            target: 'gameOver',
+          },
+          {
+            guard: () => import.meta.env.DEV,
+            actions: assign(({ context }) => deleteCurrentWord(context)),
           },
         ],
       },

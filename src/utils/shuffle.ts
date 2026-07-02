@@ -1,5 +1,16 @@
 import type { DictionaryEntry } from '../data/dictionary';
 
+// Prefers the Web Crypto API's CSPRNG over Math.random() when available
+// (all evergreen browsers), falling back for older/non-browser runtimes.
+function randomFloat(): number {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const buffer = new Uint32Array(1);
+    crypto.getRandomValues(buffer);
+    return buffer[0] / 2 ** 32;
+  }
+  return Math.random();
+}
+
 // Zipf frequency (both plain and Levenshtein-neighbour-blended) tops out
 // around 8 on wordfreq's scale.
 const ZIPF_SCALE_MAX = 8;
@@ -11,11 +22,17 @@ const MAX_MEANINGFUL_WORD_LENGTH = 16;
 // common its nearest spelling-neighbours are, and a slice of pure noise so
 // the same difficulty setting doesn't draw the exact same words every game.
 const DIFFICULTY_WEIGHTS = {
-  length: 0.7,
-  frequency: 0.15,
+  length: 0.5,
+  frequency: 0.40,
   levenshteinFrequency: 0.08,
   randomness: 0.07,
 } as const;
+
+// The hardest possible setting (slider at 100%) opens up words wordfreq has
+// never seen (frequency 0) — anywhere below that, they're excluded outright
+// rather than just scored as maximally hard, since a 0 usually means
+// "unattested" rather than "extremely obscure but real".
+const MAX_DIFFICULTY_LEVEL = 1;
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -31,7 +48,7 @@ function wordHardness(entry: DictionaryEntry): number {
     DIFFICULTY_WEIGHTS.length * lengthHardness +
     DIFFICULTY_WEIGHTS.frequency * frequencyHardness +
     DIFFICULTY_WEIGHTS.levenshteinFrequency * levenshteinHardness +
-    DIFFICULTY_WEIGHTS.randomness * Math.random()
+    DIFFICULTY_WEIGHTS.randomness * randomFloat()
   );
 }
 
@@ -50,10 +67,12 @@ export function pickRandom(
   count: number,
   difficultyLevel: number,
 ): DictionaryEntry[] {
-  const keyed = items.map((entry) => {
+  const eligible =
+    difficultyLevel >= MAX_DIFFICULTY_LEVEL ? items : items.filter((entry) => entry.frequency !== 0);
+  const keyed = eligible.map((entry) => {
     const distance = Math.abs(wordHardness(entry) - difficultyLevel);
     const weight = 1 / (CLOSENESS_EPSILON + distance);
-    return { entry, key: Math.random() ** (1 / weight) };
+    return { entry, key: randomFloat() ** (1 / weight) };
   });
   keyed.sort((a, b) => b.key - a.key);
   return keyed.slice(0, count).map(({ entry }) => entry);
