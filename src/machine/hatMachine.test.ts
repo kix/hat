@@ -104,18 +104,61 @@ describe('setup', () => {
     expect(snapshot.context.hat).toHaveLength(20);
   });
 
-  it('clamps wordCount to the size of the selected dictionary pool', () => {
-    const easyPoolSize = dictionary.filter((entry) => entry.difficulty === 'easy').length;
+  it('clamps wordCount to the size of the whole dictionary at max difficulty', () => {
+    // Only at max difficulty are 0-frequency words eligible, making the full
+    // dictionary the pool — anywhere below that, the eligible pool (and thus
+    // the clamp) is smaller. See "excludes 0-frequency words..." below.
     const actor = startActor();
     addTeam(actor, 'Аня', 'Боря');
     addTeam(actor, 'Вика', 'Гриша');
-    actor.send({ type: 'SET_DIFFICULTIES', difficulties: ['easy'] });
-    actor.send({ type: 'SET_WORD_COUNT', wordCount: easyPoolSize + 1 });
+    actor.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: 1 });
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: dictionary.length + 1 });
     actor.send({ type: 'START_GAME' });
     const snapshot = actor.getSnapshot();
-    expect(snapshot.context.hat).toHaveLength(easyPoolSize);
-    expect(snapshot.context.settings.wordCount).toBe(easyPoolSize);
-    expect(snapshot.context.hat.every((entry) => entry.difficulty === 'easy')).toBe(true);
+    expect(snapshot.context.hat).toHaveLength(dictionary.length);
+    expect(snapshot.context.settings.wordCount).toBe(dictionary.length);
+  });
+
+  it('excludes 0-frequency words unless difficulty is at max', () => {
+    const zeroFrequencyCount = dictionary.filter((entry) => entry.frequency === 0).length;
+    expect(zeroFrequencyCount).toBeGreaterThan(0);
+
+    const belowMax = startActor();
+    addTeam(belowMax, 'Аня', 'Боря');
+    addTeam(belowMax, 'Вика', 'Гриша');
+    belowMax.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: 0.9 });
+    belowMax.send({ type: 'SET_WORD_COUNT', wordCount: 2000 });
+    belowMax.send({ type: 'START_GAME' });
+    expect(belowMax.getSnapshot().context.hat.some((entry) => entry.frequency === 0)).toBe(false);
+
+    const atMax = startActor();
+    addTeam(atMax, 'Аня', 'Боря');
+    addTeam(atMax, 'Вика', 'Гриша');
+    atMax.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: 1 });
+    atMax.send({ type: 'SET_WORD_COUNT', wordCount: 2000 });
+    atMax.send({ type: 'START_GAME' });
+    expect(atMax.getSnapshot().context.hat.some((entry) => entry.frequency === 0)).toBe(true);
+  });
+
+  it('biases word selection toward the requested difficulty level', () => {
+    function drawHat(difficultyLevel: number) {
+      const actor = startActor();
+      addTeam(actor, 'Аня', 'Боря');
+      addTeam(actor, 'Вика', 'Гриша');
+      actor.send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel });
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 500 });
+      actor.send({ type: 'START_GAME' });
+      return actor.getSnapshot().context.hat;
+    }
+    const average = (hat: ReturnType<typeof drawHat>, pick: (entry: (typeof hat)[number]) => number) =>
+      hat.reduce((sum, entry) => sum + pick(entry), 0) / hat.length;
+
+    const easyHat = drawHat(0);
+    const hardHat = drawHat(1);
+
+    // Harder words skew longer and rarer (lower Zipf frequency) than easier ones.
+    expect(average(hardHat, (entry) => entry.word.length)).toBeGreaterThan(average(easyHat, (entry) => entry.word.length));
+    expect(average(easyHat, (entry) => entry.frequency)).toBeGreaterThan(average(hardHat, (entry) => entry.frequency));
   });
 
   it(`refuses to add more than ${MAX_TEAMS} teams`, () => {
@@ -486,6 +529,44 @@ describe('remaining word count after each action', () => {
     const before = remainingWordCount(actor.getSnapshot().context);
     actor.send({ type: 'WORD_FOUL' });
     expect(remainingWordCount(actor.getSnapshot().context)).toBe(before - 1);
+  });
+
+  it('DELETE_WORD removes the word from the hat and from the dictionary itself', () => {
+    const actor = startActor();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+
+    const deletedWord = actor.getSnapshot().context.currentWord!.word;
+    const before = remainingWordCount(actor.getSnapshot().context);
+    actor.send({ type: 'DELETE_WORD' });
+    const snapshot = actor.getSnapshot();
+    expect(remainingWordCount(snapshot.context)).toBe(before - 1);
+    expect(snapshot.context.dictionary!.some((entry) => entry.word === deletedWord)).toBe(false);
+    // No WordRecord for it — this isn't a real guess/skip/foul.
+    expect(snapshot.context.history).toHaveLength(0);
+  });
+
+  it('MARK_WORD_RARE sets the current word\'s frequency to 0.05 without advancing the round', () => {
+    const actor = startActor();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+
+    const markedWord = actor.getSnapshot().context.currentWord!.word;
+    const before = remainingWordCount(actor.getSnapshot().context);
+    actor.send({ type: 'MARK_WORD_RARE' });
+    const snapshot = actor.getSnapshot();
+
+    expect(remainingWordCount(snapshot.context)).toBe(before);
+    expect(snapshot.context.currentWord!.word).toBe(markedWord);
+    expect(snapshot.context.currentWord!.frequency).toBe(0.05);
+    expect(snapshot.context.dictionary!.find((entry) => entry.word === markedWord)!.frequency).toBe(0.05);
+    expect(snapshot.context.history).toHaveLength(0);
   });
 
   it('a timeout keeps the word in play — remaining count is unchanged', () => {

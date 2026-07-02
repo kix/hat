@@ -1,6 +1,6 @@
-import { Chip, Group, NumberInput, SegmentedControl, Stack, Switch, Text } from '@mantine/core';
+import { SegmentedControl, Slider, Stack, Switch, Text } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
-import type { DictionaryEntry, DifficultyLevel } from '../../data/dictionary';
+import type { DictionaryEntry } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
 
 interface RoundSettingsFormProps {
@@ -9,14 +9,8 @@ interface RoundSettingsFormProps {
   send: (event: HatEvent) => void;
 }
 
-const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
-  easy: 'Лёгкие',
-  medium: 'Средние',
-  hard: 'Сложные',
-};
-
 export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsFormProps) {
-  const poolSize = dictionary?.filter((entry) => settings.difficulties.includes(entry.difficulty)).length ?? null;
+  const poolSize = dictionary?.length ?? null;
   // Laptops/desktops (mouse-primary, fine pointer) have no vibration motor —
   // no point showing a setting that can't do anything there.
   const isTouchDevice = useMediaQuery('(pointer: coarse)', undefined, { getInitialValueInEffect: false });
@@ -83,30 +77,42 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
         />
       )}
 
-      <NumberInput
-        label="Количество слов в шляпе"
-        min={1}
-        value={settings.wordCount}
-        onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: typeof value === 'number' ? value : 1 })}
-      />
+      <div>
+        <Text size="sm" fw={500} mb={4}>
+          Количество слов в шляпе
+        </Text>
+        <Slider
+          value={settings.wordCount}
+          min={10}
+          max={100}
+          onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: value })}
+          label={(value) => `${value}`}
+          marks={[
+            { value: 10, label: '10' },
+            { value: 100, label: '100' },
+          ]}
+          mx="xs"
+          mb="lg"
+          styles={{ markLabel: { whiteSpace: 'nowrap' } }}
+        />
+      </div>
 
       <div>
         <Text size="sm" fw={500} mb={4}>
           Сложность слов
         </Text>
-        <Chip.Group
-          multiple
-          value={settings.difficulties}
-          onChange={(value) => send({ type: 'SET_DIFFICULTIES', difficulties: value as DifficultyLevel[] })}
-        >
-          <Group gap="xs">
-            {(Object.keys(DIFFICULTY_LABELS) as DifficultyLevel[]).map((level) => (
-              <Chip key={level} value={level}>
-                {DIFFICULTY_LABELS[level]}
-              </Chip>
-            ))}
-          </Group>
-        </Chip.Group>
+        <Slider
+          value={Math.round(settings.difficultyLevel * 100)}
+          onChange={(value) => send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: value / 100 })}
+          label={(value) => `${value}%`}
+          marks={[
+            { value: 0, label: 'Легче' },
+            { value: 100, label: 'Сложнее' },
+          ]}
+          mx="xs"
+          mb="lg"
+          styles={{ markLabel: { whiteSpace: 'nowrap' } }}
+        />
         <Text size="xs" c="dimmed" mt={4}>
           {poolSize === null ? 'Словарь загружается…' : `Доступно слов: ${poolSize}`}
         </Text>

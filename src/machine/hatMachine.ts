@@ -6,6 +6,7 @@ import { getCurrentRoles } from '../utils/roles';
 import { generateId } from '../utils/id';
 import { isHatRunningLow } from '../utils/lowHat';
 import { getDuplicateNameReason } from '../utils/setupValidity';
+import { isLocalDevEnvironment } from '../utils/isLocalDevEnvironment';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
@@ -43,7 +44,9 @@ export interface Settings {
   roundDurationSec: 30 | 60 | 120;
   allowSkip: boolean;
   wordCount: number;
-  difficulties: DifficultyLevel[];
+  // 0 (easiest) to 1 (hardest) — see pickRandom in utils/shuffle.ts for how
+  // this is weighed against each word's length and frequency.
+  difficultyLevel: number;
   rolesMode: RolesMode;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
@@ -72,7 +75,7 @@ export type HatEvent =
   | { type: 'SET_ROUND_DURATION'; roundDurationSec: 30 | 60 | 120 }
   | { type: 'SET_ALLOW_SKIP'; allowSkip: boolean }
   | { type: 'SET_WORD_COUNT'; wordCount: number }
-  | { type: 'SET_DIFFICULTIES'; difficulties: DifficultyLevel[] }
+  | { type: 'SET_DIFFICULTY_LEVEL'; difficultyLevel: number }
   | { type: 'SET_ROLES_MODE'; rolesMode: RolesMode }
   | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
@@ -82,6 +85,8 @@ export type HatEvent =
   | { type: 'WORD_GUESSED' }
   | { type: 'WORD_SKIPPED' }
   | { type: 'WORD_FOUL' }
+  | { type: 'DELETE_WORD' }
+  | { type: 'MARK_WORD_RARE' }
   | { type: 'TICK' }
   | { type: 'RESTART' };
 
@@ -115,7 +120,7 @@ export function createInitialContext(): HatContext {
       roundDurationSec: 60,
       allowSkip: false,
       wordCount: 20,
-      difficulties: ['easy', 'medium', 'hard'],
+      difficultyLevel: 0.5,
       rolesMode: 'alternate',
       soundEnabled: true,
       vibrationEnabled: false,
@@ -189,6 +194,42 @@ function resolveTimeout(context: HatContext): Partial<HatContext> {
 
 function isHatEmpty(context: HatContext): boolean {
   return context.hat.length === 0;
+}
+
+// Matches the value the vite.config.ts dev-server middleware writes to disk.
+const RARE_WORD_FREQUENCY = 0.05;
+
+// Dev-only word-list curation (see DeleteWordButton and vite.config.ts's
+// delete-word middleware): drops the current word from the dictionary
+// outright, so it can't be drawn again, and advances to the next one.
+// Unlike resolveWord, this doesn't record a WordRecord — it isn't a real
+// guess/skip/foul, just editorial removal.
+function deleteCurrentWord(context: HatContext): Partial<HatContext> {
+  const currentWord = context.currentWord;
+  if (!currentWord) return {};
+  const dictionary = (context.dictionary ?? []).filter((entry) => entry.word !== currentWord.word);
+
+  const [nextWord, ...rest] = context.hat;
+  if (!nextWord) {
+    return { dictionary, currentWord: null, wordShownAt: null };
+  }
+  return { dictionary, hat: rest, currentWord: nextWord, wordShownAt: Date.now() };
+}
+
+// Dev-only word-list curation: recalibrates a word wordfreq scored as
+// completely unattested (frequency 0) to a small non-zero frequency, so it
+// stops being excluded outright below max difficulty (see pickRandom's
+// 0-frequency exclusion) without claiming it's actually common. Doesn't
+// advance the round — the current word stays in play.
+function markCurrentWordRare(context: HatContext): Partial<HatContext> {
+  const currentWord = context.currentWord;
+  if (!currentWord) return {};
+  const applyRareFrequency = (entry: DictionaryEntry): DictionaryEntry =>
+    entry.word === currentWord.word ? { ...entry, frequency: RARE_WORD_FREQUENCY } : entry;
+  return {
+    dictionary: (context.dictionary ?? []).map(applyRareFrequency),
+    currentWord: applyRareFrequency(currentWord),
+  };
 }
 
 export const hatMachine = setup({
@@ -281,9 +322,9 @@ export const hatMachine = setup({
             settings: { ...context.settings, wordCount: event.wordCount },
           })),
         },
-        SET_DIFFICULTIES: {
+        SET_DIFFICULTY_LEVEL: {
           actions: assign(({ context, event }) => ({
-            settings: { ...context.settings, difficulties: event.difficulties },
+            settings: { ...context.settings, difficultyLevel: event.difficultyLevel },
           })),
         },
         SET_ROLES_MODE: {
@@ -304,7 +345,6 @@ export const hatMachine = setup({
         START_GAME: {
           guard: ({ context }) =>
             context.teams.length >= 2 &&
-            context.settings.difficulties.length > 0 &&
             context.dictionary !== null &&
             context.teams.every((team) => !getDuplicateNameReason(team)),
           actions: [
@@ -313,13 +353,17 @@ export const hatMachine = setup({
             // placeholders for anyone left blank.
             'rememberPlayerNames',
             assign(({ context }) => {
-              const pool = (context.dictionary ?? []).filter((entry) =>
-                context.settings.difficulties.includes(entry.difficulty),
-              );
-              const wordCount = Math.min(context.settings.wordCount, pool.length);
+              // No difficulty-tag filtering — the whole dictionary is the pool,
+              // and pickRandom weighs each word's difficulty (length, frequency,
+              // Levenshtein-neighbour frequency) against the difficulty slider,
+              // excluding 0-frequency words below max difficulty. wordCount is
+              // clamped to however many it actually managed to draw, since that
+              // exclusion can shrink the eligible pool below the full dictionary.
+              const pool = context.dictionary ?? [];
+              const hat = pickRandom(pool, context.settings.wordCount, context.settings.difficultyLevel);
               return {
-                hat: pickRandom(pool, wordCount),
-                settings: { ...context.settings, wordCount },
+                hat,
+                settings: { ...context.settings, wordCount: hat.length },
                 currentTeamIndex: 0,
                 history: [],
                 currentWord: null,
@@ -398,6 +442,21 @@ export const hatMachine = setup({
             actions: [assign(({ context }) => resolveWord(context, 'foul')), 'playFoulSound'],
           },
         ],
+        DELETE_WORD: [
+          {
+            guard: ({ context }) => isLocalDevEnvironment() && isHatEmpty(context),
+            actions: assign(({ context }) => deleteCurrentWord(context)),
+            target: 'gameOver',
+          },
+          {
+            guard: () => isLocalDevEnvironment(),
+            actions: assign(({ context }) => deleteCurrentWord(context)),
+          },
+        ],
+        MARK_WORD_RARE: {
+          guard: () => isLocalDevEnvironment(),
+          actions: assign(({ context }) => markCurrentWordRare(context)),
+        },
       },
       always: [
         {
