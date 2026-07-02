@@ -1,4 +1,4 @@
-import { NumberInput, SegmentedControl, Slider, Stack, Switch, Text } from '@mantine/core';
+import { SegmentedControl, Slider, Stack, Switch, Text } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { DictionaryEntry } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
@@ -77,12 +77,25 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
         />
       )}
 
-      <NumberInput
-        label="Количество слов в шляпе"
-        min={1}
-        value={settings.wordCount}
-        onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: typeof value === 'number' ? value : 1 })}
-      />
+      <div>
+        <Text size="sm" fw={500} mb={4}>
+          Количество слов в шляпе
+        </Text>
+        <Slider
+          value={settings.wordCount}
+          min={10}
+          max={100}
+          onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: value })}
+          label={(value) => `${value}`}
+          marks={[
+            { value: 10, label: '10' },
+            { value: 100, label: '100' },
+          ]}
+          mx="xs"
+          mb="lg"
+          styles={{ markLabel: { whiteSpace: 'nowrap' } }}
+        />
+      </div>
 
       <div>
         <Text size="sm" fw={500} mb={4}>
