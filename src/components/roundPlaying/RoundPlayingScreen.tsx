@@ -3,12 +3,15 @@ import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { getCurrentRoundGuessedCount } from '../../utils/stats';
 import { logWeirdWord } from '../../auth/logWeirdWord';
 import { deleteWordFromDictionary } from '../../utils/deleteWord';
+import { markWordRareInDictionary } from '../../utils/setWordFrequency';
 import { RoundTimer } from './RoundTimer';
 import { HatCountBadge } from './HatCountBadge';
 import { RoundGuessedCount } from './RoundGuessedCount';
 import { WordDisplay } from './WordDisplay';
 import { ActionButtons } from './ActionButtons';
 import { DeleteWordButton } from './DeleteWordButton';
+import { MarkWordRareButton } from './MarkWordRareButton';
+import { isLocalDevEnvironment } from '../../utils/isLocalDevEnvironment';
 
 interface RoundPlayingScreenProps {
   context: HatContext;
@@ -26,6 +29,9 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
     if (event.type === 'DELETE_WORD') {
       void deleteWordFromDictionary(currentWord);
     }
+    if (event.type === 'MARK_WORD_RARE') {
+      void markWordRareInDictionary(currentWord);
+    }
     send(event);
   }
 
@@ -39,9 +45,13 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
 
       <WordDisplay word={context.currentWord.word} />
 
-      <Group justify="center" pb="sm">
-        <DeleteWordButton onClick={() => handleSend({ type: 'DELETE_WORD' })} />
-      </Group>
+      { isLocalDevEnvironment() && (
+        <Group justify="center" pb="sm">
+          <MarkWordRareButton onClick={() => handleSend({ type: 'MARK_WORD_RARE' })} />
+          <DeleteWordButton onClick={() => handleSend({ type: 'DELETE_WORD' })} />
+        </Group>
+      )}
+      
 
       <ActionButtons
         allowSkip={context.settings.allowSkip}

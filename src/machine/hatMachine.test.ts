@@ -549,6 +549,26 @@ describe('remaining word count after each action', () => {
     expect(snapshot.context.history).toHaveLength(0);
   });
 
+  it('MARK_WORD_RARE sets the current word\'s frequency to 0.05 without advancing the round', () => {
+    const actor = startActor();
+    addTeam(actor, 'Аня', 'Боря');
+    addTeam(actor, 'Вика', 'Гриша');
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+
+    const markedWord = actor.getSnapshot().context.currentWord!.word;
+    const before = remainingWordCount(actor.getSnapshot().context);
+    actor.send({ type: 'MARK_WORD_RARE' });
+    const snapshot = actor.getSnapshot();
+
+    expect(remainingWordCount(snapshot.context)).toBe(before);
+    expect(snapshot.context.currentWord!.word).toBe(markedWord);
+    expect(snapshot.context.currentWord!.frequency).toBe(0.05);
+    expect(snapshot.context.dictionary!.find((entry) => entry.word === markedWord)!.frequency).toBe(0.05);
+    expect(snapshot.context.history).toHaveLength(0);
+  });
+
   it('a timeout keeps the word in play — remaining count is unchanged', () => {
     vi.useFakeTimers();
     const actor = startActor();

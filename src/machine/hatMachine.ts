@@ -6,6 +6,7 @@ import { getCurrentRoles } from '../utils/roles';
 import { generateId } from '../utils/id';
 import { isHatRunningLow } from '../utils/lowHat';
 import { getDuplicateNameReason } from '../utils/setupValidity';
+import { isLocalDevEnvironment } from '../utils/isLocalDevEnvironment';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
@@ -85,6 +86,7 @@ export type HatEvent =
   | { type: 'WORD_SKIPPED' }
   | { type: 'WORD_FOUL' }
   | { type: 'DELETE_WORD' }
+  | { type: 'MARK_WORD_RARE' }
   | { type: 'TICK' }
   | { type: 'RESTART' };
 
@@ -194,6 +196,9 @@ function isHatEmpty(context: HatContext): boolean {
   return context.hat.length === 0;
 }
 
+// Matches the value the vite.config.ts dev-server middleware writes to disk.
+const RARE_WORD_FREQUENCY = 0.05;
+
 // Dev-only word-list curation (see DeleteWordButton and vite.config.ts's
 // delete-word middleware): drops the current word from the dictionary
 // outright, so it can't be drawn again, and advances to the next one.
@@ -209,6 +214,22 @@ function deleteCurrentWord(context: HatContext): Partial<HatContext> {
     return { dictionary, currentWord: null, wordShownAt: null };
   }
   return { dictionary, hat: rest, currentWord: nextWord, wordShownAt: Date.now() };
+}
+
+// Dev-only word-list curation: recalibrates a word wordfreq scored as
+// completely unattested (frequency 0) to a small non-zero frequency, so it
+// stops being excluded outright below max difficulty (see pickRandom's
+// 0-frequency exclusion) without claiming it's actually common. Doesn't
+// advance the round — the current word stays in play.
+function markCurrentWordRare(context: HatContext): Partial<HatContext> {
+  const currentWord = context.currentWord;
+  if (!currentWord) return {};
+  const applyRareFrequency = (entry: DictionaryEntry): DictionaryEntry =>
+    entry.word === currentWord.word ? { ...entry, frequency: RARE_WORD_FREQUENCY } : entry;
+  return {
+    dictionary: (context.dictionary ?? []).map(applyRareFrequency),
+    currentWord: applyRareFrequency(currentWord),
+  };
 }
 
 export const hatMachine = setup({
@@ -423,15 +444,19 @@ export const hatMachine = setup({
         ],
         DELETE_WORD: [
           {
-            guard: ({ context }) => import.meta.env.DEV && isHatEmpty(context),
+            guard: ({ context }) => isLocalDevEnvironment() && isHatEmpty(context),
             actions: assign(({ context }) => deleteCurrentWord(context)),
             target: 'gameOver',
           },
           {
-            guard: () => import.meta.env.DEV,
+            guard: () => isLocalDevEnvironment(),
             actions: assign(({ context }) => deleteCurrentWord(context)),
           },
         ],
+        MARK_WORD_RARE: {
+          guard: () => isLocalDevEnvironment(),
+          actions: assign(({ context }) => markCurrentWordRare(context)),
+        },
       },
       always: [
         {
