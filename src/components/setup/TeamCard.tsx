@@ -54,7 +54,7 @@ export function TeamCard({ team, teamNumber, send }: TeamCardProps) {
               aria-label={`Игрок ${index + 1}`}
               placeholder={`Игрок ${index + 1}`}
               description={
-                player.name.trim().length === 0 ? 'Вы не представились!' : (duplicateNameReason ?? undefined)
+                player.name.trim().length === 0 ? 'Аноним?' : (duplicateNameReason ?? undefined)
               }
               value={player.name}
               data={player.name.trim().length >= MIN_CHARS_FOR_SUGGESTIONS ? getStoredPlayerNames() : []}

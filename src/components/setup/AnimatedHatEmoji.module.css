@@ -11,4 +11,8 @@
 .hat {
   display: inline-block;
   animation: tilt 1.6s ease-in-out infinite;
+  position: absolute;
+  top: 1%;
+  left: 9%;
+  font-size: 66pt;
 }
