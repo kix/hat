@@ -20,7 +20,9 @@
 }
 
 .title {
-  font-family: 'Baloo 2', var(--mantine-font-family);
+  font-family: 'Caveat', var(--mantine-font-family);
   color: #fff;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  font-size: 46pt;
+  padding-left: 15%;
 }
