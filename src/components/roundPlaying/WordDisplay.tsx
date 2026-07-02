@@ -2,9 +2,10 @@ import { Box } from '@mantine/core';
 
 interface WordDisplayProps {
   word: string;
+  hidden?: boolean;
 }
 
-export function WordDisplay({ word }: WordDisplayProps) {
+export function WordDisplay({ word, hidden = false }: WordDisplayProps) {
   return (
     <Box
       style={{
@@ -23,11 +24,11 @@ export function WordDisplay({ word }: WordDisplayProps) {
           fontWeight: 700,
           lineHeight: 1.1,
           textAlign: 'center',
-          color: '#000',
+          color: hidden ? 'var(--mantine-color-dimmed)' : '#000',
           wordBreak: 'break-word',
         }}
       >
-        {word}
+        {hidden ? 'Слово скрыто' : word}
       </Box>
     </Box>
   );

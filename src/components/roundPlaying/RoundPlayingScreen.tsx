@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Group } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { getCurrentRoundGuessedCount } from '../../utils/stats';
@@ -14,6 +14,7 @@ import { WordDisplay } from './WordDisplay';
 import { ActionButtons } from './ActionButtons';
 import { DeleteWordButton } from './DeleteWordButton';
 import { MarkWordRareButton } from './MarkWordRareButton';
+import { HideWordButton } from './HideWordButton';
 import { isLocalDevEnvironment } from '../../utils/isLocalDevEnvironment';
 
 interface RoundPlayingScreenProps {
@@ -29,8 +30,13 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
   // which happens slightly before React actually renders the new word —
   // this instead captures the moment this word's render actually commits.
   const renderedAtRef = useRef<number | null>(null);
+  const [wordHidden, setWordHidden] = useState(false);
   useEffect(() => {
     renderedAtRef.current = Date.now();
+    // Every new word starts visible — hiding is a per-word choice, not a
+    // standing one, so it doesn't carry over to the next word or the next
+    // player's turn.
+    setWordHidden(false);
   }, [currentWord]);
 
   if (!context.currentWord || currentWord === undefined) return null;
@@ -59,7 +65,11 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
         <RoundGuessedCount count={getCurrentRoundGuessedCount(context.teams, context.history, context.currentTeamIndex)} />
       </Group>
 
-      <WordDisplay word={context.currentWord.word} />
+      <WordDisplay word={context.currentWord.word} hidden={wordHidden} />
+
+      <Group justify="center" pb="sm">
+        <HideWordButton hidden={wordHidden} onClick={() => setWordHidden((hidden) => !hidden)} />
+      </Group>
 
       { isLocalDevEnvironment() && (
         <Group justify="center" pb="sm">
