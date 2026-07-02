@@ -5,6 +5,7 @@ import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { getBestPlayer, getEasiestWord, getHardestWord } from '../../utils/stats';
 import { useAuthSession } from '../../auth/useAuthSession';
 import { syncPreferencesToSupabase } from '../../auth/syncPreferences';
+import { syncWordTimingsToSupabase } from '../../auth/syncWordTimings';
 import { ResultBanner } from './ResultBanner';
 import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
@@ -33,6 +34,7 @@ export function GameOverScreen({ context, send }: GameOverScreenProps) {
     if (session?.user.id && !syncedRef.current) {
       syncedRef.current = true;
       void syncPreferencesToSupabase(session.user.id);
+      void syncWordTimingsToSupabase(session.user.id);
     }
   }, [session]);
 
