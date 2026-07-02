@@ -1,4 +1,4 @@
-import { ActionIcon, Avatar, Button, Popover, Stack, Text } from '@mantine/core';
+import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text } from '@mantine/core';
 import { IconBrandApple, IconBrandGoogle, IconUserCircle } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
@@ -35,9 +35,9 @@ export function AuthMenu() {
             <Text size="sm" fw={500} truncate="end">
               {(user.user_metadata?.full_name as string | undefined) ?? user.email ?? 'Аккаунт'}
             </Text>
-            <Button variant="light" color="red" onClick={() => void supabase.auth.signOut()}>
+            <Anchor component="button" type="button" c="red" onClick={() => void supabase.auth.signOut()}>
               Выйти
-            </Button>
+            </Anchor>
           </Stack>
         ) : (
           <Stack gap="xs" miw={220}>
