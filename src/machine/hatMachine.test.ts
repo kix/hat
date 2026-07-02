@@ -361,6 +361,53 @@ describe('round play', () => {
   });
 });
 
+describe('exiting mid-game', () => {
+  it('EXIT_GAME from roundIntro returns to setup, keeping the team roster and settings', () => {
+    const actor = startActor();
+    const [teamA, teamB] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+
+    actor.send({ type: 'EXIT_GAME' });
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toBe('setup');
+    expect(snapshot.context.hat).toHaveLength(0);
+    expect(snapshot.context.history).toHaveLength(0);
+    expect(snapshot.context.teams.map((t) => t.id)).toEqual([teamA.id, teamB.id]);
+    expect(snapshot.context.settings.wordCount).toBe(5);
+  });
+
+  it('EXIT_GAME from roundPlaying returns to setup and clears the in-progress round', () => {
+    const actor = startActor();
+    setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+
+    actor.send({ type: 'EXIT_GAME' });
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toBe('setup');
+    expect(snapshot.context.currentWord).toBeNull();
+    expect(snapshot.context.hat).toHaveLength(0);
+  });
+
+  it('RESTART from gameOver returns to setup, resetting progress but keeping the team roster', () => {
+    const actor = startActor();
+    const [teamA, teamB] = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 1 });
+    actor.send({ type: 'START_GAME' });
+    actor.send({ type: 'START_ROUND' });
+    actor.send({ type: 'WORD_GUESSED' }); // empties the hat -> gameOver
+
+    actor.send({ type: 'RESTART' });
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toBe('setup');
+    expect(snapshot.context.teams.map((t) => t.id)).toEqual([teamA.id, teamB.id]);
+    expect(snapshot.context.teams.every((t) => t.roundsPlayed === 0)).toBe(true);
+    expect(snapshot.context.history).toHaveLength(0);
+  });
+});
+
 describe('low-hat guessed sound', () => {
   it('plays the normal guessed sound while the hat still has 5+ words left', () => {
     const playGuessedSound = vi.fn();
