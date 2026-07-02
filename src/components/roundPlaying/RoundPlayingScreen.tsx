@@ -16,6 +16,7 @@ import { DeleteWordButton } from './DeleteWordButton';
 import { MarkWordRareButton } from './MarkWordRareButton';
 import { HideWordButton } from './HideWordButton';
 import { isLocalDevEnvironment } from '../../utils/isLocalDevEnvironment';
+import { ExitGameButton } from '../shared/ExitGameButton';
 
 interface RoundPlayingScreenProps {
   context: HatContext;
@@ -59,6 +60,7 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
 
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+      <ExitGameButton send={send} />
       <Group justify="center" align="center" gap="lg" py="md">
         <HatCountBadge hatLength={context.hat.length} />
         <RoundTimer timeRemainingSec={context.timeRemainingSec} roundDurationSec={context.settings.roundDurationSec} />

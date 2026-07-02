@@ -89,7 +89,8 @@ export type HatEvent =
   | { type: 'DELETE_WORD' }
   | { type: 'MARK_WORD_RARE' }
   | { type: 'TICK' }
-  | { type: 'RESTART' };
+  | { type: 'RESTART' }
+  | { type: 'EXIT_GAME' };
 
 function createTeam(dictionaryEntries: DictionaryEntry[] | null): Team {
   return {
@@ -197,6 +198,21 @@ function resolveTimeout(context: HatContext): Partial<HatContext> {
 
 function isHatEmpty(context: HatContext): boolean {
   return context.hat.length === 0;
+}
+
+// Drops all in-progress game state back to a clean slate but keeps the
+// team roster and settings, so a new game with the same teams can start
+// right away — used by both RESTART (from gameOver) and EXIT_GAME (from
+// mid-game).
+function resetToSetup(context: HatContext): Partial<HatContext> {
+  return {
+    hat: [],
+    history: [],
+    currentWord: null,
+    wordShownAt: null,
+    currentTeamIndex: 0,
+    teams: context.teams.map((team) => ({ ...team, roundsPlayed: 0 })),
+  };
 }
 
 // Matches the value the vite.config.ts dev-server middleware writes to disk.
@@ -395,6 +411,10 @@ export const hatMachine = setup({
           }),
           target: 'roundPlaying',
         },
+        EXIT_GAME: {
+          target: 'setup',
+          actions: assign(({ context }) => resetToSetup(context)),
+        },
       },
     },
 
@@ -461,6 +481,10 @@ export const hatMachine = setup({
           guard: () => isLocalDevEnvironment(),
           actions: assign(({ context }) => markCurrentWordRare(context)),
         },
+        EXIT_GAME: {
+          target: 'setup',
+          actions: assign(({ context }) => resetToSetup(context)),
+        },
       },
       always: [
         {
@@ -492,14 +516,7 @@ export const hatMachine = setup({
       on: {
         RESTART: {
           target: 'setup',
-          actions: assign(({ context }) => ({
-            hat: [],
-            history: [],
-            currentWord: null,
-            wordShownAt: null,
-            currentTeamIndex: 0,
-            teams: context.teams.map((team) => ({ ...team, roundsPlayed: 0 })),
-          })),
+          actions: assign(({ context }) => resetToSetup(context)),
         },
       },
     },
