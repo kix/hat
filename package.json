@@ -17,6 +17,8 @@
     "@tabler/icons-react": "^3.44.0",
     "@xstate/react": "^6.1.0",
     "canvas-confetti": "^1.9.4",
+    "hyphenated": "^1.2.0",
+    "hyphenated-ru": "^1.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "xstate": "^5.32.2"
