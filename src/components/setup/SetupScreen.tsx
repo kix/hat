@@ -1,4 +1,4 @@
-import { Container, Divider, Stack, Title } from '@mantine/core';
+import { Container, Divider, Stack, Title, Group, Button } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { TeamList } from './TeamList';
 import { RoundSettingsForm } from './RoundSettingsForm';
@@ -8,9 +8,10 @@ import { SetupHero } from './SetupHero';
 interface SetupScreenProps {
   context: HatContext;
   send: (event: HatEvent) => void;
+  onBack?: () => void;
 }
 
-export function SetupScreen({ context, send }: SetupScreenProps) {
+export function SetupScreen({ context, send, onBack }: SetupScreenProps) {
   return (
     <Container size="xs" py="lg">
       <Stack gap="lg">
@@ -32,7 +33,14 @@ export function SetupScreen({ context, send }: SetupScreenProps) {
           <RoundSettingsForm settings={context.settings} dictionary={context.dictionary} send={send} />
         </div>
 
-        <StartGameButton context={context} send={send} />
+        <Group grow gap="sm">
+          {onBack && (
+            <Button variant="default" size="lg" onClick={onBack}>
+              Назад
+            </Button>
+          )}
+          <StartGameButton context={context} send={send} />
+        </Group>
       </Stack>
     </Container>
   );

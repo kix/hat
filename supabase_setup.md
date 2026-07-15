@@ -48,6 +48,15 @@ create table if not exists public.word_solution_times (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Таблица: Игровые комнаты для мультиплеера
+create table if not exists public.rooms (
+    id text primary key, -- 4-значный код комнаты
+    host_id uuid references auth.users(id) on delete cascade not null,
+    state jsonb default '{}'::jsonb not null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- =====================================================================
 -- 3. СОЗДАНИЕ ИНДЕКСОВ (INDEXES)
 -- =====================================================================
@@ -61,6 +70,7 @@ create index if not exists idx_word_solution_times_user_id on public.word_soluti
 alter table public.weird_words enable row level security;
 alter table public.user_states enable row level security;
 alter table public.word_solution_times enable row level security;
+alter table public.rooms enable row level security;
 
 -- Политики для таблицы weird_words:
 -- Разрешаем анонимную вставку слов (для логов прямо во время игры)
@@ -88,6 +98,32 @@ to authenticated
 using (auth.uid() = user_id) 
 with check (auth.uid() = user_id);
 
+-- Политики для таблицы rooms (мультиплеер):
+create policy "Allow everyone to read rooms" 
+on public.rooms 
+for select 
+to anon, authenticated 
+using (true);
+
+create policy "Allow everyone to create rooms" 
+on public.rooms 
+for insert 
+to anon, authenticated 
+with check (auth.uid() = host_id);
+
+create policy "Allow host to update their room" 
+on public.rooms 
+for update 
+to anon, authenticated 
+using (auth.uid() = host_id) 
+with check (auth.uid() = host_id);
+
+create policy "Allow host to delete their room" 
+on public.rooms 
+for delete 
+to anon, authenticated 
+using (auth.uid() = host_id);
+
 -- =====================================================================
 -- 5. ТРИГГЕР ДЛЯ АВТООБНОВЛЕНИЯ СТОЛБЦА updated_at
 -- =====================================================================
@@ -104,6 +140,12 @@ $$ language plpgsql;
 -- Назначаем триггер на таблицу user_states
 create trigger trigger_update_user_states_time
     before update on public.user_states
+    for each row
+    execute function public.handle_updated_at();
+
+-- Назначаем триггер на таблицу rooms
+create trigger trigger_update_rooms_time
+    before update on public.rooms
     for each row
     execute function public.handle_updated_at();
 
