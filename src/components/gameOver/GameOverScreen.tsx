@@ -7,6 +7,7 @@ import { getTeamScore } from '../../utils/scoring';
 import { useAuthSession } from '../../auth/useAuthSession';
 import { syncPreferencesToSupabase } from '../../auth/syncPreferences';
 import { syncWordTimingsToSupabase } from '../../auth/syncWordTimings';
+import { saveGameResult } from '../../auth/saveGame';
 import { ResultBanner } from './ResultBanner';
 import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
@@ -16,9 +17,11 @@ import { PreviousRoundWords } from '../shared/PreviousRoundWords';
 interface GameOverScreenProps {
   context: HatContext;
   send: (event: HatEvent) => void;
+  isHost?: boolean;
+  participants?: { userId: string; name: string }[];
 }
 
-export function GameOverScreen({ context, send }: GameOverScreenProps) {
+export function GameOverScreen({ context, send, isHost, participants }: GameOverScreenProps) {
   const bestPlayer = getBestPlayer(context.teams, context.history);
   const hardestWord = getHardestWord(context.history);
   const easiestWord = getEasiestWord(context.history);
@@ -31,13 +34,23 @@ export function GameOverScreen({ context, send }: GameOverScreenProps) {
   // Runs once per finished game, as soon as the session (if any) is known —
   // session starts out null on mount and fills in shortly after.
   const syncedRef = useRef(false);
+  const savedRef = useRef(false);
   useEffect(() => {
     if (session?.user.id && !syncedRef.current) {
       syncedRef.current = true;
       void syncPreferencesToSupabase(session.user.id);
       void syncWordTimingsToSupabase(session.user.id);
     }
-  }, [session]);
+
+    if (!savedRef.current) {
+      savedRef.current = true;
+      const isMultiplayer = !!participants && participants.length > 0;
+      const shouldSave = !isMultiplayer || isHost;
+      if (shouldSave) {
+        void saveGameResult(context, participants || [], session?.user?.id);
+      }
+    }
+  }, [session, isHost, participants]);
 
   const sortedTeams = sortTeamsByScore(context.teams, context.history);
 

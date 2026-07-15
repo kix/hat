@@ -50,7 +50,11 @@ function decodeJwt(token: string): any {
   }
 }
 
-export function AuthMenu() {
+interface AuthMenuProps {
+  onViewProfile?: () => void;
+}
+
+export function AuthMenu({ onViewProfile }: AuthMenuProps) {
   const session = useAuthSession();
   const user = session?.user;
   const isRealUser = !!(user && (!user.is_anonymous || user.user_metadata?.provider === 'telegram'));
@@ -150,6 +154,11 @@ export function AuthMenu() {
             <Text size="sm" fw={500} truncate="end">
               {(user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? 'Аккаунт'}
             </Text>
+            {onViewProfile && (
+              <Anchor component="button" type="button" onClick={onViewProfile} fw={500}>
+                Мой профиль
+              </Anchor>
+            )}
             <Anchor component="button" type="button" c="red" onClick={() => void supabase.auth.signOut()}>
               Выйти
             </Anchor>

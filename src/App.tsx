@@ -12,6 +12,7 @@ import { LobbyScreen } from './components/setup/LobbyScreen';
 import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
 import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
 import { GameOverScreen } from './components/gameOver/GameOverScreen';
+import { ProfileScreen } from './components/profile/ProfileScreen';
 import { AuthMenu, signInWithGoogle, signInWithTelegram } from './components/auth/AuthMenu';
 import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
@@ -25,6 +26,7 @@ function App() {
   const [mode, setMode] = useState<'local' | 'multiplayer' | null>(null);
   const [playerName, setPlayerName] = useState<string>('');
   const [joinRoomCode, setJoinRoomCode] = useState<string>('');
+  const [showProfile, setShowProfile] = useState<boolean>(false);
 
   // Ссылка на последние настройки для звуков/вибрации
   const settingsRef = useRef<Settings | null>(null);
@@ -150,6 +152,17 @@ function App() {
   };
 
   // =====================================================================
+  // ЭКРАН ПРОФИЛЯ И СТАТИСТИКИ
+  // =====================================================================
+  if (showProfile && session?.user?.id) {
+    return (
+      <ScreenTransition key="profile">
+        <ProfileScreen userId={session.user.id} onBack={() => setShowProfile(false)} />
+      </ScreenTransition>
+    );
+  }
+
+  // =====================================================================
   // ЭКРАН ВЫБОРА РЕЖИМА ИГРЫ
   // =====================================================================
   if (mode === null) {
@@ -160,7 +173,7 @@ function App() {
             <Title order={1} size={36} fw={800} style={{ letterSpacing: -1 }}>
               Шляпа
             </Title>
-            <AuthMenu />
+            <AuthMenu onViewProfile={() => setShowProfile(true)} />
           </Group>
           <Text size="sm" c="dimmed">
             Популярная игра в объяснение слов. Выберите режим игры, чтобы начать!
@@ -316,7 +329,12 @@ function App() {
   if (currentStatus === 'gameOver') {
     return (
       <ScreenTransition key="gameOver">
-        <GameOverScreen context={currentContext} send={send} />
+        <GameOverScreen
+          context={currentContext}
+          send={send}
+          isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
+          participants={mode === 'multiplayer' ? multiplayer.participants : []}
+        />
       </ScreenTransition>
     );
   }
