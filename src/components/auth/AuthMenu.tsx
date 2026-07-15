@@ -1,12 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text } from '@mantine/core';
-import { IconBrandGoogle, IconUserCircle } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text, Loader } from '@mantine/core';
+import { IconBrandGoogle, IconBrandTelegram, IconUserCircle } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
-import { verifyTelegramHash, type TelegramUser } from '../../auth/telegram';
 import styles from './AuthMenu.module.css';
 
-// Элемент инициализации OAuth (только для Google)
+// Инициализация OAuth для Google
 function signInWithGoogle() {
   const redirectTo = window.location.origin + window.location.pathname;
   void supabase.auth.signInWithOAuth({
@@ -17,87 +16,105 @@ function signInWithGoogle() {
   });
 }
 
-interface TelegramLoginButtonProps {
-  botName: string;
-  onAuth: (user: TelegramUser) => void;
+// Инициализация OIDC для Telegram
+function signInWithTelegram(botName: string) {
+  const redirectUri = window.location.origin + window.location.pathname;
+  const authUrl = `https://oauth.telegram.org/auth?client_id=${botName}&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&response_type=code&scope=openid`;
+  window.location.href = authUrl;
 }
 
-function TelegramLoginButton({ botName, onAuth }: TelegramLoginButtonProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Очищаем контейнер перед добавлением виджета
-    containerRef.current.innerHTML = '';
-
-    // Регистрируем глобальный коллбэк для виджета Telegram
-    const callbackName = 'onTelegramAuth';
-    (window as any)[callbackName] = (user: TelegramUser) => {
-      onAuth(user);
-    };
-
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.setAttribute('data-telegram-login', botName);
-    script.setAttribute('data-size', 'medium');
-    script.setAttribute('data-radius', '8');
-    script.setAttribute('data-onauth', `${callbackName}(user)`);
-    script.setAttribute('data-request-access', 'write');
-    script.async = true;
-
-    containerRef.current.appendChild(script);
-
-    return () => {
-      delete (window as any)[callbackName];
-    };
-  }, [botName, onAuth]);
-
-  return <div ref={containerRef} style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }} />;
+// Декодер JWT токена на клиенте
+function decodeJwt(token: string): any {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('Ошибка декодирования ID Token:', e);
+    return null;
+  }
 }
 
 export function AuthMenu() {
   const session = useAuthSession();
   const user = session?.user;
   const botName = import.meta.env.VITE_TELEGRAM_BOT_NAME;
+  const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+  const [loading, setLoading] = useState(false);
 
-  const handleTelegramAuth = async (tgUser: TelegramUser) => {
-    let isValid = true;
-    const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+  // Обработка OIDC-кода от Telegram в URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
 
-    if (botToken) {
-      isValid = await verifyTelegramHash(tgUser, botToken);
-    } else {
-      console.warn(
-        'Telegram bot token is not provided (VITE_TELEGRAM_BOT_TOKEN). Signature verification skipped in development.'
-      );
-    }
+    if (code && botName && botToken) {
+      setLoading(true);
+      const redirectUri = window.location.origin + window.location.pathname;
 
-    if (isValid) {
-      try {
-        // Выполняем анонимный вход в Supabase
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) throw error;
-
-        if (data.user) {
-          // Сохраняем имя и аватар из Telegram в метаданных пользователя
-          const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUser.username || 'Telegram User';
-          await supabase.auth.updateUser({
-            data: {
-              full_name: fullName,
-              avatar_url: tgUser.photo_url,
-              telegram_id: tgUser.id,
-              provider: 'telegram'
-            }
+      void (async () => {
+        try {
+          // Обмениваем code на id_token через PL/pgSQL RPC функцию в Supabase
+          const { data, error } = await supabase.rpc('exchange_telegram_code', {
+            code,
+            redirect_uri: redirectUri,
+            bot_name: botName,
+            bot_token: botToken,
           });
+
+          if (error) throw error;
+
+          const idToken = data?.id_token;
+          if (!idToken) {
+            throw new Error('Telegram не вернул id_token');
+          }
+
+          // Декодируем JWT-токен
+          const decoded = decodeJwt(idToken);
+          if (!decoded) {
+            throw new Error('Не удалось декодировать данные пользователя');
+          }
+
+          // Выполняем анонимный вход в Supabase
+          const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+          if (authError) throw authError;
+
+          if (authData.user) {
+            // Сохраняем имя и аватар из Telegram в метаданных пользователя
+            const fullName =
+              [decoded.given_name, decoded.family_name].filter(Boolean).join(' ') ||
+              decoded.nickname ||
+              'Telegram User';
+
+            await supabase.auth.updateUser({
+              data: {
+                full_name: fullName,
+                avatar_url: decoded.picture,
+                telegram_id: decoded.sub,
+                provider: 'telegram',
+              },
+            });
+          }
+        } catch (e) {
+          console.error('Ошибка авторизации через Telegram OIDC:', e);
+          alert('Не удалось войти через Telegram. Убедитесь, что настроена RPC-функция в Supabase.');
+        } finally {
+          setLoading(false);
+          // Очищаем URL от параметров авторизации
+          const url = new URL(window.location.href);
+          url.searchParams.delete('code');
+          window.history.replaceState({}, '', url.toString());
         }
-      } catch (e) {
-        console.error('Ошибка входа через Telegram в Supabase:', e);
-      }
-    } else {
-      alert('Ошибка: Не удалось подтвердить подпись Telegram (проверьте VITE_TELEGRAM_BOT_TOKEN).');
+      })();
     }
-  };
+  }, [botName, botToken]);
 
   return (
     <Popover position="bottom-end" withArrow shadow="md">
@@ -109,7 +126,9 @@ export function AuthMenu() {
           size="lg"
           className={styles.trigger}
         >
-          {user ? (
+          {loading ? (
+            <Loader size={18} color="blue" />
+          ) : user ? (
             <Avatar size={28} radius="xl" src={user.user_metadata?.avatar_url as string | undefined} />
           ) : (
             <IconUserCircle size={22} />
@@ -136,7 +155,13 @@ export function AuthMenu() {
             </Button>
             
             {botName ? (
-              <TelegramLoginButton botName={botName} onAuth={handleTelegramAuth} />
+              <Button
+                variant="default"
+                leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
+                onClick={() => signInWithTelegram(botName)}
+              >
+                Войти через Telegram
+              </Button>
             ) : (
               <Text size="xs" c="dimmed" ta="center">
                 Настройте VITE_TELEGRAM_BOT_NAME для входа через Telegram
