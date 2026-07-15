@@ -72,7 +72,7 @@ export function AuthMenu() {
 
           const idToken = data?.id_token;
           if (!idToken) {
-            throw new Error('Telegram не вернул id_token');
+            throw new Error(`Telegram не вернул id_token. Ответ сервера: ${JSON.stringify(data)}`);
           }
 
           // Декодируем JWT-токен
