@@ -122,7 +122,10 @@ function App() {
   // Обработчик создания комнаты
   const handleCreateRoom = async () => {
     const name = playerName.trim() || 'Создатель';
-    await multiplayer.createRoom(name, localState.context);
+    const code = await multiplayer.createRoom(name, localState.context);
+    if (code) {
+      setMode('multiplayer');
+    }
   };
 
   // Обработчик подключения к комнате
@@ -134,6 +137,7 @@ function App() {
     const name = playerName.trim() || 'Игрок';
     const ok = await multiplayer.joinRoom(joinRoomCode, name);
     if (ok) {
+      setMode('multiplayer');
       // Очищаем URL параметр join
       const url = new URL(window.location.href);
       url.searchParams.delete('join');
