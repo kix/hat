@@ -161,6 +161,8 @@ create or replace function public.exchange_telegram_code(
 declare
   response_request record;
   post_body text;
+  i integer := 0;
+  max_retries integer := 3;
 begin
   -- Формируем URL-encoded тело запроса с обязательным кодированием параметров
   post_body := 'grant_type=authorization_code' ||
@@ -169,11 +171,24 @@ begin
                '&client_id=' || urlencode(client_id) ||
                '&client_secret=' || urlencode(client_secret);
   
-  select * into response_request from http_post(
-    'https://oauth.telegram.org/token',
-    post_body,
-    'application/x-www-form-urlencoded'
-  );
+  loop
+    begin
+      select * into response_request from http_post(
+        'https://oauth.telegram.org/token',
+        post_body,
+        'application/x-www-form-urlencoded'
+      );
+      -- Если запрос успешен, выходим из цикла
+      exit;
+    exception when others then
+      i := i + 1;
+      if i >= max_retries then
+        raise exception 'Не удалось связаться с Telegram после % попыток. Ошибка: %', max_retries, SQLERRM;
+      end if;
+      -- Небольшая пауза в 0.5 секунды перед повторной попыткой
+      perform pg_sleep(0.5);
+    end;
+  end loop;
   
   return response_request.content::json;
 end;
