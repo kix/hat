@@ -1,10 +1,10 @@
 import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text } from '@mantine/core';
-import { IconBrandGoogle, IconUserCircle } from '@tabler/icons-react';
+import { IconBrandGoogle, IconBrandTelegram, IconUserCircle } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
 import styles from './AuthMenu.module.css';
 
-function signInWith(provider: 'google') {
+function signInWith(provider: 'google' | 'custom:telegram') {
   const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`;
   void supabase.auth.signInWithOAuth({
     provider,
@@ -52,6 +52,9 @@ export function AuthMenu() {
             </Text>
             <Button variant="default" leftSection={<IconBrandGoogle size={18} />} onClick={() => signInWith('google')}>
               Войти через Google
+            </Button>
+            <Button variant="default" leftSection={<IconBrandTelegram size={18} />} onClick={() => signInWith('custom:telegram')}>
+              Войти через Telegram
             </Button>
           </Stack>
         )}
