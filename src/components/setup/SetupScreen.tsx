@@ -1,4 +1,4 @@
-import { Container, Divider, Stack, Title, Group, Button } from '@mantine/core';
+import { Container, Divider, Stack, Title } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { TeamList } from './TeamList';
 import { RoundSettingsForm } from './RoundSettingsForm';
@@ -33,14 +33,7 @@ export function SetupScreen({ context, send, onBack }: SetupScreenProps) {
           <RoundSettingsForm settings={context.settings} dictionary={context.dictionary} send={send} />
         </div>
 
-        <Group grow gap="sm">
-          {onBack && (
-            <Button variant="default" size="lg" onClick={onBack}>
-              Назад
-            </Button>
-          )}
-          <StartGameButton context={context} send={send} />
-        </Group>
+        <StartGameButton context={context} send={send} onBack={onBack} />
       </Stack>
     </Container>
   );
