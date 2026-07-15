@@ -1,10 +1,10 @@
 import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text } from '@mantine/core';
-import { IconBrandApple, IconBrandGoogle, IconUserCircle } from '@tabler/icons-react';
+import { IconBrandGoogle, IconUserCircle } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
 import styles from './AuthMenu.module.css';
 
-function signInWith(provider: 'google' | 'apple') {
+function signInWith(provider: 'google') {
   const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`;
   void supabase.auth.signInWithOAuth({
     provider,
@@ -52,9 +52,6 @@ export function AuthMenu() {
             </Text>
             <Button variant="default" leftSection={<IconBrandGoogle size={18} />} onClick={() => signInWith('google')}>
               Войти через Google
-            </Button>
-            <Button variant="default" leftSection={<IconBrandApple size={18} />} onClick={() => signInWith('apple')}>
-              Войти через Apple
             </Button>
           </Stack>
         )}
