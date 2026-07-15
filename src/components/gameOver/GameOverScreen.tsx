@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Container, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Container, SimpleGrid, Stack, Text, Title, Card, Group } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
-import { getBestPlayer, getEasiestWord, getHardestWord } from '../../utils/stats';
+import { getBestPlayer, getEasiestWord, getHardestWord, sortTeamsByScore } from '../../utils/stats';
+import { getTeamScore } from '../../utils/scoring';
 import { useAuthSession } from '../../auth/useAuthSession';
 import { syncPreferencesToSupabase } from '../../auth/syncPreferences';
 import { syncWordTimingsToSupabase } from '../../auth/syncWordTimings';
@@ -38,6 +39,28 @@ export function GameOverScreen({ context, send }: GameOverScreenProps) {
     }
   }, [session]);
 
+  const sortedTeams = sortTeamsByScore(context.teams, context.history);
+
+  // Вычисляем рейтинг игроков
+  const playersWithScores = context.teams
+    .flatMap((team) =>
+      team.players.map((player) => {
+        const guessed = context.history.filter(
+          (record) => record.result === 'guessed' && record.guesserId === player.id
+        ).length;
+        const explained = context.history.filter(
+          (record) => record.result === 'guessed' && record.describerId === player.id
+        ).length;
+        return {
+          player,
+          team,
+          guessed,
+          explained,
+        };
+      })
+    )
+    .sort((a, b) => b.guessed - a.guessed || b.explained - a.explained);
+
   return (
     <Container size="xs" py="lg">
       <Stack gap="lg">
@@ -46,6 +69,59 @@ export function GameOverScreen({ context, send }: GameOverScreenProps) {
         </Title>
 
         <ResultBanner context={context} />
+
+        {/* Рейтинг команд */}
+        <Card withBorder padding="md">
+          <Stack gap="xs">
+            <Text fw={600} size="sm" c="dimmed">
+              Рейтинг команд
+            </Text>
+            <Stack gap={6}>
+              {sortedTeams.map((team, idx) => (
+                <Group key={team.id} justify="space-between">
+                  <Group gap="xs">
+                    <Text fw={500} c={idx === 0 ? 'yellow' : 'dimmed'}>
+                      {idx + 1}.
+                    </Text>
+                    <Text fw={idx === 0 ? 600 : 500}>{team.name}</Text>
+                  </Group>
+                  <Text fw={600}>{getTeamScore(context.history, team.id)} очков</Text>
+                </Group>
+              ))}
+            </Stack>
+          </Stack>
+        </Card>
+
+        {/* Рейтинг игроков */}
+        <Card withBorder padding="md">
+          <Stack gap="xs">
+            <Text fw={600} size="sm" c="dimmed">
+              Рейтинг игроков
+            </Text>
+            <Stack gap="xs">
+              {playersWithScores.map((item, idx) => (
+                <Group key={item.player.id} justify="space-between" wrap="nowrap">
+                  <Group gap="xs" style={{ minWidth: 0, flexShrink: 1 }}>
+                    <Text fw={500} c={idx === 0 ? 'yellow' : 'dimmed'}>
+                      {idx + 1}.
+                    </Text>
+                    <Stack gap={0} style={{ minWidth: 0 }}>
+                      <Text fw={idx === 0 ? 600 : 500} truncate>
+                        {item.player.name}
+                      </Text>
+                      <Text size="xs" c="dimmed" truncate>
+                        {item.team.name}
+                      </Text>
+                    </Stack>
+                  </Group>
+                  <Text size="xs" style={{ flexShrink: 0 }} ta="right">
+                    угадал: <b>{item.guessed}</b> · объяснил: <b>{item.explained}</b>
+                  </Text>
+                </Group>
+              ))}
+            </Stack>
+          </Stack>
+        </Card>
 
         <PreviousRoundWords context={context} />
 

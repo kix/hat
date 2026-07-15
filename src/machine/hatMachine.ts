@@ -90,6 +90,7 @@ export type HatEvent =
   | { type: 'MARK_WORD_RARE' }
   | { type: 'TICK' }
   | { type: 'RESTART' }
+  | { type: 'FINISH_ROUND' }
   | { type: 'EXIT_GAME' };
 
 function createTeam(dictionaryEntries: DictionaryEntry[] | null): Team {
@@ -161,6 +162,14 @@ function resolveWord(context: HatContext, result: Exclude<WordResult, 'timeout'>
   const currentWord = context.currentWord;
   if (!currentWord || context.wordShownAt === null) return {};
   const record = buildWordRecord(context, currentWord, result);
+
+  if (context.timeRemainingSec <= 0) {
+    return {
+      history: [...context.history, record],
+      currentWord: null,
+      wordShownAt: null,
+    };
+  }
 
   const [nextWord, ...rest] = context.hat;
   if (!nextWord) {
@@ -423,6 +432,7 @@ export const hatMachine = setup({
       invoke: { src: 'ticker' },
       on: {
         TICK: {
+          guard: ({ context }) => context.timeRemainingSec > 0,
           actions: enqueueActions(({ context, enqueue }) => {
             const timeRemainingSec = context.timeRemainingSec - 1;
             enqueue.assign({ timeRemainingSec });
@@ -481,18 +491,20 @@ export const hatMachine = setup({
           guard: () => isLocalDevEnvironment(),
           actions: assign(({ context }) => markCurrentWordRare(context)),
         },
+        FINISH_ROUND: {
+          actions: assign(({ context }) => {
+            if (context.currentWord) {
+              return resolveTimeout(context);
+            }
+            return {};
+          }),
+          target: 'roundEnd',
+        },
         EXIT_GAME: {
           target: 'setup',
           actions: assign(({ context }) => resetToSetup(context)),
         },
       },
-      always: [
-        {
-          guard: ({ context }) => context.timeRemainingSec <= 0,
-          actions: assign(({ context }) => resolveTimeout(context)),
-          target: 'roundEnd',
-        },
-      ],
     },
 
     roundEnd: {

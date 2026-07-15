@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Group } from '@mantine/core';
+import { Button, Group, Stack, Text } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { getCurrentRoundGuessedCount } from '../../utils/stats';
 import { logWeirdWord } from '../../auth/logWeirdWord';
@@ -40,9 +40,8 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
     setWordHidden(false);
   }, [currentWord]);
 
-  if (!context.currentWord || currentWord === undefined) return null;
-
   const handleSend = (event: HatEvent) => {
+    if (!currentWord) return;
     if (event.type === 'WORD_SKIPPED') {
       void logWeirdWord(currentWord);
     }
@@ -58,6 +57,8 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
     send(event);
   };
 
+  const isTimeUp = context.timeRemainingSec <= 0;
+
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <ExitGameButton send={send} />
@@ -67,26 +68,55 @@ export function RoundPlayingScreen({ context, send }: RoundPlayingScreenProps) {
         <RoundGuessedCount count={getCurrentRoundGuessedCount(context.teams, context.history, context.currentTeamIndex)} />
       </Group>
 
-      <WordDisplay word={context.currentWord.word} hidden={wordHidden} />
+      {context.currentWord ? (
+        <>
+          <WordDisplay word={context.currentWord.word} hidden={wordHidden} />
 
-      <Group justify="center" pb="sm">
-        <HideWordButton hidden={wordHidden} onClick={() => setWordHidden((hidden) => !hidden)} />
-      </Group>
+          <Group justify="center" pb="sm">
+            <HideWordButton hidden={wordHidden} onClick={() => setWordHidden((hidden) => !hidden)} />
+          </Group>
 
-      { isLocalDevEnvironment() && (
-        <Group justify="center" pb="sm">
-          <MarkWordRareButton onClick={() => handleSend({ type: 'MARK_WORD_RARE' })} />
-          <DeleteWordButton onClick={() => handleSend({ type: 'DELETE_WORD' })} />
-        </Group>
+          {isLocalDevEnvironment() && (
+            <Group justify="center" pb="sm">
+              <MarkWordRareButton onClick={() => handleSend({ type: 'MARK_WORD_RARE' })} />
+              <DeleteWordButton onClick={() => handleSend({ type: 'DELETE_WORD' })} />
+            </Group>
+          )}
+
+          {!isTimeUp ? (
+            <ActionButtons
+              allowSkip={context.settings.allowSkip}
+              vibrationEnabled={context.settings.vibrationEnabled}
+              wordShownAt={context.wordShownAt}
+              send={handleSend}
+            />
+          ) : (
+            <Stack align="center" gap="md" pb="xl" px="md">
+              <Text c="red" fw={700} size="md" ta="center">
+                Время вышло! Вы можете разгадать последнее слово или завершить раунд.
+              </Text>
+              <ActionButtons
+                allowSkip={context.settings.allowSkip}
+                vibrationEnabled={context.settings.vibrationEnabled}
+                wordShownAt={context.wordShownAt}
+                send={handleSend}
+              />
+              <Button size="xl" color="blue" fullWidth style={{ maxWidth: 300 }} onClick={() => send({ type: 'FINISH_ROUND' })}>
+                Завершить раунд
+              </Button>
+            </Stack>
+          )}
+        </>
+      ) : (
+        <Stack align="center" justify="center" style={{ flex: 1 }} gap="lg" px="md">
+          <Text size="xl" fw={600} ta="center">
+            Раунд окончен! Все слова разгаданы.
+          </Text>
+          <Button size="xl" color="blue" fullWidth style={{ maxWidth: 300 }} onClick={() => send({ type: 'FINISH_ROUND' })}>
+            Завершить раунд
+          </Button>
+        </Stack>
       )}
-      
-
-      <ActionButtons
-        allowSkip={context.settings.allowSkip}
-        vibrationEnabled={context.settings.vibrationEnabled}
-        wordShownAt={context.wordShownAt}
-        send={handleSend}
-      />
     </div>
   );
 }
