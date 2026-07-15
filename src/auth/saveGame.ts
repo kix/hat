@@ -55,7 +55,7 @@ export async function saveGameResult(
 
     // 3. Формируем список участников для сохранения
     const participantsToInsert: any[] = [];
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[45][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     for (const team of context.teams) {
       const isTeamWinner = team.id === winnerTeam.id;
@@ -82,6 +82,21 @@ export async function saveGameResult(
             is_winner: isTeamWinner,
           });
         }
+      }
+    }
+
+    // Если в локальной игре ни один игрок не совпал по имени, связываем текущего пользователя с первым игроком
+    if (participantsToInsert.length === 0 && currentUserId && context.teams.length > 0) {
+      const firstTeam = context.teams[0];
+      const firstPlayer = firstTeam.players[0];
+      if (firstPlayer && firstPlayer.name) {
+        participantsToInsert.push({
+          game_id: game.id,
+          user_id: currentUserId,
+          player_name: firstPlayer.name,
+          team_name: firstTeam.name,
+          is_winner: firstTeam.id === winnerTeam.id,
+        });
       }
     }
 
