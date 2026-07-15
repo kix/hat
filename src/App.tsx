@@ -201,6 +201,14 @@ function App() {
           <Card withBorder padding="lg" radius="md">
             {isRealUser ? (
               <Stack gap="md">
+                <Group justify="space-between" align="center" mb={-5}>
+                  <Text size="sm" c="dimmed">
+                    Вы вошли в сеть
+                  </Text>
+                  <Button variant="subtle" size="xs" onClick={() => setShowProfile(true)}>
+                    Статистика и ачивки
+                  </Button>
+                </Group>
                 <TextInput
                   label="Ваше имя"
                   placeholder="Введите ваше имя"
