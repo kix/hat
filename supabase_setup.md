@@ -74,6 +74,7 @@ alter table public.rooms enable row level security;
 
 -- Политики для таблицы weird_words:
 -- Разрешаем анонимную вставку слов (для логов прямо во время игры)
+drop policy if exists "Allow anonymous inserts to weird_words" on public.weird_words;
 create policy "Allow anonymous inserts to weird_words" 
 on public.weird_words 
 for insert 
@@ -82,6 +83,7 @@ with check (true);
 
 -- Политики для таблицы user_states:
 -- Игроки могут управлять (просмотр, изменение, удаление) только своими настройками
+drop policy if exists "Users can manage their own user_state" on public.user_states;
 create policy "Users can manage their own user_state" 
 on public.user_states 
 for all 
@@ -91,6 +93,7 @@ with check (auth.uid() = user_id);
 
 -- Политики для таблицы word_solution_times:
 -- Игроки могут вносить и просматривать статистику только для своего user_id
+drop policy if exists "Users can manage their own solution times" on public.word_solution_times;
 create policy "Users can manage their own solution times" 
 on public.word_solution_times 
 for all 
@@ -99,18 +102,21 @@ using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
 -- Политики для таблицы rooms (мультиплеер):
+drop policy if exists "Allow everyone to read rooms" on public.rooms;
 create policy "Allow everyone to read rooms" 
 on public.rooms 
 for select 
 to anon, authenticated 
 using (true);
 
+drop policy if exists "Allow everyone to create rooms" on public.rooms;
 create policy "Allow everyone to create rooms" 
 on public.rooms 
 for insert 
 to anon, authenticated 
 with check (auth.uid() = host_id);
 
+drop policy if exists "Allow host to update their room" on public.rooms;
 create policy "Allow host to update their room" 
 on public.rooms 
 for update 
@@ -118,6 +124,7 @@ to anon, authenticated
 using (auth.uid() = host_id) 
 with check (auth.uid() = host_id);
 
+drop policy if exists "Allow host to delete their room" on public.rooms;
 create policy "Allow host to delete their room" 
 on public.rooms 
 for delete 
@@ -138,12 +145,14 @@ end;
 $$ language plpgsql;
 
 -- Назначаем триггер на таблицу user_states
+drop trigger if exists trigger_update_user_states_time on public.user_states;
 create trigger trigger_update_user_states_time
     before update on public.user_states
     for each row
     execute function public.handle_updated_at();
 
 -- Назначаем триггер на таблицу rooms
+drop trigger if exists trigger_update_rooms_time on public.rooms;
 create trigger trigger_update_rooms_time
     before update on public.rooms
     for each row
@@ -227,12 +236,14 @@ alter table public.games enable row level security;
 alter table public.game_participants enable row level security;
 
 -- Политики безопасности для public.games
+drop policy if exists "Allow everyone to read games" on public.games;
 create policy "Allow everyone to read games" 
 on public.games 
 for select 
 to anon, authenticated 
 using (true);
 
+drop policy if exists "Allow everyone to insert games" on public.games;
 create policy "Allow everyone to insert games" 
 on public.games 
 for insert 
@@ -240,12 +251,14 @@ to anon, authenticated
 with check (true);
 
 -- Политики безопасности для public.game_participants
+drop policy if exists "Allow everyone to read game_participants" on public.game_participants;
 create policy "Allow everyone to read game_participants" 
 on public.game_participants 
 for select 
 to anon, authenticated 
 using (true);
 
+drop policy if exists "Allow everyone to insert game_participants" on public.game_participants;
 create policy "Allow everyone to insert game_participants" 
 on public.game_participants 
 for insert 

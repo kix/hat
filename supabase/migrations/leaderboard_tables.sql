@@ -30,12 +30,14 @@ alter table public.games enable row level security;
 alter table public.game_participants enable row level security;
 
 -- Политики безопасности для public.games
+drop policy if exists "Allow everyone to read games" on public.games;
 create policy "Allow everyone to read games" 
 on public.games 
 for select 
 to anon, authenticated 
 using (true);
 
+drop policy if exists "Allow everyone to insert games" on public.games;
 create policy "Allow everyone to insert games" 
 on public.games 
 for insert 
@@ -43,12 +45,14 @@ to anon, authenticated
 with check (true);
 
 -- Политики безопасности для public.game_participants
+drop policy if exists "Allow everyone to read game_participants" on public.game_participants;
 create policy "Allow everyone to read game_participants" 
 on public.game_participants 
 for select 
 to anon, authenticated 
 using (true);
 
+drop policy if exists "Allow everyone to insert game_participants" on public.game_participants;
 create policy "Allow everyone to insert game_participants" 
 on public.game_participants 
 for insert 
