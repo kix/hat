@@ -55,7 +55,17 @@ export async function saveGameResult(
 
     // 3. Формируем список участников для сохранения
     const participantsToInsert: any[] = [];
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    // Собираем набор всех гарантированно реальных UUID пользователей в этой сессии
+    const validUserIds = new Set<string>();
+    if (currentUserId) {
+      validUserIds.add(currentUserId);
+    }
+    participants.forEach((p) => {
+      if (p.userId) {
+        validUserIds.add(p.userId);
+      }
+    });
 
     for (const team of context.teams) {
       const isTeamWinner = team.id === winnerTeam.id;
@@ -65,11 +75,11 @@ export async function saveGameResult(
         const nameKey = player.name.trim().toLowerCase();
         let matchedUserId: string | null = null;
 
-        // Если player.id — это уже UUID пользователя (мультиплеер)
-        if (uuidRegex.test(player.id)) {
+        // Если player.id — это реально известный UUID зарегистрированного пользователя в сессии
+        if (validUserIds.has(player.id)) {
           matchedUserId = player.id;
         } else {
-          // Иначе пытаемся сопоставить по имени (локальный режим)
+          // Иначе пытаемся сопоставить по имени (для локального режима)
           matchedUserId = realUsersMap.get(nameKey) || null;
         }
 

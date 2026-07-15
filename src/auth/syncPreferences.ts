@@ -6,7 +6,7 @@ import { getStoredPlayerNames } from '../utils/playerNamesStore';
 export async function syncPreferencesToSupabase(userId: string): Promise<void> {
   try {
     const preferences = { playerNames: getStoredPlayerNames() };
-    await supabase.from('user_states').upsert({ user_id: userId, preferences }, { onConflict: 'user_id' });
+    await supabase.from('user_states').upsert({ user_id: userId, preferences });
   } catch {
     // ignore
   }
