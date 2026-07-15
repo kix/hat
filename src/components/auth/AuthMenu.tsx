@@ -101,9 +101,10 @@ export function AuthMenu() {
               },
             });
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Ошибка авторизации через Telegram OIDC:', e);
-          alert('Не удалось войти через Telegram. Убедитесь, что настроена RPC-функция в Supabase.');
+          const errorMsg = e?.message || e?.details || JSON.stringify(e);
+          alert(`Не удалось войти через Telegram: ${errorMsg}\n\nУбедитесь, что настроена RPC-функция в Supabase.`);
         } finally {
           setLoading(false);
           // Очищаем URL от параметров авторизации
