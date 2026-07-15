@@ -65,7 +65,7 @@ export function AuthMenu() {
 
     if (code && clientId && clientSecret) {
       setLoading(true);
-      const redirectUri = window.location.origin + window.location.pathname;
+      const redirectUri = getCleanCurrentUrl();
 
       void (async () => {
         try {
