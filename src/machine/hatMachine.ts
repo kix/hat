@@ -51,6 +51,8 @@ export interface Settings {
   rolesMode: RolesMode;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
+  wordPack: 'standard' | 'frequent' | 'custom';
+  customWords: string[];
 }
 
 export interface HatContext {
@@ -80,6 +82,8 @@ export type HatEvent =
   | { type: 'SET_ROLES_MODE'; rolesMode: RolesMode }
   | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
+  | { type: 'SET_WORD_PACK'; wordPack: 'standard' | 'frequent' | 'custom' }
+  | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
   | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }
   | { type: 'START_GAME' }
   | { type: 'START_ROUND' }
@@ -129,6 +133,8 @@ export function createInitialContext(): HatContext {
       rolesMode: 'alternate',
       soundEnabled: true,
       vibrationEnabled: false,
+      wordPack: 'standard',
+      customWords: [],
     },
     dictionary: null,
     hat: [],
@@ -371,6 +377,16 @@ export const hatMachine = setup({
             settings: { ...context.settings, vibrationEnabled: event.vibrationEnabled },
           })),
         },
+        SET_WORD_PACK: {
+          actions: assign(({ context, event }) => ({
+            settings: { ...context.settings, wordPack: event.wordPack },
+          })),
+        },
+        SET_CUSTOM_WORDS: {
+          actions: assign(({ context, event }) => ({
+            settings: { ...context.settings, customWords: event.customWords },
+          })),
+        },
         START_GAME: {
           guard: ({ context }) =>
             context.teams.length >= 2 &&
@@ -382,13 +398,18 @@ export const hatMachine = setup({
             // placeholders for anyone left blank.
             'rememberPlayerNames',
             assign(({ context }) => {
-              // No difficulty-tag filtering — the whole dictionary is the pool,
-              // and pickRandom weighs each word's difficulty (length, frequency,
-              // Levenshtein-neighbour frequency) against the difficulty slider,
-              // excluding 0-frequency words below max difficulty. wordCount is
-              // clamped to however many it actually managed to draw, since that
-              // exclusion can shrink the eligible pool below the full dictionary.
-              const pool = context.dictionary ?? [];
+              let pool = context.dictionary ?? [];
+              if (context.settings.wordPack === 'frequent') {
+                pool = pool.filter((w) => w.frequency >= 3.0 || w.levenshtein_zipf_frequency >= 3.0);
+                if (pool.length === 0) pool = context.dictionary ?? [];
+              } else if (context.settings.wordPack === 'custom') {
+                pool = context.settings.customWords.map((word) => ({
+                  word,
+                  difficulty: 'easy',
+                  frequency: 4.0,
+                  levenshtein_zipf_frequency: 4.0,
+                }));
+              }
               const hat = pickRandom(pool, context.settings.wordCount, context.settings.difficultyLevel);
               return {
                 hat,

@@ -1,4 +1,4 @@
-import { SegmentedControl, Slider, Stack, Switch, Text } from '@mantine/core';
+import { SegmentedControl, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { DictionaryEntry } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
@@ -10,7 +10,16 @@ interface RoundSettingsFormProps {
 }
 
 export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsFormProps) {
-  const poolSize = dictionary?.length ?? null;
+  // Вычисляем размер доступного пула слов в зависимости от выбранного пака
+  const poolSize =
+    settings.wordPack === 'custom'
+      ? settings.customWords.length
+      : settings.wordPack === 'frequent'
+      ? dictionary
+        ? dictionary.filter((w) => w.frequency >= 3.0 || w.levenshtein_zipf_frequency >= 3.0).length
+        : null
+      : dictionary?.length ?? null;
+
   // Laptops/desktops (mouse-primary, fine pointer) have no vibration motor —
   // no point showing a setting that can't do anything there.
   const isTouchDevice = useMediaQuery('(pointer: coarse)', undefined, { getInitialValueInEffect: false });
@@ -79,44 +88,87 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
 
       <div>
         <Text size="sm" fw={500} mb={4}>
-          Количество слов в шляпе
+          Набор слов (Словарь)
         </Text>
-        <Slider
-          value={settings.wordCount}
-          min={10}
-          max={100}
-          onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: value })}
-          label={(value) => `${value}`}
-          marks={[
-            { value: 10, label: '10' },
-            { value: 100, label: '100' },
+        <SegmentedControl
+          fullWidth
+          value={settings.wordPack || 'standard'}
+          onChange={(value) =>
+            send({ type: 'SET_WORD_PACK', wordPack: value as 'standard' | 'frequent' | 'custom' })
+          }
+          data={[
+            { value: 'standard', label: 'Все слова' },
+            { value: 'frequent', label: 'Частотный (топ)' },
+            { value: 'custom', label: 'Свой список' },
           ]}
-          mx="xs"
-          mb="lg"
-          styles={{ markLabel: { whiteSpace: 'nowrap' } }}
         />
       </div>
 
-      <div>
-        <Text size="sm" fw={500} mb={4}>
-          Сложность слов
-        </Text>
-        <Slider
-          value={Math.round(settings.difficultyLevel * 100)}
-          onChange={(value) => send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: value / 100 })}
-          label={(value) => `${value}%`}
-          marks={[
-            { value: 0, label: 'Легче' },
-            { value: 100, label: 'Сложнее' },
-          ]}
-          mx="xs"
-          mb="lg"
-          styles={{ markLabel: { whiteSpace: 'nowrap' } }}
-        />
-        <Text size="xs" c="dimmed" mt={4}>
-          {poolSize === null ? 'Словарь загружается…' : `Доступно слов: ${poolSize}`}
-        </Text>
-      </div>
+      {settings.wordPack === 'custom' ? (
+        <div>
+          <Textarea
+            label="Ваш список слов"
+            placeholder="Введите слова через запятую или с новой строки..."
+            minRows={3}
+            autosize
+            value={settings.customWords.join('\n')}
+            onChange={(event) => {
+              const text = event.currentTarget.value;
+              const words = text
+                .split(/[,\n]+/)
+                .map((w) => w.trim())
+                .filter((w) => w.length > 0);
+              send({ type: 'SET_CUSTOM_WORDS', customWords: words });
+            }}
+          />
+          <Text size="xs" c="dimmed" mt={4}>
+            Введено слов: {settings.customWords.length}
+          </Text>
+        </div>
+      ) : (
+        <>
+          <div>
+            <Text size="sm" fw={500} mb={4}>
+              Количество слов в шляпе
+            </Text>
+            <Slider
+              value={settings.wordCount}
+              min={10}
+              max={100}
+              onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: value })}
+              label={(value) => `${value}`}
+              marks={[
+                { value: 10, label: '10' },
+                { value: 100, label: '100' },
+              ]}
+              mx="xs"
+              mb="lg"
+              styles={{ markLabel: { whiteSpace: 'nowrap' } }}
+            />
+          </div>
+
+          <div>
+            <Text size="sm" fw={500} mb={4}>
+              Сложность слов
+            </Text>
+            <Slider
+              value={Math.round(settings.difficultyLevel * 100)}
+              onChange={(value) => send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: value / 100 })}
+              label={(value) => `${value}%`}
+              marks={[
+                { value: 0, label: 'Легче' },
+                { value: 100, label: 'Сложнее' },
+              ]}
+              mx="xs"
+              mb="lg"
+              styles={{ markLabel: { whiteSpace: 'nowrap' } }}
+            />
+            <Text size="xs" c="dimmed" mt={4}>
+              {poolSize === null ? 'Словарь загружается…' : `Доступно слов в паке: ${poolSize}`}
+            </Text>
+          </div>
+        </>
+      )}
     </Stack>
   );
 }
