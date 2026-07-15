@@ -95,7 +95,6 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const joinCode = params.get('join');
     if (joinCode) {
-      setMode('multiplayer');
       setJoinRoomCode(joinCode.toUpperCase());
     }
   }, []);
