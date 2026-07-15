@@ -5,7 +5,7 @@ import { useAuthSession } from '../../auth/useAuthSession';
 import styles from './AuthMenu.module.css';
 
 function signInWith(provider: 'google' | 'custom:telegram') {
-  const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`;
+  const redirectTo = window.location.origin + window.location.pathname;
   void supabase.auth.signInWithOAuth({
     provider,
     options: {
