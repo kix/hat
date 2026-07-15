@@ -53,7 +53,7 @@ function decodeJwt(token: string): any {
 export function AuthMenu() {
   const session = useAuthSession();
   const user = session?.user;
-  const isRealUser = !!(user && !user.is_anonymous && user.app_metadata?.provider !== 'anonymous');
+  const isRealUser = !!(user && (!user.is_anonymous || user.user_metadata?.provider === 'telegram'));
   const clientId = import.meta.env.VITE_TELEGRAM_CLIENT_ID;
   const clientSecret = import.meta.env.VITE_TELEGRAM_CLIENT_SECRET;
   const [loading, setLoading] = useState(false);

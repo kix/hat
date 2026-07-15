@@ -19,7 +19,7 @@ import { useMultiplayer } from './auth/useMultiplayer';
 function App() {
   const sounds = useGameSounds();
   const session = useAuthSession();
-  const isRealUser = !!(session?.user && !session.user.is_anonymous && session.user.app_metadata?.provider !== 'anonymous');
+  const isRealUser = !!(session?.user && (!session.user.is_anonymous || session.user.user_metadata?.provider === 'telegram'));
   
   // Режимы игры: null (выбор режима), 'local' (Pass & Play), 'multiplayer' (сетевой)
   const [mode, setMode] = useState<'local' | 'multiplayer' | null>(null);
