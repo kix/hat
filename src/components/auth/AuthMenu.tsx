@@ -5,9 +5,16 @@ import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
 import styles from './AuthMenu.module.css';
 
+// Получение текущего URL без временных параметров авторизации
+function getCleanCurrentUrl(): string {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('code');
+  return url.toString();
+}
+
 // Инициализация OAuth для Google
 export function signInWithGoogle() {
-  const redirectTo = window.location.origin + window.location.pathname;
+  const redirectTo = getCleanCurrentUrl();
   void supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -18,7 +25,7 @@ export function signInWithGoogle() {
 
 // Инициализация OIDC для Telegram
 export function signInWithTelegram(clientId: string) {
-  const redirectUri = window.location.origin + window.location.pathname;
+  const redirectUri = getCleanCurrentUrl();
   const authUrl = `https://oauth.telegram.org/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
     redirectUri
   )}&response_type=code&scope=openid`;
