@@ -165,18 +165,24 @@ export function useMultiplayer(
         // Генерируем уникальный код
         for (let i = 0; i < 5; i++) {
           code = generateRoomCode();
-          const { count } = await supabase
+          const { data: existingRoom, error: checkErr } = await supabase
             .from('rooms')
-            .select('*', { count: 'exact', head: true })
-            .eq('id', code);
-          if (count === 0) {
+            .select('id')
+            .eq('id', code)
+            .maybeSingle();
+
+          if (checkErr) {
+            throw checkErr;
+          }
+
+          if (!existingRoom) {
             exists = false;
             break;
           }
         }
 
         if (exists) {
-          throw new Error('Не удалось сгенерировать уникальный код комнаты. Попробуйте еще раз.');
+          throw new Error('Не удалось найти свободный код комнаты. Предел попыток исчерпан.');
         }
 
         // Сохраняем комнату в БД
