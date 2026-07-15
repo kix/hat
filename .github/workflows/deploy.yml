@@ -44,7 +44,8 @@ jobs:
       - name: Build
         run: npx vite build
         env:
-          VITE_TELEGRAM_BOT_TOKEN: ${{ secrets.VITE_TELEGRAM_BOT_TOKEN }}
+          VITE_TELEGRAM_CLIENT_ID: ${{ secrets.VITE_TELEGRAM_CLIENT_ID || vars.VITE_TELEGRAM_CLIENT_ID }}
+          VITE_TELEGRAM_CLIENT_SECRET: ${{ secrets.VITE_TELEGRAM_CLIENT_SECRET }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

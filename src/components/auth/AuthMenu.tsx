@@ -16,10 +16,10 @@ function signInWithGoogle() {
   });
 }
 
-// Инициализация OIDC для Telegram с использованием botId в качестве client_id
-function signInWithTelegram(botId: string) {
+// Инициализация OIDC для Telegram
+function signInWithTelegram(clientId: string) {
   const redirectUri = window.location.origin + window.location.pathname;
-  const authUrl = `https://oauth.telegram.org/auth?client_id=${botId}&redirect_uri=${encodeURIComponent(
+  const authUrl = `https://oauth.telegram.org/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
     redirectUri
   )}&response_type=code&scope=openid`;
   window.location.href = authUrl;
@@ -46,8 +46,8 @@ function decodeJwt(token: string): any {
 export function AuthMenu() {
   const session = useAuthSession();
   const user = session?.user;
-  const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-  const botId = botToken ? botToken.split(':')[0] : '';
+  const clientId = import.meta.env.VITE_TELEGRAM_CLIENT_ID;
+  const clientSecret = import.meta.env.VITE_TELEGRAM_CLIENT_SECRET;
   const [loading, setLoading] = useState(false);
 
   // Обработка OIDC-кода от Telegram в URL
@@ -55,7 +55,7 @@ export function AuthMenu() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
 
-    if (code && botToken) {
+    if (code && clientId && clientSecret) {
       setLoading(true);
       const redirectUri = window.location.origin + window.location.pathname;
 
@@ -65,7 +65,8 @@ export function AuthMenu() {
           const { data, error } = await supabase.rpc('exchange_telegram_code', {
             code,
             redirect_uri: redirectUri,
-            bot_token: botToken,
+            client_id: clientId,
+            client_secret: clientSecret,
           });
 
           if (error) throw error;
@@ -114,7 +115,7 @@ export function AuthMenu() {
         }
       })();
     }
-  }, [botToken]);
+  }, [clientId, clientSecret]);
 
   return (
     <Popover position="bottom-end" withArrow shadow="md">
@@ -154,17 +155,17 @@ export function AuthMenu() {
               Войти через Google
             </Button>
             
-            {botId ? (
+            {clientId ? (
               <Button
                 variant="default"
                 leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
-                onClick={() => signInWithTelegram(botId)}
+                onClick={() => signInWithTelegram(clientId)}
               >
                 Войти через Telegram
               </Button>
             ) : (
               <Text size="xs" c="dimmed" ta="center">
-                Настройте VITE_TELEGRAM_BOT_TOKEN для входа через Telegram
+                Настройте VITE_TELEGRAM_CLIENT_ID для входа через Telegram
               </Text>
             )}
           </Stack>

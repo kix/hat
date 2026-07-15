@@ -113,22 +113,19 @@ create trigger trigger_update_user_states_time
 create or replace function public.exchange_telegram_code(
   code text, 
   redirect_uri text, 
-  bot_token text
+  client_id text,
+  client_secret text
 ) returns json as $$
 declare
   response_request record;
-  bot_id text;
   post_body text;
 begin
-  -- Автоматически извлекаем numeric bot_id из токена бота
-  bot_id := split_part(bot_token, ':', 1);
-  
   -- Формируем URL-encoded тело запроса с обязательным кодированием параметров
   post_body := 'grant_type=authorization_code' ||
                '&code=' || urlencode(code) ||
                '&redirect_uri=' || urlencode(redirect_uri) ||
-               '&client_id=' || urlencode(bot_id) ||
-               '&client_secret=' || urlencode(bot_token);
+               '&client_id=' || urlencode(client_id) ||
+               '&client_secret=' || urlencode(client_secret);
   
   select * into response_request from http_post(
     'https://oauth.telegram.org/token',
