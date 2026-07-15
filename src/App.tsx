@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useMachine } from '@xstate/react';
 import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider } from '@mantine/core';
-import { IconDeviceGamepad2, IconUsers, IconUser } from '@tabler/icons-react';
+import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandGoogle, IconBrandTelegram } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
 import { useGameSounds } from './sounds/useGameSounds';
 import { vibrate } from './utils/haptics';
@@ -12,13 +12,14 @@ import { LobbyScreen } from './components/setup/LobbyScreen';
 import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
 import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
 import { GameOverScreen } from './components/gameOver/GameOverScreen';
-import { AuthMenu } from './components/auth/AuthMenu';
+import { AuthMenu, signInWithGoogle, signInWithTelegram } from './components/auth/AuthMenu';
 import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
 
 function App() {
   const sounds = useGameSounds();
   const session = useAuthSession();
+  const isRealUser = !!(session?.user && !session.user.is_anonymous && session.user.app_metadata?.provider !== 'anonymous');
   
   // Режимы игры: null (выбор режима), 'local' (Pass & Play), 'multiplayer' (сетевой)
   const [mode, setMode] = useState<'local' | 'multiplayer' | null>(null);
@@ -182,50 +183,78 @@ function App() {
           <Divider label="ИЛИ СЕТЕВАЯ ИГРА" labelPosition="center" />
 
           <Card withBorder padding="lg" radius="md">
-            <Stack gap="md">
-              <TextInput
-                label="Ваше имя"
-                placeholder="Введите ваше имя"
-                leftSection={<IconUser size={16} />}
-                value={playerName}
-                onChange={(e) => setPlayerName(e.currentTarget.value)}
-              />
-
-              <Button
-                size="lg"
-                variant="light"
-                color="teal"
-                leftSection={<IconUsers size={20} />}
-                onClick={handleCreateRoom}
-                loading={multiplayer.loading}
-              >
-                Создать онлайн-комнату
-              </Button>
-
-              <Group gap="xs" grow>
+            {isRealUser ? (
+              <Stack gap="md">
                 <TextInput
-                  placeholder="КОД"
-                  maxLength={4}
-                  value={joinRoomCode}
-                  onChange={(e) => setJoinRoomCode(e.currentTarget.value.toUpperCase())}
-                  style={{ textTransform: 'uppercase', letterSpacing: 2 }}
+                  label="Ваше имя"
+                  placeholder="Введите ваше имя"
+                  leftSection={<IconUser size={16} />}
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.currentTarget.value)}
                 />
+
                 <Button
-                  size="md"
-                  variant="outline"
-                  color="blue"
-                  onClick={handleJoinRoom}
+                  size="lg"
+                  variant="light"
+                  color="teal"
+                  leftSection={<IconUsers size={20} />}
+                  onClick={handleCreateRoom}
                   loading={multiplayer.loading}
                 >
-                  Войти по коду
+                  Создать онлайн-комнату
                 </Button>
-              </Group>
-              {multiplayer.error && (
-                <Text size="xs" color="red" ta="center">
-                  {multiplayer.error}
+
+                <Group gap="xs" grow>
+                  <TextInput
+                    placeholder="КОД"
+                    maxLength={4}
+                    value={joinRoomCode}
+                    onChange={(e) => setJoinRoomCode(e.currentTarget.value.toUpperCase())}
+                    style={{ textTransform: 'uppercase', letterSpacing: 2 }}
+                  />
+                  <Button
+                    size="md"
+                    variant="outline"
+                    color="blue"
+                    onClick={handleJoinRoom}
+                    loading={multiplayer.loading}
+                  >
+                    Войти по коду
+                  </Button>
+                </Group>
+                {multiplayer.error && (
+                  <Text size="xs" color="red" ta="center">
+                    {multiplayer.error}
+                  </Text>
+                )}
+              </Stack>
+            ) : (
+              <Stack gap="sm" align="stretch">
+                <Text size="sm" c="dimmed" ta="center">
+                  Для игры по сети необходимо войти в аккаунт. Это позволит сохранять вашу статистику и отображать ваше имя другим игрокам.
                 </Text>
-              )}
-            </Stack>
+                <Button
+                  variant="default"
+                  leftSection={<IconBrandGoogle size={18} />}
+                  onClick={signInWithGoogle}
+                >
+                  Войти через Google
+                </Button>
+                {import.meta.env.VITE_TELEGRAM_CLIENT_ID ? (
+                  <Button
+                    variant="default"
+                    leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
+                    onClick={() => signInWithTelegram(import.meta.env.VITE_TELEGRAM_CLIENT_ID)}
+                  >
+                    Войти через Telegram
+                  </Button>
+                ) : (
+                  <Text size="xs" c="dimmed" ta="center">
+                    Настройте VITE_TELEGRAM_CLIENT_ID для входа через Telegram
+                  </Text>
+                )}
+              </Stack>
+            )}
           </Card>
         </Stack>
       </Container>

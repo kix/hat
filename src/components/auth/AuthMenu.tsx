@@ -6,7 +6,7 @@ import { useAuthSession } from '../../auth/useAuthSession';
 import styles from './AuthMenu.module.css';
 
 // Инициализация OAuth для Google
-function signInWithGoogle() {
+export function signInWithGoogle() {
   const redirectTo = window.location.origin + window.location.pathname;
   void supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -17,7 +17,7 @@ function signInWithGoogle() {
 }
 
 // Инициализация OIDC для Telegram
-function signInWithTelegram(clientId: string) {
+export function signInWithTelegram(clientId: string) {
   const redirectUri = window.location.origin + window.location.pathname;
   const authUrl = `https://oauth.telegram.org/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
     redirectUri
@@ -46,6 +46,7 @@ function decodeJwt(token: string): any {
 export function AuthMenu() {
   const session = useAuthSession();
   const user = session?.user;
+  const isRealUser = !!(user && !user.is_anonymous && user.app_metadata?.provider !== 'anonymous');
   const clientId = import.meta.env.VITE_TELEGRAM_CLIENT_ID;
   const clientSecret = import.meta.env.VITE_TELEGRAM_CLIENT_SECRET;
   const [loading, setLoading] = useState(false);
@@ -121,7 +122,7 @@ export function AuthMenu() {
     <Popover position="bottom-end" withArrow shadow="md">
       <Popover.Target>
         <ActionIcon
-          aria-label={user ? 'Аккаунт' : 'Войти'}
+          aria-label={isRealUser ? 'Аккаунт' : 'Войти'}
           variant="white"
           radius="xl"
           size="lg"
@@ -129,18 +130,18 @@ export function AuthMenu() {
         >
           {loading ? (
             <Loader size={18} color="blue" />
-          ) : user ? (
-            <Avatar size={28} radius="xl" src={user.user_metadata?.avatar_url as string | undefined} />
+          ) : isRealUser ? (
+            <Avatar size={28} radius="xl" src={user?.user_metadata?.avatar_url as string | undefined} />
           ) : (
             <IconUserCircle size={22} />
           )}
         </ActionIcon>
       </Popover.Target>
       <Popover.Dropdown>
-        {user ? (
+        {isRealUser ? (
           <Stack gap="xs" miw={200}>
             <Text size="sm" fw={500} truncate="end">
-              {(user.user_metadata?.full_name as string | undefined) ?? user.email ?? 'Аккаунт'}
+              {(user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? 'Аккаунт'}
             </Text>
             <Anchor component="button" type="button" c="red" onClick={() => void supabase.auth.signOut()}>
               Выйти
