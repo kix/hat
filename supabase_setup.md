@@ -118,17 +118,23 @@ create or replace function public.exchange_telegram_code(
 declare
   response_request record;
   bot_id text;
+  post_body text;
 begin
   -- Автоматически извлекаем numeric bot_id из токена бота
   bot_id := split_part(bot_token, ':', 1);
   
-  select * into response_request from http((
-    'POST',
+  -- Формируем URL-encoded тело запроса с обязательным кодированием параметров
+  post_body := 'grant_type=authorization_code' ||
+               '&code=' || urlencode(code) ||
+               '&redirect_uri=' || urlencode(redirect_uri) ||
+               '&client_id=' || urlencode(bot_id) ||
+               '&client_secret=' || urlencode(bot_token);
+  
+  select * into response_request from http_post(
     'https://oauth.telegram.org/token',
-    ARRAY[http_header('Content-Type', 'application/x-www-form-urlencoded')],
-    'grant_type=authorization_code&code=' || code || '&redirect_uri=' || redirect_uri || '&client_id=' || bot_id || '&client_secret=' || bot_token,
-    null
-  )::http_request);
+    post_body,
+    'application/x-www-form-urlencoded'
+  );
   
   return response_request.content::json;
 end;
