@@ -5,7 +5,13 @@ import { useAuthSession } from '../../auth/useAuthSession';
 import styles from './AuthMenu.module.css';
 
 function signInWith(provider: 'google' | 'apple') {
-  void supabase.auth.signInWithOAuth({ provider });
+  const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`;
+  void supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo,
+    },
+  });
 }
 
 export function AuthMenu() {
