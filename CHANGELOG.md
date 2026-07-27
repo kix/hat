@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-07-28
+
+### Fixed
+
+- **Localization and pluralization support** for the new Game Over statistics screen in both Russian and English. Plurals for fouls are correctly handled (e.g., "1 foul" / "2 fouls" in English, "1 нарушение" / "2 нарушения" / "5 нарушений" in Russian).
+
+## [1.4.0] - 2026-07-28
+
+### Added
+
+- **Word Packs and Custom Lists.** Players can now choose between:
+  - "All words" (complete 50,000+ nouns dictionary).
+  - "Frequent (top)" (lightweight top-3000 most common nouns, perfect for quick/easy games).
+  - "Custom list" (import custom words via comma or newline separator directly in the lobby settings, with automatic count clamping).
+- **Detailed Game Over Nominations & Statistics.** Added dedicated cards for:
+  - ⚡️ Fastest Guess (fastest single correct guess).
+  - ⏳ Slowest Guess (slowest single correct guess).
+  - 🕵️‍♂️ Theft of the Century (Кражи века) — list of words stolen by another team after the active team failed (due to timeout, skip, or foul).
+  - 🚨 Rule Breakers (Фолы) — list of players who violated word-explanation rules.
+- **Dramatic End-of-Round Confetti.** Replaced simple confetti with a 3-second multi-stage cross-confetti cascade.
+
+### Fixed
+
+- Resolved Supabase `400 (Bad Request)` on `user_states` upsert by removing the redundant `onConflict` parameter.
+- Resolved Supabase `23503 (Foreign Key Constraint)` on `game_participants` by ensuring random client-side UUIDs from local players are not treated as authenticated user IDs.
+- Database setup script robustness: made all policies and triggers safe for repeat runs with pre-creation `DROP POLICY/TRIGGER IF EXISTS` cleanups.
+
 ## [1.3.0] - 2026-07-27
 
 ### Added
@@ -116,6 +143,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.4.1]: https://github.com/kix/hat/releases/tag/v1.4.1
+[1.4.0]: https://github.com/kix/hat/releases/tag/v1.4.0
 [1.3.0]: https://github.com/kix/hat/releases/tag/v1.3.0
 [1.2.0]: https://github.com/kix/hat/releases/tag/v1.2.0
 [1.1.1]: https://github.com/kix/hat/releases/tag/v1.1.1
