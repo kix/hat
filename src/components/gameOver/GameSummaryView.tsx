@@ -57,6 +57,24 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
   const stolenWords = getStolenWords(teams, history);
   const ruleBreakers = getRuleBreakers(teams, history);
 
+  const getFoulLabel = (count: number) => {
+    const isEn = t('summaryView.reasonFoul') === 'foul';
+    if (isEn) {
+      return count === 1
+        ? t('summaryView.foulCountPlural1', { n: count })
+        : t('summaryView.foulCountPlural2', { n: count });
+    }
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) {
+      return t('summaryView.foulCountPlural1', { n: count });
+    }
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+      return t('summaryView.foulCountPlural2', { n: count });
+    }
+    return t('summaryView.foulCountPlural5', { n: count });
+  };
+
   const playersWithScores = teams
     .flatMap((team) =>
       team.players.map((player) => {
@@ -151,19 +169,27 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
         )}
 
         {fastestGuess && (
-          <StatCard title="⚡️ Самый быстрый ответ">
+          <StatCard title={t('summaryView.fastestGuessTitle')}>
             <Text fw={600}>{fastestGuess.playerName}</Text>
             <Text size="sm" c="dimmed">
-              Разгадал(а) слово «{fastestGuess.word}» за {(fastestGuess.timeMs / 1000).toFixed(2)} сек (команда {fastestGuess.teamName})!
+              {t('summaryView.fastestGuessSub', {
+                word: fastestGuess.word,
+                sec: (fastestGuess.timeMs / 1000).toFixed(2),
+                team: fastestGuess.teamName,
+              })}
             </Text>
           </StatCard>
         )}
 
         {slowestGuess && (
-          <StatCard title="⏳ Самый неторопливый ответ">
+          <StatCard title={t('summaryView.slowestGuessTitle')}>
             <Text fw={600}>{slowestGuess.playerName}</Text>
             <Text size="sm" c="dimmed">
-              Разгадал(а) слово «{slowestGuess.word}» за {(slowestGuess.timeMs / 1000).toFixed(1)} сек (команда {slowestGuess.teamName}).
+              {t('summaryView.slowestGuessSub', {
+                word: slowestGuess.word,
+                sec: (slowestGuess.timeMs / 1000).toFixed(1),
+                team: slowestGuess.teamName,
+              })}
             </Text>
           </StatCard>
         )}
@@ -191,20 +217,26 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
         <Card withBorder padding="md">
           <Stack gap="xs">
             <Text fw={600} size="sm" c="indigo.6">
-              🕵️‍♂️ Кражи века (Отыгрыш за чужой счет)
+              {t('summaryView.stolenWordsTitle')}
             </Text>
             <Stack gap="xs">
               {stolenWords.map((stolen, idx) => {
-                let reason = 'пропуска';
-                if (stolen.failureReason === 'foul') reason = 'нарушения';
-                if (stolen.failureReason === 'timeout') reason = 'тайм-аута';
+                let reasonKey = 'summaryView.reasonSkip';
+                if (stolen.failureReason === 'foul') reasonKey = 'summaryView.reasonFoul';
+                if (stolen.failureReason === 'timeout') reasonKey = 'summaryView.reasonTimeout';
+                const reason = t(reasonKey);
                 return (
                   <Stack key={idx} gap={2}>
                     <Text size="sm" fw={600}>
                       {stolen.thiefPlayerName} ({stolen.thiefTeamName})
                     </Text>
                     <Text size="xs" c="dimmed">
-                      Утащил(а) слово <Text span fw={600} c="indigo">«{stolen.word}»</Text> у {stolen.victimPlayerName} ({stolen.victimTeamName}) после их {reason}!
+                      {t('summaryView.stolenWordsSub', {
+                        word: stolen.word,
+                        victim: stolen.victimPlayerName,
+                        victimTeam: stolen.victimTeamName,
+                        reason,
+                      })}
                     </Text>
                   </Stack>
                 );
@@ -218,7 +250,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
         <Card withBorder padding="md">
           <Stack gap="xs">
             <Text fw={600} size="sm" c="red.6">
-              🚨 Нарушители правил (Фолы)
+              {t('summaryView.ruleBreakersTitle')}
             </Text>
             <Stack gap="xs">
               {ruleBreakers.map((breaker, idx) => (
@@ -227,7 +259,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
                     {breaker.playerName} ({breaker.teamName})
                   </Text>
                   <Text size="sm" c="red.6" fw={600}>
-                    {breaker.foulCount} {breaker.foulCount === 1 ? 'нарушение' : breaker.foulCount < 5 ? 'нарушения' : 'нарушений'}
+                    {getFoulLabel(breaker.foulCount)}
                   </Text>
                 </Group>
               ))}

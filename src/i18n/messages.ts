@@ -241,6 +241,21 @@ export const messages: Record<Lang, Record<string, string>> = {
     'mp.createError': 'Ошибка создания комнаты',
     'mp.roomNotFound': 'Комната не найдена. Проверьте правильность кода.',
     'mp.joinError': 'Ошибка входа в комнату',
+
+    // custom game over stats
+    'summaryView.fastestGuessTitle': '⚡️ Самый быстрый ответ',
+    'summaryView.fastestGuessSub': 'Разгадал(а) слово «{word}» за {sec} сек (команда {team})!',
+    'summaryView.slowestGuessTitle': '⏳ Самый неторопливый ответ',
+    'summaryView.slowestGuessSub': 'Разгадал(а) слово «{word}» за {sec} сек (команда {team}).',
+    'summaryView.stolenWordsTitle': '🕵️‍♂️ Кражи века (Отыгрыш за чужой счет)',
+    'summaryView.stolenWordsSub': 'Утащил(а) слово «{word}» у {victim} ({victimTeam}) после их {reason}!',
+    'summaryView.reasonFoul': 'нарушения',
+    'summaryView.reasonSkip': 'пропуска',
+    'summaryView.reasonTimeout': 'тайм-аута',
+    'summaryView.ruleBreakersTitle': '🚨 Нарушители правил (Фолы)',
+    'summaryView.foulCountPlural1': '{n} нарушение',
+    'summaryView.foulCountPlural2': '{n} нарушения',
+    'summaryView.foulCountPlural5': '{n} нарушений',
   },
 
   en: {
@@ -480,5 +495,20 @@ export const messages: Record<Lang, Record<string, string>> = {
     'mp.createError': 'Error creating room',
     'mp.roomNotFound': 'Room not found. Check the code.',
     'mp.joinError': 'Error joining room',
+
+    // custom game over stats
+    'summaryView.fastestGuessTitle': '⚡️ Fastest Guess',
+    'summaryView.fastestGuessSub': "Guessed '{word}' in {sec}s (team {team})!",
+    'summaryView.slowestGuessTitle': '⏳ Slowest Guess',
+    'summaryView.slowestGuessSub': "Guessed '{word}' in {sec}s (team {team}).",
+    'summaryView.stolenWordsTitle': '🕵️‍♂️ Theft of the Century (Guessed after failure)',
+    'summaryView.stolenWordsSub': "Stole '{word}' from {victim} ({victimTeam}) after their {reason}!",
+    'summaryView.reasonFoul': 'foul',
+    'summaryView.reasonSkip': 'skip',
+    'summaryView.reasonTimeout': 'timeout',
+    'summaryView.ruleBreakersTitle': '🚨 Rule Breakers (Fouls)',
+    'summaryView.foulCountPlural1': '{n} foul',
+    'summaryView.foulCountPlural2': '{n} fouls',
+    'summaryView.foulCountPlural5': '{n} fouls',
   },
 };
