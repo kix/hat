@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-28
+
+### Added
+
+- **QR-code lobby joining for local games.** Hosts of local (Pass & Play) games can now open a dynamic lobby displaying a QR code. Other players scan the QR code to connect their device, enter their name, and join the local lobby on the host's screen.
+  - Automatically fetches client-side UUIDs of connected guests so their game results and achievements save directly to their profiles.
+  - Added **Autocomplete integration** on team player cards, letting the host easily pick from connected guests.
+  - Added **Auto-distribute button** that assigns all connected players to team slots sequentially.
+  - Created a dedicated **Guest Waiting Screen** for players who join a local lobby, keeping them synced in real-time.
+
 ## [1.4.1] - 2026-07-28
 
 ### Fixed
@@ -143,6 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.5.0]: https://github.com/kix/hat/releases/tag/v1.5.0
 [1.4.1]: https://github.com/kix/hat/releases/tag/v1.4.1
 [1.4.0]: https://github.com/kix/hat/releases/tag/v1.4.0
 [1.3.0]: https://github.com/kix/hat/releases/tag/v1.3.0

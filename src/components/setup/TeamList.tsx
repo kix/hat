@@ -7,9 +7,10 @@ import { useI18n } from '../../i18n/i18n';
 interface TeamListProps {
   teams: Team[];
   send: (event: HatEvent) => void;
+  connectedParticipants?: { userId: string; name: string }[];
 }
 
-export function TeamList({ teams, send }: TeamListProps) {
+export function TeamList({ teams, send, connectedParticipants }: TeamListProps) {
   const { t } = useI18n();
   const atMax = teams.length >= MAX_TEAMS;
   const atMin = teams.length <= MIN_TEAMS;
@@ -17,7 +18,14 @@ export function TeamList({ teams, send }: TeamListProps) {
   return (
     <Stack gap="sm">
       {teams.map((team, index) => (
-        <TeamCard key={team.id} team={team} teamNumber={index + 1} canRemove={!atMin} send={send} />
+        <TeamCard
+          key={team.id}
+          team={team}
+          teamNumber={index + 1}
+          canRemove={!atMin}
+          send={send}
+          connectedParticipants={connectedParticipants}
+        />
       ))}
       {!atMax ? (
         <Button variant="outline" leftSection={<IconPlus size={18} />} onClick={() => send({ type: 'ADD_TEAM' })}>

@@ -9,6 +9,7 @@ import { rememberPlayerName } from './utils/playerNamesStore';
 import { ScreenTransition } from './components/ScreenTransition';
 import { SetupScreen } from './components/setup/SetupScreen';
 import { LobbyScreen } from './components/setup/LobbyScreen';
+import { GuestLocalLobbyScreen } from './components/setup/GuestLocalLobbyScreen';
 import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
 import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
 import { GameOverScreen } from './components/gameOver/GameOverScreen';
@@ -137,6 +138,13 @@ function App() {
   const send = mode === 'multiplayer' ? multiplayer.sendAction : localSend;
   const currentContext = mode === 'multiplayer' ? (multiplayer.gameContext || localState.context) : localState.context;
   const currentStatus = mode === 'multiplayer' ? multiplayer.gameState : (localState.value as string);
+
+  // Автоматический выход из комнаты при старте локальной игры хостом
+  useEffect(() => {
+    if (mode === 'local' && currentStatus !== 'setup' && multiplayer.roomId) {
+      multiplayer.leaveRoom();
+    }
+  }, [mode, currentStatus, multiplayer.roomId, multiplayer.leaveRoom]);
 
   // Обработчик создания комнаты
   const handleCreateRoom = async () => {
@@ -346,6 +354,19 @@ function App() {
   // =====================================================================
   // СЕТЕВОЕ ЛОББИ ОЖИДАНИЯ (SETUP в режиме онлайн)
   // =====================================================================
+  if (mode === 'multiplayer' && !multiplayer.isHost && multiplayer.gameContext?.isLocalLobby) {
+    return (
+      <ScreenTransition key="guestLocalLobby">
+        <GuestLocalLobbyScreen
+          roomId={multiplayer.roomId}
+          playerName={playerName}
+          participants={multiplayer.participants}
+          onLeave={handleLeaveRoom}
+        />
+      </ScreenTransition>
+    );
+  }
+
   if (mode === 'multiplayer' && currentStatus === 'setup') {
     return (
       <ScreenTransition key="lobby">
@@ -368,7 +389,15 @@ function App() {
   if (currentStatus === 'setup') {
     return (
       <ScreenTransition key="setup">
-        <SetupScreen context={currentContext} send={send} onBack={() => setMode(null)} />
+        <SetupScreen
+          context={currentContext}
+          send={send}
+          onBack={() => {
+            multiplayer.leaveRoom();
+            setMode(null);
+          }}
+          multiplayer={multiplayer}
+        />
       </ScreenTransition>
     );
   }

@@ -224,6 +224,21 @@ export const messages: Record<Lang, Record<string, string>> = {
     'lobby.waitingHost': 'Ожидание, пока создатель запустит игру...',
     'lobby.secShort': '{n} сек',
 
+    // localLobby
+    'localLobby.collectByQr': 'Сбор имён по QR',
+    'localLobby.closeQr': 'Закрыть сбор по QR',
+    'localLobby.connectedPlayers': 'Подключенные по QR игроки',
+    'localLobby.noPlayersYet': 'Никто ещё не подключился. Покажите QR-код друзьям!',
+    'localLobby.autoDistribute': 'Заполнить команды подключенными',
+    'localLobby.guestTitle': 'Вы в игре!',
+    'localLobby.guestSubtitle': 'Подключение к локальной игре',
+    'localLobby.guestDesc': 'Вы успешно подключились к игре на устройстве ведущего. Он распределит вас по командам и запустит игру.',
+    'localLobby.guestStatus': 'Ваш статус:',
+    'localLobby.guestConnectedAs': 'Подключен как <b>{name}</b>',
+    'localLobby.guestRoomCode': 'Код комнаты:',
+    'localLobby.guestPlayersInLobby': 'Другие игроки в лобби:',
+    'localLobby.guestWaitingNotice': 'Следите за общим экраном — игра будет проходить на устройстве ведущего!',
+
     // exit
     'exit.aria': 'Выйти из игры',
     'exit.title': 'Выйти из игры?',
@@ -477,6 +492,21 @@ export const messages: Record<Lang, Record<string, string>> = {
     'lobby.startGame': 'Start game',
     'lobby.waitingHost': 'Waiting for the host to start the game...',
     'lobby.secShort': '{n}s',
+
+    // localLobby
+    'localLobby.collectByQr': 'Collect names via QR',
+    'localLobby.closeQr': 'Close QR collection',
+    'localLobby.connectedPlayers': 'Players connected via QR',
+    'localLobby.noPlayersYet': 'No one connected yet. Show the QR code to your friends!',
+    'localLobby.autoDistribute': 'Fill teams with connected',
+    'localLobby.guestTitle': 'You are in!',
+    'localLobby.guestSubtitle': 'Connected to local game',
+    'localLobby.guestDesc': 'You have successfully connected to the game on the host\'s device. They will assign you to a team and start the game.',
+    'localLobby.guestStatus': 'Your status:',
+    'localLobby.guestConnectedAs': 'Connected as <b>{name}</b>',
+    'localLobby.guestRoomCode': 'Room code:',
+    'localLobby.guestPlayersInLobby': 'Other players in lobby:',
+    'localLobby.guestWaitingNotice': 'Watch the shared screen — the game will be played on the host\'s device!',
 
     // exit
     'exit.aria': 'Exit game',

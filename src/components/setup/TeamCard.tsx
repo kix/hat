@@ -10,11 +10,12 @@ interface TeamCardProps {
   teamNumber: number;
   canRemove: boolean;
   send: (event: HatEvent) => void;
+  connectedParticipants?: { userId: string; name: string }[];
 }
 
 const MIN_CHARS_FOR_SUGGESTIONS = 2;
 
-export function TeamCard({ team, teamNumber, canRemove, send }: TeamCardProps) {
+export function TeamCard({ team, teamNumber, canRemove, send, connectedParticipants }: TeamCardProps) {
   const { t } = useI18n();
   const duplicateNameReason = getDuplicateNameReason(team);
 
@@ -52,26 +53,40 @@ export function TeamCard({ team, teamNumber, canRemove, send }: TeamCardProps) {
           </ActionIcon>
         </Group>
         <Group gap="xs" grow>
-          {team.players.map((player, index) => (
-            <Autocomplete
-              key={player.id}
-              aria-label={t('default.playerN', { n: index + 1 })}
-              placeholder={t('default.playerN', { n: index + 1 })}
-              description={
-                player.name.trim().length === 0 ? t('teamCard.anon') : (duplicateNameReason ?? undefined)
-              }
-              value={player.name}
-              data={player.name.trim().length >= MIN_CHARS_FOR_SUGGESTIONS ? getStoredPlayerNames() : []}
-              onChange={(value) =>
-                send({
-                  type: 'UPDATE_PLAYER_NAME',
-                  teamId: team.id,
-                  playerId: player.id,
-                  name: value,
-                })
-              }
-            />
-          ))}
+          {team.players.map((player, index) => {
+            const participantNames = (connectedParticipants || []).map((p) => p.name);
+            const suggestions = Array.from(
+              new Set([
+                ...participantNames,
+                ...(player.name.trim().length >= MIN_CHARS_FOR_SUGGESTIONS ? getStoredPlayerNames() : []),
+              ])
+            );
+
+            return (
+              <Autocomplete
+                key={player.id}
+                aria-label={t('default.playerN', { n: index + 1 })}
+                placeholder={t('default.playerN', { n: index + 1 })}
+                description={
+                  player.name.trim().length === 0 ? t('teamCard.anon') : (duplicateNameReason ?? undefined)
+                }
+                value={player.name}
+                data={suggestions}
+                onChange={(value) => {
+                  const matched = (connectedParticipants || []).find(
+                    (p) => p.name.trim().toLowerCase() === value.trim().toLowerCase()
+                  );
+                  send({
+                    type: 'UPDATE_PLAYER_NAME',
+                    teamId: team.id,
+                    playerId: player.id,
+                    name: value,
+                    newPlayerId: matched?.userId,
+                  });
+                }}
+              />
+            );
+          })}
         </Group>
       </Stack>
     </Card>

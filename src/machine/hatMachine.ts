@@ -68,6 +68,7 @@ export interface HatContext {
   timeRemainingSec: number;
   currentTeamIndex: number;
   history: History;
+  isLocalLobby?: boolean;
 }
 
 export type HatEvent =
@@ -75,7 +76,7 @@ export type HatEvent =
   | { type: 'REMOVE_TEAM'; teamId: string }
   | { type: 'UPDATE_TEAM_NAME'; teamId: string; name: string }
   | { type: 'REGENERATE_TEAM_NAME'; teamId: string }
-  | { type: 'UPDATE_PLAYER_NAME'; teamId: string; playerId: string; name: string }
+  | { type: 'UPDATE_PLAYER_NAME'; teamId: string; playerId: string; name: string; newPlayerId?: string }
   | { type: 'SET_ROUND_DURATION'; roundDurationSec: 30 | 60 | 120 }
   | { type: 'SET_ALLOW_SKIP'; allowSkip: boolean }
   | { type: 'SET_WORD_COUNT'; wordCount: number }
@@ -336,7 +337,9 @@ export const hatMachine = setup({
                 ? {
                     ...team,
                     players: team.players.map((player) =>
-                      player.id === event.playerId ? { ...player, name: event.name } : player,
+                      player.id === event.playerId
+                        ? { id: event.newPlayerId ?? player.id, name: event.name }
+                        : player,
                     ) as [Player, Player],
                   }
                 : team,
