@@ -31,7 +31,7 @@ interface GameRow {
   history_data: History;
   settings: Settings;
   teams_data: Team[] | null;
-  game_participants: ParticipantRow[] | null;
+  participants: ParticipantRow[] | null;
 }
 
 // Legacy games (saved before the teams_data snapshot existed) only carry
@@ -40,7 +40,7 @@ interface GameRow {
 // online players (whose player id is their Supabase user id) and fall back to
 // a placeholder otherwise.
 function reconstructTeams(game: GameRow): Team[] {
-  const participants = game.game_participants ?? [];
+  const participants = game.participants ?? [];
   const nameByUserId = new Map(participants.map((p) => [p.user_id, p.player_name]));
   const teamNameByUserId = new Map(participants.map((p) => [p.user_id, p.team_name]));
 
@@ -75,27 +75,16 @@ function toSummaryGame(game: GameRow): SummaryGame {
 }
 
 // Fetches a shared daily digest by its UUID (the link target). Returns null
-// if the id is unknown. Games are read via the public-read `games` policy;
-// the digest itself comes through a SECURITY DEFINER RPC so the summaries
-// table can't be enumerated.
+// if the id is unknown. A single SECURITY DEFINER RPC returns the digest and
+// its games/participants — that way the shared link needs no table grants and
+// the summaries table can't be enumerated.
 export async function fetchSummary(summaryId: string): Promise<GameSummary | null> {
-  const { data: rows, error } = await supabase.rpc('get_game_summary', { p_id: summaryId });
+  const { data, error } = await supabase.rpc('get_game_summary', { p_id: summaryId });
   if (error) throw error;
-  const digest = rows?.[0];
-  if (!digest) return null;
+  if (!data) return null;
 
-  const gameIds: string[] = digest.game_ids ?? [];
-  if (gameIds.length === 0) {
-    return { id: digest.id, summaryDate: digest.summary_date, games: [] };
-  }
-
-  const { data: games, error: gamesError } = await supabase
-    .from('games')
-    .select('*, game_participants(*)')
-    .in('id', gameIds);
-  if (gamesError) throw gamesError;
-
-  const summaryGames = ((games ?? []) as GameRow[])
+  const digest = data as { id: string; summary_date: string; games: GameRow[] };
+  const summaryGames = (digest.games ?? [])
     .map(toSummaryGame)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 

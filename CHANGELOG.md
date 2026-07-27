@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-07-27
+
+### Fixed
+
+- Shared summary links now render for **logged-out** viewers. `get_game_summary`
+  now returns the games and participants directly as JSON (it is `SECURITY
+  DEFINER`, so it bypasses table grants) instead of leaving the client to
+  re-read `public.games` — which `anon` has no SELECT grant on, so a
+  not-logged-in visitor previously got a `42501 permission denied` after the
+  digest loaded. Adds forward migration
+  `20260727202125_summary_rpc_returns_games.sql` (drops and recreates the
+  function, since the return type changed from `table` to `jsonb`); the
+  frontend now consumes the single RPC payload.
+
 ## [1.1.0] - 2026-07-27
 
 ### Added
@@ -63,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.1.1]: https://github.com/kix/hat/releases/tag/v1.1.1
 [1.1.0]: https://github.com/kix/hat/releases/tag/v1.1.0
 [1.0.1]: https://github.com/kix/hat/releases/tag/v1.0.1
 [1.0.0]: https://github.com/kix/hat/releases/tag/v1.0.0

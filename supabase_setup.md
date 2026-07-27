@@ -287,8 +287,9 @@ with check (true);
    supabase db push   # спросит пароль базы данных
    ```
 
-   либо вручную — выполнить весь файл
-   `supabase/migrations/20260727200434_telegram_summaries.sql` в SQL Editor. Он создаёт
+   либо вручную — выполнить по порядку оба файла миграции из
+   `supabase/migrations/` (`20260727200434_telegram_summaries.sql`, затем
+   `20260727202125_summary_rpc_returns_games.sql`) в SQL Editor. Они создают
    столбец `games.teams_data`, таблицы `app_settings`, `telegram_notifications`,
    `game_summaries`, функции `get_game_summary()` и
    `build_and_send_daily_summaries()`.
