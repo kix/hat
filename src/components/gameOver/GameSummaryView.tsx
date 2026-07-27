@@ -1,6 +1,15 @@
 import { Badge, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 import type { HatContext, History, Settings, Team } from '../../machine/hatMachine';
-import { getBestPlayer, getEasiestWord, getHardestWord, sortTeamsByScore } from '../../utils/stats';
+import {
+  getBestPlayer,
+  getEasiestWord,
+  getHardestWord,
+  sortTeamsByScore,
+  getFastestGuess,
+  getSlowestGuess,
+  getStolenWords,
+  getRuleBreakers,
+} from '../../utils/stats';
 import { getTeamScore } from '../../utils/scoring';
 import { useI18n } from '../../i18n/i18n';
 import { ResultBanner } from './ResultBanner';
@@ -43,6 +52,10 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
   const hardestWord = getHardestWord(history);
   const easiestWord = getEasiestWord(history);
   const sortedTeams = sortTeamsByScore(teams, history);
+  const fastestGuess = getFastestGuess(teams, history);
+  const slowestGuess = getSlowestGuess(teams, history);
+  const stolenWords = getStolenWords(teams, history);
+  const ruleBreakers = getRuleBreakers(teams, history);
 
   const playersWithScores = teams
     .flatMap((team) =>
@@ -137,6 +150,24 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
           </StatCard>
         )}
 
+        {fastestGuess && (
+          <StatCard title="⚡️ Самый быстрый ответ">
+            <Text fw={600}>{fastestGuess.playerName}</Text>
+            <Text size="sm" c="dimmed">
+              Разгадал(а) слово «{fastestGuess.word}» за {(fastestGuess.timeMs / 1000).toFixed(2)} сек (команда {fastestGuess.teamName})!
+            </Text>
+          </StatCard>
+        )}
+
+        {slowestGuess && (
+          <StatCard title="⏳ Самый неторопливый ответ">
+            <Text fw={600}>{slowestGuess.playerName}</Text>
+            <Text size="sm" c="dimmed">
+              Разгадал(а) слово «{slowestGuess.word}» за {(slowestGuess.timeMs / 1000).toFixed(1)} сек (команда {slowestGuess.teamName}).
+            </Text>
+          </StatCard>
+        )}
+
         {hardestWord && (
           <StatCard title={t('summaryView.hardestWord')}>
             <Text fw={600}>{hardestWord.word}</Text>
@@ -155,6 +186,55 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
           </StatCard>
         )}
       </SimpleGrid>
+
+      {stolenWords.length > 0 && (
+        <Card withBorder padding="md">
+          <Stack gap="xs">
+            <Text fw={600} size="sm" c="indigo.6">
+              🕵️‍♂️ Кражи века (Отыгрыш за чужой счет)
+            </Text>
+            <Stack gap="xs">
+              {stolenWords.map((stolen, idx) => {
+                let reason = 'пропуска';
+                if (stolen.failureReason === 'foul') reason = 'нарушения';
+                if (stolen.failureReason === 'timeout') reason = 'тайм-аута';
+                return (
+                  <Stack key={idx} gap={2}>
+                    <Text size="sm" fw={600}>
+                      {stolen.thiefPlayerName} ({stolen.thiefTeamName})
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      Утащил(а) слово <Text span fw={600} c="indigo">«{stolen.word}»</Text> у {stolen.victimPlayerName} ({stolen.victimTeamName}) после их {reason}!
+                    </Text>
+                  </Stack>
+                );
+              })}
+            </Stack>
+          </Stack>
+        </Card>
+      )}
+
+      {ruleBreakers.length > 0 && (
+        <Card withBorder padding="md">
+          <Stack gap="xs">
+            <Text fw={600} size="sm" c="red.6">
+              🚨 Нарушители правил (Фолы)
+            </Text>
+            <Stack gap="xs">
+              {ruleBreakers.map((breaker, idx) => (
+                <Group key={idx} justify="space-between">
+                  <Text size="sm" fw={500}>
+                    {breaker.playerName} ({breaker.teamName})
+                  </Text>
+                  <Text size="sm" c="red.6" fw={600}>
+                    {breaker.foulCount} {breaker.foulCount === 1 ? 'нарушение' : breaker.foulCount < 5 ? 'нарушения' : 'нарушений'}
+                  </Text>
+                </Group>
+              ))}
+            </Stack>
+          </Stack>
+        </Card>
+      )}
 
       <HintedWordsCard context={context} />
     </Stack>

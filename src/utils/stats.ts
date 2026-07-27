@@ -121,3 +121,110 @@ export function getHintedWords(
 
   return hinted;
 }
+
+export interface StolenWord {
+  word: string;
+  victimTeamName: string;
+  victimPlayerName: string;
+  thiefTeamName: string;
+  thiefPlayerName: string;
+  failureReason: 'timeout' | 'foul' | 'skipped';
+}
+
+export function getStolenWords(teams: Team[], history: History): StolenWord[] {
+  const stolen: StolenWord[] = [];
+  
+  history.forEach((record, index) => {
+    if (record.result !== 'guessed') return;
+    
+    const priorFailure = history.slice(0, index).find(
+      (candidate) => 
+        candidate.word === record.word && 
+        candidate.teamId !== record.teamId &&
+        (candidate.result === 'timeout' || candidate.result === 'foul' || candidate.result === 'skipped')
+    );
+    
+    if (priorFailure) {
+      const victimTeam = teams.find(t => t.id === priorFailure.teamId);
+      const victimPlayer = victimTeam?.players.find(p => p.id === priorFailure.describerId);
+      
+      const thiefTeam = teams.find(t => t.id === record.teamId);
+      const thiefPlayer = thiefTeam?.players.find(p => p.id === record.guesserId);
+      
+      stolen.push({
+        word: record.word,
+        victimTeamName: victimTeam?.name || 'Другая команда',
+        victimPlayerName: victimPlayer?.name || 'Игрок',
+        thiefTeamName: thiefTeam?.name || 'Своя команда',
+        thiefPlayerName: thiefPlayer?.name || 'Игрок',
+        failureReason: priorFailure.result as 'timeout' | 'foul' | 'skipped'
+      });
+    }
+  });
+  
+  return stolen;
+}
+
+export interface RuleBreaker {
+  playerName: string;
+  teamName: string;
+  foulCount: number;
+}
+
+export function getRuleBreakers(teams: Team[], history: History): RuleBreaker[] {
+  const foulsMap = new Map<string, { playerName: string; teamName: string; count: number }>();
+  
+  history.forEach((record) => {
+    if (record.result === 'foul') {
+      const team = teams.find(t => t.id === record.teamId);
+      const player = team?.players.find(p => p.id === record.describerId);
+      if (player) {
+        const key = player.id;
+        const existing = foulsMap.get(key) || { playerName: player.name, teamName: team?.name || '', count: 0 };
+        existing.count++;
+        foulsMap.set(key, existing);
+      }
+    }
+  });
+  
+  return Array.from(foulsMap.values())
+    .map(f => ({ playerName: f.playerName, teamName: f.teamName, foulCount: f.count }))
+    .sort((a, b) => b.foulCount - a.foulCount);
+}
+
+export interface SingleGuess {
+  playerName: string;
+  teamName: string;
+  word: string;
+  timeMs: number;
+}
+
+export function getFastestGuess(teams: Team[], history: History): SingleGuess | null {
+  const guessed = history.filter((r) => r.result === 'guessed');
+  if (guessed.length === 0) return null;
+  const bestRecord = guessed.reduce((fastest, record) => (record.timeMs < fastest.timeMs ? record : fastest));
+  
+  const team = teams.find(t => t.id === bestRecord.teamId);
+  const player = team?.players.find(p => p.id === bestRecord.guesserId);
+  return {
+    playerName: player?.name || 'Игрок',
+    teamName: team?.name || 'Команда',
+    word: bestRecord.word,
+    timeMs: bestRecord.timeMs
+  };
+}
+
+export function getSlowestGuess(teams: Team[], history: History): SingleGuess | null {
+  const guessed = history.filter((r) => r.result === 'guessed');
+  if (guessed.length === 0) return null;
+  const worstRecord = guessed.reduce((slowest, record) => (record.timeMs > slowest.timeMs ? record : slowest));
+  
+  const team = teams.find(t => t.id === worstRecord.teamId);
+  const player = team?.players.find(p => p.id === worstRecord.guesserId);
+  return {
+    playerName: player?.name || 'Игрок',
+    teamName: team?.name || 'Команда',
+    word: worstRecord.word,
+    timeMs: worstRecord.timeMs
+  };
+}
