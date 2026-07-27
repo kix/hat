@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-07-28
+
+### Added
+
+- **Web NFC Name Collecting & Lobby Sharing.** Integrated Web NFC (`NDEFReader` API) to support sharing and joining local game sessions.
+  - **Lobby sharing**: Write the active room join URL directly to any blank NFC card/sticker. Guests tap their phone to the card to instantly join the room.
+  - **Player name scanning**: Tapping the NFC button next to a player slot prompts the host to scan a player's card/badge, automatically populating their name into the slot.
+  - Fully translated NFC dialog states and error handling for Russian and English.
+- **Cinematic Theme Switch Animation.** Added a premium circular ripple reveal animation when switching light/dark color modes, utilizing the modern `View Transitions API` (`document.startViewTransition`) with performance-optimized CSS clip-path masks.
+
 ## [1.5.1] - 2026-07-28
 
 ### Fixed
@@ -159,6 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.0]: https://github.com/kix/hat/releases/tag/v1.6.0
 [1.5.1]: https://github.com/kix/hat/releases/tag/v1.5.1
 [1.5.0]: https://github.com/kix/hat/releases/tag/v1.5.0
 [1.4.1]: https://github.com/kix/hat/releases/tag/v1.4.1

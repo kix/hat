@@ -23,3 +23,14 @@ button {
 button:active {
   filter: brightness(0.85);
 }
+
+/* Circular theme switch animation styling */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-image-pair(root) {
+  isolation: auto;
+}

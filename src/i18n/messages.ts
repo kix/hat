@@ -239,6 +239,18 @@ export const messages: Record<Lang, Record<string, string>> = {
     'localLobby.guestPlayersInLobby': 'Другие игроки в лобби:',
     'localLobby.guestWaitingNotice': 'Следите за общим экраном — игра будет проходить на устройстве ведущего!',
 
+    // nfc
+    'nfc.collectTitle': 'Чтение NFC',
+    'nfc.collectPrompt': 'Приложите NFC-карту игрока к телефону...',
+    'nfc.writeTitle': 'Запись NFC',
+    'nfc.writePrompt': 'Приложите чистую NFC-метку для записи ссылки...',
+    'nfc.writeSuccess': 'Успешно записано!',
+    'nfc.scanSuccess': 'Имя успешно считано!',
+    'nfc.notSupported': 'Web NFC не поддерживается в этом браузере.',
+    'nfc.error': 'Ошибка NFC: {error}',
+    'nfc.writeBtn': 'Записать на NFC',
+    'nfc.scanBtnAria': 'Считать имя по NFC',
+
     // exit
     'exit.aria': 'Выйти из игры',
     'exit.title': 'Выйти из игры?',
@@ -507,6 +519,18 @@ export const messages: Record<Lang, Record<string, string>> = {
     'localLobby.guestRoomCode': 'Room code:',
     'localLobby.guestPlayersInLobby': 'Other players in lobby:',
     'localLobby.guestWaitingNotice': 'Watch the shared screen — the game will be played on the host\'s device!',
+
+    // nfc
+    'nfc.collectTitle': 'NFC Scanning',
+    'nfc.collectPrompt': 'Bring player\'s NFC tag close to your phone...',
+    'nfc.writeTitle': 'NFC Writing',
+    'nfc.writePrompt': 'Bring a blank NFC tag close to write the link...',
+    'nfc.writeSuccess': 'Successfully written!',
+    'nfc.scanSuccess': 'Name successfully scanned!',
+    'nfc.notSupported': 'Web NFC is not supported in this browser.',
+    'nfc.error': 'NFC Error: {error}',
+    'nfc.writeBtn': 'Write to NFC',
+    'nfc.scanBtnAria': 'Scan name via NFC',
 
     // exit
     'exit.aria': 'Exit game',

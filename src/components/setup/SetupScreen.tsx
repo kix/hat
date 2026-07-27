@@ -1,5 +1,5 @@
-import { Container, Divider, Stack, Title, Button, Card, Text, Group, Badge } from '@mantine/core';
-import { IconQrcode, IconCopy, IconCheck, IconUsers, IconTrash } from '@tabler/icons-react';
+import { Container, Divider, Stack, Title, Button, Card, Text, Group, Badge, Modal, Loader, ThemeIcon } from '@mantine/core';
+import { IconQrcode, IconCopy, IconCheck, IconUsers, IconTrash, IconWifi, IconAlertTriangle } from '@tabler/icons-react';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { TeamList } from './TeamList';
 import { RoundSettingsForm } from './RoundSettingsForm';
@@ -19,8 +19,12 @@ interface SetupScreenProps {
 export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenProps) {
   const { t } = useI18n();
   const [loadingQr, setLoadingQr] = useState(false);
+  const [nfcModalOpen, setNfcModalOpen] = useState(false);
+  const [nfcStatus, setNfcStatus] = useState<'prompt' | 'success' | 'error'>('prompt');
+  const [nfcErrorMsg, setNfcErrorMsg] = useState('');
 
   const hasRoom = !!multiplayer?.roomId;
+  const isNfcSupported = 'NDEFReader' in window;
   
   // Build the join link for scanning
   const joinUrl = hasRoom
@@ -31,7 +35,6 @@ export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenP
     if (!multiplayer) return;
     setLoadingQr(true);
     try {
-      // Create room with a special flag isLocalLobby in state
       const hostName = context.teams[0]?.players[0]?.name || t('default.player');
       await multiplayer.createRoom(hostName, {
         ...context,
@@ -56,13 +59,30 @@ export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenP
     alert(t('lobby.linkCopied'));
   };
 
+  const handleWriteNfc = async () => {
+    setNfcStatus('prompt');
+    setNfcErrorMsg('');
+    setNfcModalOpen(true);
+    try {
+      const NDEFReaderClass = (window as any).NDEFReader;
+      if (!NDEFReaderClass) throw new Error(t('nfc.notSupported'));
+      const ndef = new NDEFReaderClass();
+      await ndef.write(joinUrl);
+      setNfcStatus('success');
+      setTimeout(() => setNfcModalOpen(false), 2000);
+    } catch (err: any) {
+      console.error(err);
+      setNfcStatus('error');
+      setNfcErrorMsg(err.message || String(err));
+    }
+  };
+
   const handleAutoDistribute = () => {
     if (!multiplayer || multiplayer.participants.length === 0) return;
     
     const participants = multiplayer.participants;
     let participantIndex = 0;
 
-    // Distribute connected participants into teams
     context.teams.forEach((team) => {
       team.players.forEach((player) => {
         if (participantIndex < participants.length) {
@@ -85,7 +105,7 @@ export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenP
       <Stack gap="lg">
         <SetupHero />
 
-        {/* QR Joining Section */}
+        {/* QR & NFC Joining Section */}
         {multiplayer && (
           <div>
             {!hasRoom ? (
@@ -124,6 +144,11 @@ export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenP
                       <Button size="xs" variant="light" leftSection={<IconCopy size={12} />} onClick={copyToClipboard}>
                         {t('lobby.copyLink')}
                       </Button>
+                      {isNfcSupported && (
+                        <Button size="xs" variant="light" color="indigo" leftSection={<IconWifi size={12} />} onClick={handleWriteNfc}>
+                          {t('nfc.writeBtn')}
+                        </Button>
+                      )}
                       <Button size="xs" color="red" variant="subtle" leftSection={<IconTrash size={12} />} onClick={handleCloseQrSession}>
                         {t('localLobby.closeQr')}
                       </Button>
@@ -197,6 +222,45 @@ export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenP
           onBack={onBack}
         />
       </Stack>
+
+      {/* NFC Write Modal */}
+      <Modal
+        opened={nfcModalOpen}
+        onClose={() => setNfcModalOpen(false)}
+        title={t('nfc.writeTitle')}
+        centered
+        size="xs"
+      >
+        <Stack align="center" gap="md" py="lg" ta="center">
+          {nfcStatus === 'prompt' && (
+            <>
+              <Loader size="lg" color="indigo" />
+              <Text size="sm">{t('nfc.writePrompt')}</Text>
+            </>
+          )}
+
+          {nfcStatus === 'success' && (
+            <>
+              <ThemeIcon size={48} radius="xl" color="green">
+                <IconCheck size={30} />
+              </ThemeIcon>
+              <Text size="sm" fw={600} c="green">{t('nfc.writeSuccess')}</Text>
+            </>
+          )}
+
+          {nfcStatus === 'error' && (
+            <>
+              <ThemeIcon size={48} radius="xl" color="red">
+                <IconAlertTriangle size={30} />
+              </ThemeIcon>
+              <Text size="sm" fw={600} c="red">{t('nfc.error', { error: nfcErrorMsg })}</Text>
+              <Button size="xs" variant="default" onClick={handleWriteNfc}>
+                {t('common.tryAgain')}
+              </Button>
+            </>
+          )}
+        </Stack>
+      </Modal>
     </Container>
   );
 }
