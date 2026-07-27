@@ -91,6 +91,16 @@ export async function fetchSummary(summaryId: string): Promise<GameSummary | nul
   return { id: digest.id, summaryDate: digest.summary_date, games: summaryGames };
 }
 
+// Fetches a single game by id for the ?game=<uuid> share link. Uses the same
+// SECURITY DEFINER RPC pattern as fetchSummary so the link renders for any
+// viewer without a SELECT grant on public.games. Returns null if unknown.
+export async function fetchGame(gameId: string): Promise<SummaryGame | null> {
+  const { data, error } = await supabase.rpc('get_game', { p_id: gameId });
+  if (error) throw error;
+  if (!data) return null;
+  return toSummaryGame(data as GameRow);
+}
+
 // Convenience for a digest-level headline: total games and how many the
 // viewer won (matched by their player id across every game's ranking).
 export function summaryTotals(summary: GameSummary, viewerId?: string) {

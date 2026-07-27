@@ -17,6 +17,23 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Apply the saved/system color scheme before React mounts to avoid a
+         flash of the wrong theme. Mirrors Mantine's ColorSchemeScript, using
+         the same localStorage key and html attribute. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('mantine-color-scheme-value');
+          var scheme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+          document.documentElement.setAttribute('data-mantine-color-scheme', scheme);
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

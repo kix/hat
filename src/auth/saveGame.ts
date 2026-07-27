@@ -10,13 +10,13 @@ export async function saveGameResult(
   context: HatContext,
   participants: { userId: string; name: string }[] = [],
   currentUserId?: string
-) {
+): Promise<string | null> {
   try {
-    if (context.history.length === 0) return;
+    if (context.history.length === 0) return null;
 
     const sortedTeams = sortTeamsByScore(context.teams, context.history);
     const winnerTeam = sortedTeams[0];
-    if (!winnerTeam) return;
+    if (!winnerTeam) return null;
 
     // 1. Сохраняем игру в таблицу games
     const { data: game, error: gameErr } = await supabase
@@ -34,7 +34,7 @@ export async function saveGameResult(
 
     if (gameErr || !game) {
       console.error('Ошибка сохранения игры:', gameErr);
-      return;
+      return null;
     }
 
     // 2. Строим карту соответствия имен и UUID пользователей
@@ -123,7 +123,10 @@ export async function saveGameResult(
         console.error('Ошибка сохранения участников игры:', partErr);
       }
     }
+
+    return game.id as string;
   } catch (err) {
     console.error('Системная ошибка в функции saveGameResult:', err);
+    return null;
   }
 }

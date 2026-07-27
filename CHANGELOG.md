@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-27
+
+### Added
+
+- **Share a finished game to Telegram.** The game-over screen now has a
+  "Поделиться в Telegram" button (plus copy-link) that links to a shareable,
+  read-only `?game=<uuid>` page rendering that single game — reusing the same
+  view as the game-over screen and highlighting a logged-in viewer's own rows.
+  The Telegram button opens Telegram's native share composer, so the user
+  picks the chat and sends it themselves (no bot delivery involved). Backed by
+  a new `get_game(uuid)` `SECURITY DEFINER` RPC (migration
+  `20260727203815_share_single_game.sql`) so the link resolves for any viewer,
+  logged in or not; `saveGameResult` now returns the new game id to enable it.
+- **Night mode.** A light/dark theme toggle in the landing header, defaulting
+  to the OS preference (`auto`) and persisted across sessions. A pre-mount
+  script applies the saved scheme before React renders, so there's no
+  theme flash on load.
+
 ## [1.1.1] - 2026-07-27
 
 ### Fixed
@@ -77,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.2.0]: https://github.com/kix/hat/releases/tag/v1.2.0
 [1.1.1]: https://github.com/kix/hat/releases/tag/v1.1.1
 [1.1.0]: https://github.com/kix/hat/releases/tag/v1.1.0
 [1.0.1]: https://github.com/kix/hat/releases/tag/v1.0.1

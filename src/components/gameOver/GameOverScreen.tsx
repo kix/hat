@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Container, Stack, Title } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
@@ -8,6 +8,7 @@ import { syncWordTimingsToSupabase } from '../../auth/syncWordTimings';
 import { saveGameResult } from '../../auth/saveGame';
 import { GameSummaryView } from './GameSummaryView';
 import { PlayAgainButton } from './PlayAgainButton';
+import { ShareGameButton } from '../summary/ShareGameButton';
 
 interface GameOverScreenProps {
   context: HatContext;
@@ -18,6 +19,9 @@ interface GameOverScreenProps {
 
 export function GameOverScreen({ context, send, isHost, participants }: GameOverScreenProps) {
   const session = useAuthSession();
+  // The id of the persisted game, once saved — enables the share link. Only
+  // the saver (local player, or the host in multiplayer) gets it.
+  const [savedGameId, setSavedGameId] = useState<string | null>(null);
 
   useEffect(() => {
     confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
@@ -39,7 +43,9 @@ export function GameOverScreen({ context, send, isHost, participants }: GameOver
       const isMultiplayer = !!participants && participants.length > 0;
       const shouldSave = !isMultiplayer || isHost;
       if (shouldSave) {
-        void saveGameResult(context, participants || [], session?.user?.id);
+        void saveGameResult(context, participants || [], session?.user?.id).then((id) => {
+          if (id) setSavedGameId(id);
+        });
       }
     }
   }, [session, isHost, participants]);
@@ -57,6 +63,8 @@ export function GameOverScreen({ context, send, isHost, participants }: GameOver
           settings={context.settings}
           highlightPlayerId={session?.user?.id}
         />
+
+        {savedGameId && <ShareGameButton gameId={savedGameId} />}
 
         <PlayAgainButton send={send} />
       </Stack>

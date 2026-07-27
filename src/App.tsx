@@ -14,7 +14,9 @@ import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen
 import { GameOverScreen } from './components/gameOver/GameOverScreen';
 import { ProfileScreen } from './components/profile/ProfileScreen';
 import { SummaryScreen } from './components/summary/SummaryScreen';
+import { GameShareScreen } from './components/summary/GameShareScreen';
 import { AuthMenu, signInWithGoogle, signInWithTelegram } from './components/auth/AuthMenu';
+import { ColorSchemeToggle } from './components/ColorSchemeToggle';
 import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
 
@@ -31,6 +33,10 @@ function App() {
   // Shareable daily-summary link (?summary=<uuid>), read once on load.
   const [summaryId, setSummaryId] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get('summary'),
+  );
+  // Shareable single-game link (?game=<uuid>), read once on load.
+  const [shareGameId, setShareGameId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('game'),
   );
 
   // Ссылка на последние настройки для звуков/вибрации
@@ -163,6 +169,13 @@ function App() {
     setSummaryId(null);
   };
 
+  const closeShareGame = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('game');
+    window.history.replaceState({}, '', url.toString());
+    setShareGameId(null);
+  };
+
   // =====================================================================
   // ЭКРАН СВОДКИ ИГР ПО ССЫЛКЕ (?summary=<uuid>)
   // =====================================================================
@@ -170,6 +183,17 @@ function App() {
     return (
       <ScreenTransition key="summary">
         <SummaryScreen summaryId={summaryId} onClose={closeSummary} />
+      </ScreenTransition>
+    );
+  }
+
+  // =====================================================================
+  // ЭКРАН ОДНОЙ ИГРЫ ПО ССЫЛКЕ (?game=<uuid>)
+  // =====================================================================
+  if (shareGameId) {
+    return (
+      <ScreenTransition key="shareGame">
+        <GameShareScreen gameId={shareGameId} onClose={closeShareGame} />
       </ScreenTransition>
     );
   }
@@ -196,7 +220,10 @@ function App() {
             <Title order={1} size={36} fw={800} style={{ letterSpacing: -1 }}>
               Шляпа
             </Title>
-            <AuthMenu onViewProfile={() => setShowProfile(true)} />
+            <Group gap="xs">
+              <ColorSchemeToggle />
+              <AuthMenu onViewProfile={() => setShowProfile(true)} />
+            </Group>
           </Group>
           <Text size="sm" c="dimmed">
             Популярная игра в объяснение слов. Выберите режим игры, чтобы начать!
