@@ -287,12 +287,14 @@ with check (true);
    supabase db push   # спросит пароль базы данных
    ```
 
-   либо вручную — выполнить по порядку оба файла миграции из
-   `supabase/migrations/` (`20260727200434_telegram_summaries.sql`, затем
-   `20260727202125_summary_rpc_returns_games.sql`) в SQL Editor. Они создают
-   столбец `games.teams_data`, таблицы `app_settings`, `telegram_notifications`,
-   `game_summaries`, функции `get_game_summary()` и
-   `build_and_send_daily_summaries()`.
+    либо вручную — выполнить по порядку все три файла миграции из
+    `supabase/migrations/` в SQL Editor:
+    1. `20260727200434_telegram_summaries.sql` (создание таблиц сводок и настроек)
+    2. `20260727202125_summary_rpc_returns_games.sql` (функция get_game_summary для сводки)
+    3. `20260727203815_share_single_game.sql` (функция get_game для шаринга одной игры)
+    Они создают столбец `games.teams_data`, таблицы `app_settings`, `telegram_notifications`,
+    `game_summaries`, функции `get_game_summary()`, `get_game()` и
+    `build_and_send_daily_summaries()`.
 
 3. **Создать бота и положить токен в Vault.** У @BotFather создать бота
    (`/newbot`), скопировать **токен бота** (это НЕ тот client secret, что
