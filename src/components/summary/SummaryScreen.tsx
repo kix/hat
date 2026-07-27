@@ -4,6 +4,7 @@ import { IconArrowLeft, IconCalendar } from '@tabler/icons-react';
 import { useAuthSession } from '../../auth/useAuthSession';
 import { GameSummaryView } from '../gameOver/GameSummaryView';
 import { fetchSummary, summaryTotals, type GameSummary } from '../../summary/summaryData';
+import { useI18n } from '../../i18n/i18n';
 
 interface SummaryScreenProps {
   summaryId: string;
@@ -15,6 +16,7 @@ interface SummaryScreenProps {
 // ?summary=<uuid> link (the one Telegram DMs). Anyone with the link can open
 // it; a viewer logged in via Telegram sees their own rows highlighted.
 export function SummaryScreen({ summaryId, onClose }: SummaryScreenProps) {
+  const { t, lang } = useI18n();
   const session = useAuthSession();
   const viewerId = session?.user?.id;
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -40,7 +42,7 @@ export function SummaryScreen({ summaryId, onClose }: SummaryScreenProps) {
   }, [summaryId]);
 
   const dateLabel = summary
-    ? new Date(summary.summaryDate).toLocaleDateString('ru-RU', {
+    ? new Date(summary.summaryDate).toLocaleDateString(lang === 'en' ? 'en-US' : 'ru-RU', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
@@ -53,31 +55,31 @@ export function SummaryScreen({ summaryId, onClose }: SummaryScreenProps) {
       <Stack gap="lg">
         <Group>
           <Button variant="subtle" leftSection={<IconArrowLeft size={16} />} onClick={onClose}>
-            В игру
+            {t('summary.backToGame')}
           </Button>
         </Group>
 
         {state === 'loading' && (
           <Stack align="center" gap="md" py="xl">
             <Loader size="xl" />
-            <Text c="dimmed">Загрузка сводки...</Text>
+            <Text c="dimmed">{t('summaryScreen.loadingSummary')}</Text>
           </Stack>
         )}
 
         {state === 'error' && (
           <Card withBorder padding="lg" radius="md" ta="center">
-            <Text fw={600}>Не удалось загрузить сводку</Text>
+            <Text fw={600}>{t('summaryScreen.loadFailed')}</Text>
             <Text size="sm" c="dimmed">
-              Попробуйте открыть ссылку ещё раз позже.
+              {t('summary.tryLater')}
             </Text>
           </Card>
         )}
 
         {state === 'ready' && (!summary || summary.games.length === 0) && (
           <Card withBorder padding="lg" radius="md" ta="center">
-            <Text fw={600}>Сводка не найдена</Text>
+            <Text fw={600}>{t('summaryScreen.notFound')}</Text>
             <Text size="sm" c="dimmed">
-              Ссылка недействительна или за этот день не было игр.
+              {t('summaryScreen.notFoundDesc')}
             </Text>
           </Card>
         )}
@@ -86,7 +88,7 @@ export function SummaryScreen({ summaryId, onClose }: SummaryScreenProps) {
           <>
             <Stack gap={4}>
               <Title order={1} size={30} fw={800} style={{ letterSpacing: -0.5 }}>
-                Итоги дня в Шляпе
+                {t('summaryScreen.dayTitle')}
               </Title>
               <Group gap="xs" c="dimmed">
                 <IconCalendar size={16} />
@@ -101,7 +103,7 @@ export function SummaryScreen({ summaryId, onClose }: SummaryScreenProps) {
                     {totals.games}
                   </Title>
                   <Text size="xs" c="dimmed" fw={600}>
-                    {totals.games === 1 ? 'ИГРА' : 'ИГР'}
+                    {totals.games === 1 ? t('summaryScreen.gameSingular') : t('summaryScreen.gamePlural')}
                   </Text>
                 </Stack>
                 {viewerId && (
@@ -110,14 +112,14 @@ export function SummaryScreen({ summaryId, onClose }: SummaryScreenProps) {
                       {totals.wins}
                     </Title>
                     <Text size="xs" c="dimmed" fw={600}>
-                      ВАШИХ ПОБЕД
+                      {t('summaryScreen.yourWins')}
                     </Text>
                   </Stack>
                 )}
               </Group>
               {!viewerId && (
                 <Text size="xs" c="dimmed" ta="center" mt="sm">
-                  Войдите через Telegram, чтобы увидеть свою статистику выделенной.
+                  {t('summaryScreen.loginToHighlight')}
                 </Text>
               )}
             </Card>
@@ -125,7 +127,11 @@ export function SummaryScreen({ summaryId, onClose }: SummaryScreenProps) {
             {summary.games.map((game, index) => (
               <Stack key={game.id} gap="sm">
                 <Divider
-                  label={summary.games.length > 1 ? `Игра ${index + 1}` : 'Результаты'}
+                  label={
+                    summary.games.length > 1
+                      ? t('summaryScreen.gameN', { n: index + 1 })
+                      : t('summaryScreen.results')
+                  }
                   labelPosition="center"
                 />
                 <GameSummaryView

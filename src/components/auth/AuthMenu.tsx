@@ -3,6 +3,8 @@ import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text, Loader } from
 import { IconBrandGoogle, IconBrandTelegram, IconUserCircle } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
+import { useI18n } from '../../i18n/i18n';
+import { tr } from '../../i18n/lang';
 import styles from './AuthMenu.module.css';
 
 // Получение текущего URL без временных параметров авторизации
@@ -55,6 +57,7 @@ interface AuthMenuProps {
 }
 
 export function AuthMenu({ onViewProfile }: AuthMenuProps) {
+  const { t } = useI18n();
   const session = useAuthSession();
   const user = session?.user;
   const isRealUser = !!(user && (!user.is_anonymous || user.user_metadata?.provider === 'telegram'));
@@ -85,13 +88,13 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
 
           const idToken = data?.id_token;
           if (!idToken) {
-            throw new Error(`Telegram не вернул id_token. Ответ сервера: ${JSON.stringify(data)}`);
+            throw new Error(tr('auth.telegramNoIdToken', { data: JSON.stringify(data) }));
           }
 
           // Декодируем JWT-токен
           const decoded = decodeJwt(idToken);
           if (!decoded) {
-            throw new Error('Не удалось декодировать данные пользователя');
+            throw new Error(tr('auth.decodeFailed'));
           }
 
           // Выполняем анонимный вход в Supabase
@@ -117,7 +120,7 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
         } catch (e: any) {
           console.error('Ошибка авторизации через Telegram OIDC:', e);
           const errorMsg = e?.message || e?.details || JSON.stringify(e);
-          alert(`Не удалось войти через Telegram: ${errorMsg}\n\nУбедитесь, что настроена RPC-функция в Supabase.`);
+          alert(tr('auth.telegramFailed', { error: errorMsg }));
         } finally {
           setLoading(false);
           // Очищаем URL от параметров авторизации
@@ -133,7 +136,7 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
     <Popover position="bottom-end" withArrow shadow="md">
       <Popover.Target>
         <ActionIcon
-          aria-label={isRealUser ? 'Аккаунт' : 'Войти'}
+          aria-label={isRealUser ? t('auth.account') : t('auth.signIn')}
           variant="white"
           radius="xl"
           size="lg"
@@ -152,24 +155,24 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
         {isRealUser ? (
           <Stack gap="xs" miw={200}>
             <Text size="sm" fw={500} truncate="end">
-              {(user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? 'Аккаунт'}
+              {(user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? t('auth.account')}
             </Text>
             {onViewProfile && (
               <Anchor component="button" type="button" onClick={onViewProfile} fw={500}>
-                Мой профиль
+                {t('auth.myProfile')}
               </Anchor>
             )}
             <Anchor component="button" type="button" c="red" onClick={() => void supabase.auth.signOut()}>
-              Выйти
+              {t('auth.signOut')}
             </Anchor>
           </Stack>
         ) : (
           <Stack gap="xs" miw={220}>
             <Text size="sm" fw={500}>
-              Войти, чтобы сохранить прогресс
+              {t('auth.signInToSave')}
             </Text>
             <Button variant="default" leftSection={<IconBrandGoogle size={18} />} onClick={signInWithGoogle}>
-              Войти через Google
+              {t('auth.google')}
             </Button>
             
             {clientId ? (
@@ -178,11 +181,11 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
                 leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
                 onClick={() => signInWithTelegram(clientId)}
               >
-                Войти через Telegram
+                {t('auth.telegram')}
               </Button>
             ) : (
               <Text size="xs" c="dimmed" ta="center">
-                Настройте VITE_TELEGRAM_CLIENT_ID для входа через Telegram
+                {t('auth.telegramNotConfigured')}
               </Text>
             )}
           </Stack>

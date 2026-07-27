@@ -5,6 +5,7 @@ import { useAuthSession } from '../../auth/useAuthSession';
 import { GameSummaryView } from '../gameOver/GameSummaryView';
 import { ShareGameButton } from './ShareGameButton';
 import { fetchGame, type SummaryGame } from '../../summary/summaryData';
+import { useI18n } from '../../i18n/i18n';
 
 interface GameShareScreenProps {
   gameId: string;
@@ -15,6 +16,7 @@ interface GameShareScreenProps {
 // a ?game=<uuid> link (the "Share to Telegram" button produces these). Opens
 // for anyone; a viewer logged in via Telegram sees their own rows highlighted.
 export function GameShareScreen({ gameId, onClose }: GameShareScreenProps) {
+  const { t } = useI18n();
   const session = useAuthSession();
   const viewerId = session?.user?.id;
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -44,31 +46,31 @@ export function GameShareScreen({ gameId, onClose }: GameShareScreenProps) {
       <Stack gap="lg">
         <Group>
           <Button variant="subtle" leftSection={<IconArrowLeft size={16} />} onClick={onClose}>
-            В игру
+            {t('summary.backToGame')}
           </Button>
         </Group>
 
         {state === 'loading' && (
           <Stack align="center" gap="md" py="xl">
             <Loader size="xl" />
-            <Text c="dimmed">Загрузка игры...</Text>
+            <Text c="dimmed">{t('summary.loadingGame')}</Text>
           </Stack>
         )}
 
         {state === 'error' && (
           <Card withBorder padding="lg" radius="md" ta="center">
-            <Text fw={600}>Не удалось загрузить игру</Text>
+            <Text fw={600}>{t('summary.loadFailed')}</Text>
             <Text size="sm" c="dimmed">
-              Попробуйте открыть ссылку ещё раз позже.
+              {t('summary.tryLater')}
             </Text>
           </Card>
         )}
 
         {state === 'ready' && !game && (
           <Card withBorder padding="lg" radius="md" ta="center">
-            <Text fw={600}>Игра не найдена</Text>
+            <Text fw={600}>{t('summary.gameNotFound')}</Text>
             <Text size="sm" c="dimmed">
-              Ссылка недействительна или игра была удалена.
+              {t('summary.gameNotFoundDesc')}
             </Text>
           </Card>
         )}
@@ -76,7 +78,7 @@ export function GameShareScreen({ gameId, onClose }: GameShareScreenProps) {
         {state === 'ready' && game && (
           <>
             <Title order={1} size={30} fw={800} ta="center" style={{ letterSpacing: -0.5 }}>
-              Итоги игры
+              {t('summary.gameTitle')}
             </Title>
             <GameSummaryView
               teams={game.teams}

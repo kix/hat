@@ -2,6 +2,7 @@ import { Button, Container, Stack, Text, Group } from '@mantine/core';
 import { useIntersection } from '@mantine/hooks';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { getSetupValidity } from '../../utils/setupValidity';
+import { useI18n } from '../../i18n/i18n';
 import styles from './StartGameButton.module.css';
 
 interface StartGameButtonProps {
@@ -11,6 +12,7 @@ interface StartGameButtonProps {
 }
 
 export function StartGameButton({ context, send, onBack }: StartGameButtonProps) {
+  const { t } = useI18n();
   const { canStart, reasons } = getSetupValidity(context);
   const dictionaryLoading = context.dictionary === null;
   // Tracks the button's natural end-of-page slot (the sentinel below), not
@@ -25,7 +27,7 @@ export function StartGameButton({ context, send, onBack }: StartGameButtonProps)
       <Group grow gap="sm">
         {onBack && (
           <Button variant="default" size="lg" onClick={onBack}>
-            Назад
+            {t('common.back')}
           </Button>
         )}
         <Button
@@ -34,12 +36,12 @@ export function StartGameButton({ context, send, onBack }: StartGameButtonProps)
           loading={dictionaryLoading}
           onClick={() => send({ type: 'START_GAME' })}
         >
-          Начать игру
+          {t('startGame.start')}
         </Button>
       </Group>
       {dictionaryLoading ? (
         <Text size="sm" c="dimmed" ta="center">
-          Загружаем словарь…
+          {t('startGame.loadingDict')}
         </Text>
       ) : (
         !canStart && (

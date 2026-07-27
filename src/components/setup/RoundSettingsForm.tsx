@@ -2,6 +2,7 @@ import { SegmentedControl, Slider, Stack, Switch, Text, Textarea } from '@mantin
 import { useMediaQuery } from '@mantine/hooks';
 import type { DictionaryEntry } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
+import { useI18n } from '../../i18n/i18n';
 
 interface RoundSettingsFormProps {
   settings: Settings;
@@ -10,6 +11,7 @@ interface RoundSettingsFormProps {
 }
 
 export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsFormProps) {
+  const { t } = useI18n();
   // Вычисляем размер доступного пула слов в зависимости от выбранного пака
   const poolSize =
     settings.wordPack === 'custom'
@@ -28,7 +30,7 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
     <Stack gap="md">
       <div>
         <Text size="sm" fw={500} mb={4}>
-          Длительность раунда
+          {t('roundSettings.roundDuration')}
         </Text>
         <SegmentedControl
           fullWidth
@@ -37,43 +39,43 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
             send({ type: 'SET_ROUND_DURATION', roundDurationSec: Number(value) as 30 | 60 | 120 })
           }
           data={[
-            { value: '30', label: '30 сек' },
-            { value: '60', label: '60 сек' },
-            { value: '120', label: '120 сек' },
+            { value: '30', label: t('roundSettings.secShort', { n: 30 }) },
+            { value: '60', label: t('roundSettings.secShort', { n: 60 }) },
+            { value: '120', label: t('roundSettings.secShort', { n: 120 }) },
           ]}
         />
       </div>
 
       <div>
         <Text size="sm" fw={500} mb={4}>
-          Роли в команде
+          {t('roundSettings.roles')}
         </Text>
         <SegmentedControl
           fullWidth
           value={settings.rolesMode}
           onChange={(value) => send({ type: 'SET_ROLES_MODE', rolesMode: value as 'alternate' | 'fixed' })}
           data={[
-            { value: 'alternate', label: 'Чередуются' },
-            { value: 'fixed', label: 'Фиксированные' },
+            { value: 'alternate', label: t('roundSettings.rolesAlternate') },
+            { value: 'fixed', label: t('roundSettings.rolesFixed') },
           ]}
         />
       </div>
 
       <Switch
-        label="Разрешить пропуск слова"
+        label={t('roundSettings.allowSkip')}
         checked={settings.allowSkip}
         onChange={(event) => send({ type: 'SET_ALLOW_SKIP', allowSkip: event.currentTarget.checked })}
       />
 
       <Switch
-        label="Звук"
+        label={t('roundSettings.sound')}
         checked={settings.soundEnabled}
         onChange={(event) => send({ type: 'SET_SOUND_ENABLED', soundEnabled: event.currentTarget.checked })}
       />
 
       {isTouchDevice && (
         <Switch
-          label="Вибрация"
+          label={t('roundSettings.vibration')}
           checked={settings.vibrationEnabled}
           onChange={(event) => {
             const vibrationEnabled = event.currentTarget.checked;
@@ -88,7 +90,7 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
 
       <div>
         <Text size="sm" fw={500} mb={4}>
-          Набор слов (Словарь)
+          {t('roundSettings.wordPack')}
         </Text>
         <SegmentedControl
           fullWidth
@@ -97,9 +99,9 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
             send({ type: 'SET_WORD_PACK', wordPack: value as 'standard' | 'frequent' | 'custom' })
           }
           data={[
-            { value: 'standard', label: 'Все слова' },
-            { value: 'frequent', label: 'Частотный (топ)' },
-            { value: 'custom', label: 'Свой список' },
+            { value: 'standard', label: t('roundSettings.packAll') },
+            { value: 'frequent', label: t('roundSettings.packFrequent') },
+            { value: 'custom', label: t('roundSettings.packCustom') },
           ]}
         />
       </div>
@@ -107,8 +109,8 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
       {settings.wordPack === 'custom' ? (
         <div>
           <Textarea
-            label="Ваш список слов"
-            placeholder="Введите слова через запятую или с новой строки..."
+            label={t('roundSettings.customLabel')}
+            placeholder={t('roundSettings.customPlaceholder')}
             minRows={3}
             autosize
             value={settings.customWords.join('\n')}
@@ -122,14 +124,14 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
             }}
           />
           <Text size="xs" c="dimmed" mt={4}>
-            Введено слов: {settings.customWords.length}
+            {t('roundSettings.wordsEntered', { n: settings.customWords.length })}
           </Text>
         </div>
       ) : (
         <>
           <div>
             <Text size="sm" fw={500} mb={4}>
-              Количество слов в шляпе
+              {t('roundSettings.wordCount')}
             </Text>
             <Slider
               value={settings.wordCount}
@@ -149,22 +151,24 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
 
           <div>
             <Text size="sm" fw={500} mb={4}>
-              Сложность слов
+              {t('roundSettings.difficulty')}
             </Text>
             <Slider
               value={Math.round(settings.difficultyLevel * 100)}
               onChange={(value) => send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: value / 100 })}
               label={(value) => `${value}%`}
               marks={[
-                { value: 0, label: 'Легче' },
-                { value: 100, label: 'Сложнее' },
+                { value: 0, label: t('roundSettings.easier') },
+                { value: 100, label: t('roundSettings.harder') },
               ]}
               mx="xs"
               mb="lg"
               styles={{ markLabel: { whiteSpace: 'nowrap' } }}
             />
             <Text size="xs" c="dimmed" mt={4}>
-              {poolSize === null ? 'Словарь загружается…' : `Доступно слов в паке: ${poolSize}`}
+              {poolSize === null
+                ? t('roundSettings.dictLoading')
+                : t('roundSettings.poolAvailable', { n: poolSize })}
             </Text>
           </div>
         </>

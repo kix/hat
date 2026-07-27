@@ -2,18 +2,20 @@ import { ActionIcon, Button, Group, Modal, Text } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import type { HatEvent } from '../../machine/hatMachine';
+import { useI18n } from '../../i18n/i18n';
 
 interface ExitGameButtonProps {
   send: (event: HatEvent) => void;
 }
 
 export function ExitGameButton({ send }: ExitGameButtonProps) {
+  const { t } = useI18n();
   const [opened, { open, close }] = useDisclosure(false);
 
   return (
     <>
       <ActionIcon
-        aria-label="Выйти из игры"
+        aria-label={t('exit.aria')}
         variant="light"
         color="gray"
         size="lg"
@@ -23,13 +25,13 @@ export function ExitGameButton({ send }: ExitGameButtonProps) {
         <IconX size={20} />
       </ActionIcon>
 
-      <Modal opened={opened} onClose={close} title="Выйти из игры?" centered>
+      <Modal opened={opened} onClose={close} title={t('exit.title')} centered>
         <Text size="sm" mb="md">
-          Текущая партия прервётся, и вы вернётесь на экран настройки команд.
+          {t('exit.body')}
         </Text>
         <Group justify="flex-end">
           <Button variant="default" onClick={close}>
-            Отмена
+            {t('exit.cancel')}
           </Button>
           <Button
             color="red"
@@ -38,7 +40,7 @@ export function ExitGameButton({ send }: ExitGameButtonProps) {
               send({ type: 'EXIT_GAME' });
             }}
           >
-            Выйти
+            {t('exit.confirm')}
           </Button>
         </Group>
       </Modal>

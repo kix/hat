@@ -1,12 +1,14 @@
 import { Card, Stack, Text } from '@mantine/core';
 import type { HatContext } from '../../machine/hatMachine';
 import { getHintedWords } from '../../utils/stats';
+import { useI18n } from '../../i18n/i18n';
 
 interface HintedWordsCardProps {
   context: HatContext;
 }
 
 export function HintedWordsCard({ context }: HintedWordsCardProps) {
+  const { t } = useI18n();
   const hinted = getHintedWords(context.teams, context.history);
   if (hinted.length === 0) return null;
 
@@ -16,12 +18,15 @@ export function HintedWordsCard({ context }: HintedWordsCardProps) {
     <Card withBorder padding="md">
       <Stack gap={4}>
         <Text size="sm" c="dimmed">
-          Подсказали 👀
+          {t('hinted.title')}
         </Text>
         {hinted.map((hint, index) => (
           <Text key={index}>
-            «{hint.word}»: {teamName(hint.strugglingTeamId)} не смогла отгадать, а{' '}
-            {teamName(hint.helpedTeamId)} угадала почти мгновенно
+            {t('hinted.line', {
+              word: hint.word,
+              a: teamName(hint.strugglingTeamId),
+              b: teamName(hint.helpedTeamId),
+            })}
           </Text>
         ))}
       </Stack>

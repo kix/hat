@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
 import type { HatContext, HatEvent } from '../machine/hatMachine';
+import { tr } from '../i18n/lang';
 
 export interface Participant {
   userId: string;
@@ -182,7 +183,7 @@ export function useMultiplayer(
         }
 
         if (exists) {
-          throw new Error('Не удалось найти свободный код комнаты. Предел попыток исчерпан.');
+          throw new Error(tr('mp.noFreeCode'));
         }
 
         // Сохраняем комнату в БД
@@ -196,7 +197,7 @@ export function useMultiplayer(
 
         // Подключаемся к каналу
         const ok = await setupRoomChannel(code, true, name, user.id);
-        if (!ok) throw new Error('Не удалось подключиться к каналу реального времени.');
+        if (!ok) throw new Error(tr('mp.realtimeFailed'));
 
         setRoomId(code);
         setIsHost(true);
@@ -205,7 +206,7 @@ export function useMultiplayer(
         return code;
       } catch (err: any) {
         console.error('Ошибка создания комнаты:', err);
-        setError(err.message || 'Ошибка создания комнаты');
+        setError(err.message || tr('mp.createError'));
         return null;
       } finally {
         setLoading(false);
@@ -238,12 +239,12 @@ export function useMultiplayer(
           .single();
 
         if (dbErr || !room) {
-          throw new Error('Комната не найдена. Проверьте правильность кода.');
+          throw new Error(tr('mp.roomNotFound'));
         }
 
         // Подключаемся к каналу
         const ok = await setupRoomChannel(cleanCode, false, name, user.id);
-        if (!ok) throw new Error('Не удалось подключиться к каналу реального времени.');
+        if (!ok) throw new Error(tr('mp.realtimeFailed'));
 
         setRoomId(cleanCode);
         setIsHost(false);
@@ -252,7 +253,7 @@ export function useMultiplayer(
         return true;
       } catch (err: any) {
         console.error('Ошибка входа в комнату:', err);
-        setError(err.message || 'Ошибка входа в комнату');
+        setError(err.message || tr('mp.joinError'));
         return false;
       } finally {
         setLoading(false);

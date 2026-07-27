@@ -1,6 +1,7 @@
 import { supabase } from '../auth/supabaseClient';
 import type { History, Player, Settings, Team } from '../machine/hatMachine';
 import { sortTeamsByScore } from '../utils/stats';
+import { tr } from '../i18n/lang';
 
 export interface SummaryGame {
   id: string;
@@ -54,9 +55,13 @@ function reconstructTeams(game: GameRow): Team[] {
   }
 
   return [...playerIdsByTeam.entries()].map(([teamId, playerIds], index) => {
-    const players = playerIds.map<Player>((id) => ({ id, name: nameByUserId.get(id) ?? 'Игрок' }));
+    const players = playerIds.map<Player>((id) => ({
+      id,
+      name: nameByUserId.get(id) ?? tr('default.player'),
+    }));
     const teamName =
-      playerIds.map((id) => teamNameByUserId.get(id)).find(Boolean) ?? `Команда ${index + 1}`;
+      playerIds.map((id) => teamNameByUserId.get(id)).find(Boolean) ??
+      tr('default.teamN', { n: index + 1 });
     return { id: teamId, name: teamName, players, roundsPlayed: 0 } as unknown as Team;
   });
 }

@@ -4,6 +4,7 @@ import { TeamList } from './TeamList';
 import { RoundSettingsForm } from './RoundSettingsForm';
 import { StartGameButton } from './StartGameButton';
 import { SetupHero } from './SetupHero';
+import { useI18n } from '../../i18n/i18n';
 
 interface SetupScreenProps {
   context: HatContext;
@@ -12,6 +13,7 @@ interface SetupScreenProps {
 }
 
 export function SetupScreen({ context, send, onBack }: SetupScreenProps) {
+  const { t } = useI18n();
   return (
     <Container size="xs" py="lg">
       <Stack gap="lg">
@@ -19,7 +21,7 @@ export function SetupScreen({ context, send, onBack }: SetupScreenProps) {
 
         <div>
           <Title order={3} mb="sm">
-            Команды
+            {t('setup.teams')}
           </Title>
           <TeamList teams={context.teams} send={send} />
         </div>
@@ -28,7 +30,7 @@ export function SetupScreen({ context, send, onBack }: SetupScreenProps) {
 
         <div>
           <Title order={3} mb="sm">
-            Настройки
+            {t('setup.settings')}
           </Title>
           <RoundSettingsForm settings={context.settings} dictionary={context.dictionary} send={send} />
         </div>

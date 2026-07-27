@@ -1,5 +1,6 @@
 import { Button, CopyButton, Group, Tooltip } from '@mantine/core';
 import { IconBrandTelegram, IconCheck, IconCopy } from '@tabler/icons-react';
+import { useI18n } from '../../i18n/i18n';
 
 interface ShareGameButtonProps {
   gameId: string;
@@ -16,8 +17,9 @@ function buildShareUrl(gameId: string): string {
 // themselves, so no bot delivery is involved. A copy-link fallback covers
 // everything else.
 export function ShareGameButton({ gameId }: ShareGameButtonProps) {
+  const { t } = useI18n();
   const url = buildShareUrl(gameId);
-  const text = 'Итоги нашей игры в Шляпу 🎩';
+  const text = t('share.text');
   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
 
   return (
@@ -31,17 +33,17 @@ export function ShareGameButton({ gameId }: ShareGameButtonProps) {
         target="_blank"
         rel="noopener noreferrer"
       >
-        Поделиться в Telegram
+        {t('share.telegram')}
       </Button>
       <CopyButton value={url} timeout={2000}>
         {({ copied, copy }) => (
-          <Tooltip label={copied ? 'Ссылка скопирована' : 'Скопировать ссылку'} withArrow>
+          <Tooltip label={copied ? t('share.linkCopied') : t('share.copyLinkTooltip')} withArrow>
             <Button
               variant="default"
               leftSection={copied ? <IconCheck size={18} /> : <IconCopy size={18} />}
               onClick={copy}
             >
-              {copied ? 'Скопировано' : 'Копировать ссылку'}
+              {copied ? t('share.copied') : t('share.copyLink')}
             </Button>
           </Tooltip>
         )}

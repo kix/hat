@@ -1,4 +1,5 @@
 import type { HatContext, Team } from '../machine/hatMachine';
+import { tr } from '../i18n/lang';
 
 export interface SetupValidity {
   canStart: boolean;
@@ -15,7 +16,7 @@ export function getDuplicateNameReason(team: Team): string | null {
   if (nameA.length === 0 || nameB.length === 0 || nameA.toLowerCase() !== nameB.toLowerCase()) {
     return null;
   }
-  return `Вы не запутаетесь, ${nameA} и ${nameB}?`;
+  return tr('validity.confuse', { a: nameA, b: nameB });
 }
 
 // Mirrors the START_GAME guard in hatMachine.ts so the UI can explain *why*
@@ -25,7 +26,7 @@ export function getSetupValidity(context: HatContext): SetupValidity {
   const reasons: string[] = [];
 
   if (context.teams.length < 2) {
-    reasons.push('Нужно как минимум 2 команды');
+    reasons.push(tr('validity.needTwoTeams'));
   }
   for (const team of context.teams) {
     const duplicateReason = getDuplicateNameReason(team);

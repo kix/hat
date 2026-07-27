@@ -3,6 +3,7 @@ import { IconCopy, IconLogout } from '@tabler/icons-react';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import type { Participant } from '../../auth/useMultiplayer';
 import { RoundSettingsForm } from './RoundSettingsForm';
+import { useI18n } from '../../i18n/i18n';
 
 interface LobbyScreenProps {
   roomId: string;
@@ -23,11 +24,12 @@ export function LobbyScreen({
   onLeave,
   onStartGame,
 }: LobbyScreenProps) {
+  const { t } = useI18n();
   const joinUrl = `${window.location.origin}${window.location.pathname}?join=${roomId}`;
 
   const copyToClipboard = () => {
     void navigator.clipboard.writeText(joinUrl);
-    alert('Ссылка на комнату скопирована в буфер обмена!');
+    alert(t('lobby.linkCopied'));
   };
 
   // Проверяем, сколько команд полностью укомплектовано (по 2 игрока в каждой)
@@ -63,7 +65,7 @@ export function LobbyScreen({
   // Варианты выбора игроков из участников для селектора
   const playerOptions = participants.map((p) => ({
     value: p.userId,
-    label: p.name + (p.isHost ? ' (Создатель)' : ''),
+    label: p.name + (p.isHost ? t('lobby.hostSuffix') : ''),
   }));
 
   return (
@@ -73,17 +75,17 @@ export function LobbyScreen({
         <Card withBorder padding="md" style={{ background: 'rgba(0,0,0,0.02)' }}>
           <Stack align="center" gap="xs">
             <Text size="xs" c="dimmed" fw={600} style={{ letterSpacing: 1 }}>
-              КОД КОМНАТЫ
+              {t('lobby.roomCode')}
             </Text>
             <Title order={1} size={48} style={{ letterSpacing: 4 }}>
               {roomId}
             </Title>
             <Group gap="xs">
               <Button size="xs" variant="light" leftSection={<IconCopy size={14} />} onClick={copyToClipboard}>
-                Копировать ссылку
+                {t('lobby.copyLink')}
               </Button>
               <Button size="xs" color="red" variant="subtle" leftSection={<IconLogout size={14} />} onClick={onLeave}>
-                Выйти
+                {t('lobby.leave')}
               </Button>
             </Group>
           </Stack>
@@ -93,7 +95,7 @@ export function LobbyScreen({
         <Card withBorder padding="sm">
           <Stack align="center" gap={6}>
             <Text size="xs" c="dimmed">
-              Отсканируйте камерой телефона для входа:
+              {t('lobby.scanHint')}
             </Text>
             <img
               src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(joinUrl)}`}
@@ -108,7 +110,7 @@ export function LobbyScreen({
           <Stack gap="xs">
             <Group justify="space-between">
               <Text fw={600} size="sm">
-                Участники в комнате
+                {t('lobby.participants')}
               </Text>
               <Badge variant="filled">{participants.length}</Badge>
             </Group>
@@ -121,7 +123,7 @@ export function LobbyScreen({
                   </Text>
                   {p.isHost && (
                     <Badge size="xs" color="yellow">
-                      Создатель
+                      {t('lobby.host')}
                     </Badge>
                   )}
                 </Group>
@@ -134,7 +136,7 @@ export function LobbyScreen({
         <Card withBorder padding="md">
           <Stack gap="md">
             <Text fw={600} size="sm">
-              Распределение по командам
+              {t('lobby.teamAssignment')}
             </Text>
             <Divider />
 
@@ -150,7 +152,7 @@ export function LobbyScreen({
                   {isHost ? (
                     <Group grow gap="xs">
                       <Select
-                        placeholder="Объясняющий"
+                        placeholder={t('lobby.explainerPlaceholder')}
                         data={playerOptions}
                         value={participants.find(p => p.name === team.players[0].name)?.userId || ''}
                         onChange={(val) => handleAssignPlayer(team.id, 0, val)}
@@ -158,7 +160,7 @@ export function LobbyScreen({
                         searchable
                       />
                       <Select
-                        placeholder="Угадывающий"
+                        placeholder={t('lobby.guesserPlaceholder')}
                         data={playerOptions}
                         value={participants.find(p => p.name === team.players[1].name)?.userId || ''}
                         onChange={(val) => handleAssignPlayer(team.id, 1, val)}
@@ -169,11 +171,11 @@ export function LobbyScreen({
                   ) : (
                     <Group grow gap="xs">
                       <Card withBorder padding="xs" bg="gray.0" ta="center">
-                        <Text size="xs" c="dimmed">Объясняет</Text>
+                        <Text size="xs" c="dimmed">{t('lobby.explains')}</Text>
                         <Text size="sm" fw={500} truncate>{team.players[0].name || '—'}</Text>
                       </Card>
                       <Card withBorder padding="xs" bg="gray.0" ta="center">
-                        <Text size="xs" c="dimmed">Угадывает</Text>
+                        <Text size="xs" c="dimmed">{t('lobby.guesses')}</Text>
                         <Text size="sm" fw={500} truncate>{team.players[1].name || '—'}</Text>
                       </Card>
                     </Group>
@@ -184,7 +186,7 @@ export function LobbyScreen({
 
             {isHost && context.teams.length < 6 && (
               <Button size="xs" variant="light" onClick={() => send({ type: 'ADD_TEAM' })}>
-                + Добавить команду
+                {t('lobby.addTeam')}
               </Button>
             )}
           </Stack>
@@ -194,7 +196,7 @@ export function LobbyScreen({
         <Card withBorder padding="md">
           <Stack gap="xs">
             <Text fw={600} size="sm">
-              Настройки игры
+              {t('lobby.gameSettings')}
             </Text>
             <Divider />
             {isHost ? (
@@ -202,15 +204,15 @@ export function LobbyScreen({
             ) : (
               <Stack gap="xs">
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Время раунда:</Text>
-                  <Text size="sm" fw={500}>{context.settings.roundDurationSec} сек</Text>
+                  <Text size="sm" c="dimmed">{t('lobby.roundTime')}</Text>
+                  <Text size="sm" fw={500}>{t('lobby.secShort', { n: context.settings.roundDurationSec })}</Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Пропуск слов:</Text>
-                  <Text size="sm" fw={500}>{context.settings.allowSkip ? 'Разрешен' : 'Запрещен'}</Text>
+                  <Text size="sm" c="dimmed">{t('lobby.skipWords')}</Text>
+                  <Text size="sm" fw={500}>{context.settings.allowSkip ? t('lobby.allowed') : t('lobby.forbidden')}</Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">Количество слов:</Text>
+                  <Text size="sm" c="dimmed">{t('lobby.wordCount')}</Text>
                   <Text size="sm" fw={500}>{context.settings.wordCount}</Text>
                 </Group>
               </Stack>
@@ -222,15 +224,15 @@ export function LobbyScreen({
         {isHost ? (
           <Button size="xl" color="blue" fullWidth disabled={!canStart} onClick={onStartGame}>
             {!canStart && configuredTeamsCount < 2
-              ? 'Настройте минимум 2 команды'
+              ? t('lobby.needTeams')
               : context.dictionary === null
-              ? 'Загрузка словаря...'
-              : 'Начать игру'}
+              ? t('lobby.loadingDict')
+              : t('lobby.startGame')}
           </Button>
         ) : (
           <Card withBorder padding="sm" bg="blue.0" ta="center">
             <Text size="sm" c="blue.7" fw={500}>
-              Ожидание, пока создатель запустит игру...
+              {t('lobby.waitingHost')}
             </Text>
           </Card>
         )}

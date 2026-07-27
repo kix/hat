@@ -7,6 +7,7 @@ import { generateId } from '../utils/id';
 import { isHatRunningLow } from '../utils/lowHat';
 import { getDuplicateNameReason } from '../utils/setupValidity';
 import { isLocalDevEnvironment } from '../utils/isLocalDevEnvironment';
+import { tr } from '../i18n/lang';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
@@ -115,7 +116,7 @@ function fillBlankPlayerNames(team: Team): Team {
   return {
     ...team,
     players: team.players.map((player, index) =>
-      player.name.trim().length > 0 ? player : { ...player, name: `Игрок ${index + 1}` },
+      player.name.trim().length > 0 ? player : { ...player, name: tr('default.playerN', { n: index + 1 }) },
     ) as [Player, Player],
   };
 }

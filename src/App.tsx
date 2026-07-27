@@ -17,11 +17,14 @@ import { SummaryScreen } from './components/summary/SummaryScreen';
 import { GameShareScreen } from './components/summary/GameShareScreen';
 import { AuthMenu, signInWithGoogle, signInWithTelegram } from './components/auth/AuthMenu';
 import { ColorSchemeToggle } from './components/ColorSchemeToggle';
+import { LanguageToggle } from './components/LanguageToggle';
+import { useI18n } from './i18n/i18n';
 import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
 
 function App() {
   const sounds = useGameSounds();
+  const { t, lang } = useI18n();
   const session = useAuthSession();
   const isRealUser = !!(session?.user && (!session.user.is_anonymous || session.user.user_metadata?.provider === 'telegram'));
   
@@ -119,12 +122,16 @@ function App() {
     }
   }, [localState, multiplayer.isHost, multiplayer.roomId, mode]);
 
-  // Ленивая загрузка словаря
+  // Ленивая загрузка словаря — русского или английского, в зависимости от языка
   useEffect(() => {
-    void import('./data/dictionary').then((module) => {
-      localSend({ type: 'DICTIONARY_LOADED', entries: module.dictionary });
-    });
-  }, [localSend]);
+    void (async () => {
+      const entries =
+        lang === 'en'
+          ? (await import('./data/dictionaryEn')).dictionaryEn
+          : (await import('./data/dictionary')).dictionary;
+      localSend({ type: 'DICTIONARY_LOADED', entries });
+    })();
+  }, [localSend, lang]);
 
   // Общие методы управления действиями (роутинг send)
   const send = mode === 'multiplayer' ? multiplayer.sendAction : localSend;
@@ -133,7 +140,7 @@ function App() {
 
   // Обработчик создания комнаты
   const handleCreateRoom = async () => {
-    const name = playerName.trim() || 'Создатель';
+    const name = playerName.trim() || t('default.host');
     const code = await multiplayer.createRoom(name, localState.context);
     if (code) {
       setMode('multiplayer');
@@ -143,10 +150,10 @@ function App() {
   // Обработчик подключения к комнате
   const handleJoinRoom = async () => {
     if (!joinRoomCode.trim()) {
-      alert('Введите код комнаты!');
+      alert(t('alert.enterRoomCode'));
       return;
     }
-    const name = playerName.trim() || 'Игрок';
+    const name = playerName.trim() || t('default.player');
     const ok = await multiplayer.joinRoom(joinRoomCode, name);
     if (ok) {
       setMode('multiplayer');
@@ -218,15 +225,16 @@ function App() {
         <Stack gap="lg" style={{ width: '100%' }}>
           <Group justify="space-between" align="center">
             <Title order={1} size={36} fw={800} style={{ letterSpacing: -1 }}>
-              Шляпа
+              {t('app.title')}
             </Title>
             <Group gap="xs">
+              <LanguageToggle />
               <ColorSchemeToggle />
               <AuthMenu onViewProfile={() => setShowProfile(true)} />
             </Group>
           </Group>
           <Text size="sm" c="dimmed">
-            Популярная игра в объяснение слов. Выберите режим игры, чтобы начать!
+            {t('landing.tagline')}
           </Text>
 
           <Card withBorder padding="lg" radius="md">
@@ -238,30 +246,30 @@ function App() {
                 leftSection={<IconDeviceGamepad2 size={24} />}
                 onClick={() => setMode('local')}
               >
-                Локальная игра
+                {t('landing.localGame')}
               </Button>
               <Text size="xs" c="dimmed" ta="center">
-                Один телефон передается из рук в руки в одной комнате.
+                {t('landing.localHint')}
               </Text>
             </Stack>
           </Card>
 
-          <Divider label="ИЛИ СЕТЕВАЯ ИГРА" labelPosition="center" />
+          <Divider label={t('landing.orOnline')} labelPosition="center" />
 
           <Card withBorder padding="lg" radius="md">
             {isRealUser ? (
               <Stack gap="md">
                 <Group justify="space-between" align="center" mb={-5}>
                   <Text size="sm" c="dimmed">
-                    Вы вошли в сеть
+                    {t('landing.online')}
                   </Text>
                   <Button variant="subtle" size="xs" onClick={() => setShowProfile(true)}>
-                    Статистика и ачивки
+                    {t('landing.statsAchievements')}
                   </Button>
                 </Group>
                 <TextInput
-                  label="Ваше имя"
-                  placeholder="Введите ваше имя"
+                  label={t('landing.yourName')}
+                  placeholder={t('landing.yourNamePlaceholder')}
                   leftSection={<IconUser size={16} />}
                   value={playerName}
                   onChange={(e) => setPlayerName(e.currentTarget.value)}
@@ -275,12 +283,12 @@ function App() {
                   onClick={handleCreateRoom}
                   loading={multiplayer.loading}
                 >
-                  Создать онлайн-комнату
+                  {t('landing.createRoom')}
                 </Button>
 
                 <Group gap="xs" grow>
                   <TextInput
-                    placeholder="КОД"
+                    placeholder={t('landing.codePlaceholder')}
                     maxLength={4}
                     value={joinRoomCode}
                     onChange={(e) => setJoinRoomCode(e.currentTarget.value.toUpperCase())}
@@ -293,7 +301,7 @@ function App() {
                     onClick={handleJoinRoom}
                     loading={multiplayer.loading}
                   >
-                    Войти по коду
+                    {t('landing.joinByCode')}
                   </Button>
                 </Group>
                 {multiplayer.error && (
@@ -305,14 +313,14 @@ function App() {
             ) : (
               <Stack gap="sm" align="stretch">
                 <Text size="sm" c="dimmed" ta="center">
-                  Для игры по сети необходимо войти в аккаунт. Это позволит сохранять вашу статистику и отображать ваше имя другим игрокам.
+                  {t('landing.loginPrompt')}
                 </Text>
                 <Button
                   variant="default"
                   leftSection={<IconBrandGoogle size={18} />}
                   onClick={signInWithGoogle}
                 >
-                  Войти через Google
+                  {t('auth.google')}
                 </Button>
                 {import.meta.env.VITE_TELEGRAM_CLIENT_ID ? (
                   <Button
@@ -320,11 +328,11 @@ function App() {
                     leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
                     onClick={() => signInWithTelegram(import.meta.env.VITE_TELEGRAM_CLIENT_ID)}
                   >
-                    Войти через Telegram
+                    {t('auth.telegram')}
                   </Button>
                 ) : (
                   <Text size="xs" c="dimmed" ta="center">
-                    Настройте VITE_TELEGRAM_CLIENT_ID для входа через Telegram
+                    {t('auth.telegramNotConfigured')}
                   </Text>
                 )}
               </Stack>

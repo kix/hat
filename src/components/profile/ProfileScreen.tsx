@@ -3,6 +3,7 @@ import { Container, Stack, Title, Text, Button, Card, Group, SimpleGrid, Badge, 
 import { IconArrowLeft, IconBolt, IconBrain, IconHourglass, IconTrophy, IconUser, IconCalendar } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { TelegramNotificationsCard } from '../notifications/TelegramNotificationsCard';
+import { useI18n } from '../../i18n/i18n';
 
 interface ProfileScreenProps {
   userId: string;
@@ -33,6 +34,7 @@ interface UserParticipation {
 }
 
 export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
+  const { t, lang } = useI18n();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [participations, setParticipations] = useState<UserParticipation[]>([]);
@@ -116,7 +118,7 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
       <Container size="xs" py="xl" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Stack align="center" gap="md">
           <Loader size="xl" />
-          <Text c="dimmed">Загрузка статистики...</Text>
+          <Text c="dimmed">{t('profile.loadingStats')}</Text>
         </Stack>
       </Container>
     );
@@ -192,7 +194,10 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
 
   // Форматирование даты регистрации
   const registerDate = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long' })
+    ? new Date(profile.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'ru-RU', {
+        year: 'numeric',
+        month: 'long',
+      })
     : '—';
 
   return (
@@ -201,7 +206,7 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
         {/* Кнопка назад */}
         <Group>
           <Button variant="subtle" leftSection={<IconArrowLeft size={16} />} onClick={onBack}>
-            Назад
+            {t('common.back')}
           </Button>
         </Group>
 
@@ -213,11 +218,11 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
             </ThemeIcon>
             <Stack gap={2} style={{ flex: 1 }}>
               <Text fw={700} size="xl" truncate="end">
-                {profile?.user_metadata?.full_name || 'Игрок'}
+                {profile?.user_metadata?.full_name || t('default.player')}
               </Text>
               <Group gap="xs" c="dimmed">
                 <IconCalendar size={14} />
-                <Text size="xs">В игре с {registerDate}</Text>
+                <Text size="xs">{t('profile.inGameSince', { date: registerDate })}</Text>
               </Group>
             </Stack>
           </Group>
@@ -232,43 +237,43 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
         )}
 
         {/* Статистика */}
-        <Title order={3} size="h4" mb={-10}>Статистика партий</Title>
+        <Title order={3} size="h4" mb={-10}>{t('profile.statsTitle')}</Title>
         <SimpleGrid cols={2} spacing="sm">
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>СЫГРАНО ИГР</Text>
+              <Text size="xs" c="dimmed" fw={600}>{t('profile.gamesPlayed')}</Text>
               <Title order={2} c="blue">{totalGames}</Title>
             </Stack>
           </Card>
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>ПРОЦЕНТ ПОБЕД</Text>
+              <Text size="xs" c="dimmed" fw={600}>{t('profile.winRate')}</Text>
               <Title order={2} c="teal">{winRate}%</Title>
-              <Text size="xs" c="dimmed">{wins} побед</Text>
+              <Text size="xs" c="dimmed">{t('profile.wins', { n: wins })}</Text>
             </Stack>
           </Card>
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>СР. СКОРОСТЬ</Text>
-              <Title order={2} c="orange">{avgSpeedSec} {avgSpeedSec !== '—' ? 'сек' : ''}</Title>
-              <Text size="xs" c="dimmed">угадали/объяснили {totalSolvedWordsCount} слов</Text>
+              <Text size="xs" c="dimmed" fw={600}>{t('profile.avgSpeed')}</Text>
+              <Title order={2} c="orange">{avgSpeedSec} {avgSpeedSec !== '—' ? t('profile.secShort') : ''}</Title>
+              <Text size="xs" c="dimmed">{t('profile.solvedWords', { n: totalSolvedWordsCount })}</Text>
             </Stack>
           </Card>
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>ЛЮБИМЫЙ НАПАРНИК</Text>
+              <Text size="xs" c="dimmed" fw={600}>{t('profile.favPartner')}</Text>
               <Text fw={700} c="indigo" truncate="end" style={{ maxWidth: '100%' }}>
                 {partnerStats ? partnerStats.name : '—'}
               </Text>
               <Text size="xs" c="dimmed">
-                {partnerStats ? `${partnerStats.count} совместных игр` : 'Играйте в парах!'}
+                {partnerStats ? t('profile.jointGames', { n: partnerStats.count }) : t('profile.playInPairs')}
               </Text>
             </Stack>
           </Card>
         </SimpleGrid>
 
         {/* Ачивки / Достижения */}
-        <Title order={3} size="h4" mb={-10}>Достижения</Title>
+        <Title order={3} size="h4" mb={-10}>{t('profile.achievements')}</Title>
         <Stack gap="xs">
           {/* Молния */}
           <Card withBorder padding="sm" radius="md" opacity={hasLightning ? 1 : 0.4} style={{ borderLeft: hasLightning ? '4px solid #fab005' : '1px solid var(--mantine-color-border)' }}>
@@ -278,12 +283,12 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
                   <IconBolt size={18} />
                 </ThemeIcon>
                 <Stack gap={2}>
-                  <Text fw={600} size="sm">Молния</Text>
-                  <Text size="xs" c="dimmed">Угадал слово быстрее чем за 1.5 секунды</Text>
+                  <Text fw={600} size="sm">{t('profile.achLightning')}</Text>
+                  <Text size="xs" c="dimmed">{t('profile.achLightningDesc')}</Text>
                 </Stack>
               </Group>
               <Badge color={hasLightning ? 'yellow' : 'gray'} variant="light">
-                {hasLightning ? 'Разблокировано' : 'Закрыто'}
+                {hasLightning ? t('profile.unlocked') : t('profile.locked')}
               </Badge>
             </Group>
           </Card>
@@ -296,12 +301,12 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
                   <IconBrain size={18} />
                 </ThemeIcon>
                 <Stack gap={2}>
-                  <Text fw={600} size="sm">Эрудит</Text>
-                  <Text size="xs" c="dimmed">Разгадал/объяснил самое сложное слово партии</Text>
+                  <Text fw={600} size="sm">{t('profile.achErudite')}</Text>
+                  <Text size="xs" c="dimmed">{t('profile.achEruditeDesc')}</Text>
                 </Stack>
               </Group>
               <Badge color={hasErudite ? 'blue' : 'gray'} variant="light">
-                {hasErudite ? 'Разблокировано' : 'Закрыто'}
+                {hasErudite ? t('profile.unlocked') : t('profile.locked')}
               </Badge>
             </Group>
           </Card>
@@ -314,33 +319,36 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
                   <IconHourglass size={18} />
                 </ThemeIcon>
                 <Stack gap={2}>
-                  <Text fw={600} size="sm">Железные нервы</Text>
-                  <Text size="xs" c="dimmed">Угадал слово на последней секунде раунда</Text>
+                  <Text fw={600} size="sm">{t('profile.achIronNerves')}</Text>
+                  <Text size="xs" c="dimmed">{t('profile.achIronNervesDesc')}</Text>
                 </Stack>
               </Group>
               <Badge color={hasIronNerves ? 'red' : 'gray'} variant="light">
-                {hasIronNerves ? 'Разблокировано' : 'Закрыто'}
+                {hasIronNerves ? t('profile.unlocked') : t('profile.locked')}
               </Badge>
             </Group>
           </Card>
         </Stack>
 
         {/* История игр */}
-        <Title order={3} size="h4" mb={-10}>История игр</Title>
+        <Title order={3} size="h4" mb={-10}>{t('profile.historyTitle')}</Title>
         {totalGames === 0 ? (
           <Card withBorder padding="md" radius="md" ta="center">
-            <Text size="sm" c="dimmed">Вы еще не сыграли ни одной игры. Начните партию, чтобы увидеть историю!</Text>
+            <Text size="sm" c="dimmed">{t('profile.noGames')}</Text>
           </Card>
         ) : (
           <Stack gap="xs">
             {participations.slice(0, 10).map((part) => {
               const game = part.games;
-              const dateStr = new Date(game.created_at).toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              });
+              const dateStr = new Date(game.created_at).toLocaleDateString(
+                lang === 'en' ? 'en-US' : 'ru-RU',
+                {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                },
+              );
               
               // Подсчет угаданных слов его команды в этой игре
               const gameHistory = game.history_data || [];
@@ -353,12 +361,12 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
                   <Group justify="space-between">
                     <Stack gap={2}>
                       <Group gap="xs">
-                        <Text fw={600} size="sm">Команда: {part.team_name}</Text>
+                        <Text fw={600} size="sm">{t('profile.teamLabel', { team: part.team_name })}</Text>
                         <Badge color={part.is_winner ? 'green' : 'gray'} size="xs" variant="filled">
-                          {part.is_winner ? 'Победа' : 'Поражение'}
+                          {part.is_winner ? t('profile.win') : t('profile.loss')}
                         </Badge>
                       </Group>
-                      <Text size="xs" c="dimmed">Победила: {game.winner_team_name}</Text>
+                      <Text size="xs" c="dimmed">{t('profile.wonLabel', { team: game.winner_team_name })}</Text>
                       <Text size="xs" c="dimmed">{dateStr}</Text>
                     </Stack>
                     <Stack gap={2} align="flex-end">
@@ -366,9 +374,9 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
                         <ThemeIcon color="green" size="xs" radius="xl" variant="light">
                           <IconTrophy size={10} />
                         </ThemeIcon>
-                        <Text size="xs" fw={500}>{teamGuesses} слов угадано</Text>
+                        <Text size="xs" fw={500}>{t('profile.wordsGuessedCount', { n: teamGuesses })}</Text>
                       </Group>
-                      <Text size="xs" c="dimmed">Слова в игре: {game.settings?.wordCount}</Text>
+                      <Text size="xs" c="dimmed">{t('profile.wordsInGame', { n: game.settings?.wordCount })}</Text>
                     </Stack>
                   </Group>
                 </Card>

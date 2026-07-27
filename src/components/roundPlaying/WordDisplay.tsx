@@ -1,5 +1,6 @@
 import { Box } from '@mantine/core';
 import { hyphenateWord } from '../../utils/hyphenate';
+import { useI18n } from '../../i18n/i18n';
 
 interface WordDisplayProps {
   word: string;
@@ -7,6 +8,7 @@ interface WordDisplayProps {
 }
 
 export function WordDisplay({ word, hidden = false }: WordDisplayProps) {
+  const { t } = useI18n();
   return (
     <Box
       style={{
@@ -25,12 +27,12 @@ export function WordDisplay({ word, hidden = false }: WordDisplayProps) {
           fontWeight: 700,
           lineHeight: 1.1,
           textAlign: 'center',
-          color: hidden ? 'var(--mantine-color-dimmed)' : '#000',
+          color: hidden ? 'var(--mantine-color-dimmed)' : 'var(--mantine-color-text)',
           wordBreak: 'break-word',
           hyphens: 'manual',
         }}
       >
-        {hidden ? 'Слово скрыто' : hyphenateWord(word)}
+        {hidden ? t('wordDisplay.hidden') : hyphenateWord(word)}
       </Box>
     </Box>
   );

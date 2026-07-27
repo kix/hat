@@ -2,6 +2,7 @@ import { Badge, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 import type { HatContext, History, Settings, Team } from '../../machine/hatMachine';
 import { getBestPlayer, getEasiestWord, getHardestWord, sortTeamsByScore } from '../../utils/stats';
 import { getTeamScore } from '../../utils/scoring';
+import { useI18n } from '../../i18n/i18n';
 import { ResultBanner } from './ResultBanner';
 import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
@@ -22,6 +23,7 @@ interface GameSummaryViewProps {
 // sync. All the stat helpers operate purely on teams + history, so this works
 // equally on a live context or a game reconstructed from Supabase.
 export function GameSummaryView({ teams, history, settings, highlightPlayerId }: GameSummaryViewProps) {
+  const { t } = useI18n();
   // The reused sub-components (ResultBanner / HintedWordsCard /
   // PreviousRoundWords) accept a HatContext but only read teams + history.
   // Feed them a minimal context so we don't have to change their signatures.
@@ -64,7 +66,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
       <Card withBorder padding="md">
         <Stack gap="xs">
           <Text fw={600} size="sm" c="dimmed">
-            Рейтинг команд
+            {t('summaryView.teamRanking')}
           </Text>
           <Stack gap={6}>
             {sortedTeams.map((team, idx) => (
@@ -75,7 +77,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
                   </Text>
                   <Text fw={idx === 0 ? 600 : 500}>{team.name}</Text>
                 </Group>
-                <Text fw={600}>{getTeamScore(history, team.id)} очков</Text>
+                <Text fw={600}>{t('common.points', { n: getTeamScore(history, team.id) })}</Text>
               </Group>
             ))}
           </Stack>
@@ -86,7 +88,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
       <Card withBorder padding="md">
         <Stack gap="xs">
           <Text fw={600} size="sm" c="dimmed">
-            Рейтинг игроков
+            {t('summaryView.playerRanking')}
           </Text>
           <Stack gap="xs">
             {playersWithScores.map((item, idx) => {
@@ -104,7 +106,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
                         </Text>
                         {isYou && (
                           <Badge size="xs" color="blue" variant="light" style={{ flexShrink: 0 }}>
-                            вы
+                            {t('summaryView.you')}
                           </Badge>
                         )}
                       </Group>
@@ -114,7 +116,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
                     </Stack>
                   </Group>
                   <Text size="xs" style={{ flexShrink: 0 }} ta="right">
-                    угадал: <b>{item.guessed}</b> · объяснил: <b>{item.explained}</b>
+                    {t('summaryView.guessedExplained', { g: item.guessed, e: item.explained })}
                   </Text>
                 </Group>
               );
@@ -127,28 +129,28 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
 
       <SimpleGrid cols={1} spacing="sm">
         {bestPlayer && (
-          <StatCard title="Лучший игрок">
+          <StatCard title={t('summaryView.bestPlayer')}>
             <Text fw={600}>{bestPlayer.player.name}</Text>
             <Text size="sm" c="dimmed">
-              {bestPlayer.team.name} · {bestPlayer.guessedCount} угаданных слов
+              {t('summaryView.bestPlayerSub', { team: bestPlayer.team.name, n: bestPlayer.guessedCount })}
             </Text>
           </StatCard>
         )}
 
         {hardestWord && (
-          <StatCard title="Самое сложное слово">
+          <StatCard title={t('summaryView.hardestWord')}>
             <Text fw={600}>{hardestWord.word}</Text>
             <Text size="sm" c="dimmed">
-              {(hardestWord.timeMs / 1000).toFixed(1)} сек
+              {t('summaryView.secs', { n: (hardestWord.timeMs / 1000).toFixed(1) })}
             </Text>
           </StatCard>
         )}
 
         {easiestWord && (
-          <StatCard title="Самое простое слово">
+          <StatCard title={t('summaryView.easiestWord')}>
             <Text fw={600}>{easiestWord.word}</Text>
             <Text size="sm" c="dimmed">
-              {(easiestWord.timeMs / 1000).toFixed(1)} сек
+              {t('summaryView.secs', { n: (easiestWord.timeMs / 1000).toFixed(1) })}
             </Text>
           </StatCard>
         )}

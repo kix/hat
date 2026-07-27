@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Anchor, Card, Group, Stack, Switch, Text, ThemeIcon } from '@mantine/core';
 import { IconBrandTelegram } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
+import { useI18n } from '../../i18n/i18n';
 
 interface TelegramNotificationsCardProps {
   userId: string;
@@ -15,6 +16,7 @@ const botLink = botUsername ? `https://t.me/${botUsername}?start=hat` : undefine
 // Telegram forbids bots from cold-messaging, enabling also nudges the user to
 // open the bot and press Start — without that, delivery silently fails.
 export function TelegramNotificationsCard({ userId, telegramId }: TelegramNotificationsCardProps) {
+  const { t } = useI18n();
   const [enabled, setEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -60,11 +62,10 @@ export function TelegramNotificationsCard({ userId, telegramId }: TelegramNotifi
           </ThemeIcon>
           <Stack gap={2} style={{ minWidth: 0 }}>
             <Text fw={600} size="sm">
-              Итоги дня в Telegram
+              {t('notif.title')}
             </Text>
             <Text size="xs" c="dimmed">
-              Раз в день будем присылать сводку ваших вчерашних игр со ссылкой на подробную
-              статистику.
+              {t('notif.desc')}
             </Text>
           </Stack>
         </Group>
@@ -72,20 +73,20 @@ export function TelegramNotificationsCard({ userId, telegramId }: TelegramNotifi
           checked={enabled}
           disabled={saving}
           onChange={(e) => void toggle(e.currentTarget.checked)}
-          aria-label="Присылать итоги дня в Telegram"
+          aria-label={t('notif.switchAria')}
         />
       </Group>
       {enabled && (
         <Text size="xs" c="dimmed" mt="sm">
-          Важно: чтобы бот мог написать вам, один раз откройте{' '}
+          {t('notif.startHintPre')}{' '}
           {botLink ? (
             <Anchor href={botLink} target="_blank" rel="noopener">
-              чат с ботом
+              {t('notif.chatWithBot')}
             </Anchor>
           ) : (
-            'чат с ботом'
+            t('notif.chatWithBot')
           )}{' '}
-          и нажмите «Start».
+          {t('notif.startHintPost')}
         </Text>
       )}
     </Card>

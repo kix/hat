@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-27
+
+### Added
+
+- **English version.** The whole app can now run in English, switchable via a
+  RU/EN toggle in the header (persisted, defaults to the browser language).
+  - Full UI internationalization: a lightweight in-house `i18n` layer
+    (`useI18n`/`t()` for components, `tr()` for the state machine and utils)
+    with a complete RU + EN message catalog. Every user-facing string was
+    migrated — screens, buttons, placeholders, aria-labels, alerts, and
+    multiplayer/validation messages.
+  - A generated **English word dictionary** (`src/data/dictionaryEn.ts`,
+    ~11.4k common nouns from WordNet scored by Zipf frequency via
+    rspeer/wordfreq, difficulty-tiered and family-friendly filtered), loaded
+    in place of the Russian list when the language is English. Generator
+    script: `scripts/generate_english_dictionary.py`.
+  - Language-aware team-name generation (English adjectives + the English
+    dictionary), default player names, and date formatting.
+- Word cards now use the theme text color instead of hardcoded black, so they
+  render correctly in dark mode.
+
 ## [1.2.0] - 2026-07-27
 
 ### Added
@@ -95,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.3.0]: https://github.com/kix/hat/releases/tag/v1.3.0
 [1.2.0]: https://github.com/kix/hat/releases/tag/v1.2.0
 [1.1.1]: https://github.com/kix/hat/releases/tag/v1.1.1
 [1.1.0]: https://github.com/kix/hat/releases/tag/v1.1.0

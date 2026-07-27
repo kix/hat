@@ -9,6 +9,7 @@ import { saveGameResult } from '../../auth/saveGame';
 import { GameSummaryView } from './GameSummaryView';
 import { PlayAgainButton } from './PlayAgainButton';
 import { ShareGameButton } from '../summary/ShareGameButton';
+import { useI18n } from '../../i18n/i18n';
 
 interface GameOverScreenProps {
   context: HatContext;
@@ -18,6 +19,7 @@ interface GameOverScreenProps {
 }
 
 export function GameOverScreen({ context, send, isHost, participants }: GameOverScreenProps) {
+  const { t } = useI18n();
   const session = useAuthSession();
   // The id of the persisted game, once saved — enables the share link. Only
   // the saver (local player, or the host in multiplayer) gets it.
@@ -54,7 +56,7 @@ export function GameOverScreen({ context, send, isHost, participants }: GameOver
     <Container size="xs" py="lg">
       <Stack gap="lg">
         <Title order={1} ta="center">
-          Игра окончена
+          {t('gameOver.title')}
         </Title>
 
         <GameSummaryView

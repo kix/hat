@@ -18,6 +18,7 @@ import { MarkWordRareButton } from './MarkWordRareButton';
 import { HideWordButton } from './HideWordButton';
 import { isLocalDevEnvironment } from '../../utils/isLocalDevEnvironment';
 import { ExitGameButton } from '../shared/ExitGameButton';
+import { useI18n } from '../../i18n/i18n';
 
 interface RoundPlayingScreenProps {
   context: HatContext;
@@ -34,6 +35,7 @@ export function RoundPlayingScreen({
   currentUserId,
   isHost = false,
 }: RoundPlayingScreenProps) {
+  const { t } = useI18n();
   const session = useAuthSession();
   const currentWord = context.currentWord?.word;
 
@@ -116,7 +118,7 @@ export function RoundPlayingScreen({
             ) : (
               <Stack align="center" gap="md" pb="xl" px="md">
                 <Text c="red" fw={700} size="md" ta="center">
-                  Время вышло! Вы можете разгадать последнее слово или завершить раунд.
+                  {t('rp.timeUpGuessLast')}
                 </Text>
                 <ActionButtons
                   allowSkip={context.settings.allowSkip}
@@ -125,7 +127,7 @@ export function RoundPlayingScreen({
                   send={handleSend}
                 />
                 <Button size="xl" color="blue" fullWidth style={{ maxWidth: 300 }} onClick={() => send({ type: 'FINISH_ROUND' })}>
-                  Завершить раунд
+                  {t('rp.endRound')}
                 </Button>
               </Stack>
             )}
@@ -133,10 +135,10 @@ export function RoundPlayingScreen({
         ) : (
           <Stack align="center" justify="center" style={{ flex: 1 }} gap="lg" px="md">
             <Text size="xl" fw={600} ta="center">
-              Раунд окончен! Все слова разгаданы.
+              {t('rp.roundOverAllGuessed')}
             </Text>
             <Button size="xl" color="blue" fullWidth style={{ maxWidth: 300 }} onClick={() => send({ type: 'FINISH_ROUND' })}>
-              Завершить раунд
+              {t('rp.endRound')}
             </Button>
           </Stack>
         )
@@ -148,19 +150,19 @@ export function RoundPlayingScreen({
               {isGuesser ? (
                 <>
                   <Text fw={800} size="xl" c="blue">
-                    ВЫ УГАДЫВАЕТЕ!
+                    {t('rp.youGuess')}
                   </Text>
                   <Text size="sm" c="dimmed">
-                    Слушайте объяснение игрока: <b>{describer.name}</b>
+                    {t('rp.listenExplanation')} <b>{describer.name}</b>
                   </Text>
                 </>
               ) : (
                 <>
                   <Text fw={800} size="xl" c="orange">
-                    ХОД ДРУГОЙ КОМАНДЫ
+                    {t('rp.otherTeamTurn')}
                   </Text>
                   <Text size="sm" c="dimmed">
-                    <b>{describer.name}</b> объясняет для <b>{guesser.name}</b>
+                    <b>{describer.name}</b> {t('rp.explainsFor')} <b>{guesser.name}</b>
                   </Text>
                 </>
               )}
@@ -170,12 +172,12 @@ export function RoundPlayingScreen({
           {isTimeUp && (
             <Stack align="center" gap="sm">
               <Text c="red" fw={600} size="sm">
-                Время вышло! Ожидание завершения раунда...
+                {t('rp.timeUpWaiting')}
               </Text>
               {/* Позволяем хосту завершить раунд принудительно, если возникла задержка */}
               {isHost && (
                 <Button size="md" color="blue" onClick={() => send({ type: 'FINISH_ROUND' })}>
-                  Завершить раунд (Хост)
+                  {t('rp.endRoundHost')}
                 </Button>
               )}
             </Stack>

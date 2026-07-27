@@ -1,16 +1,18 @@
 import { Badge, Group, Stack, Text } from '@mantine/core';
 import type { HatContext } from '../../machine/hatMachine';
 import { getTeamScore } from '../../utils/scoring';
+import { useI18n } from '../../i18n/i18n';
 
 interface ScoreboardProps {
   context: HatContext;
 }
 
 export function Scoreboard({ context }: ScoreboardProps) {
+  const { t } = useI18n();
   return (
     <Stack gap="xs">
       <Text size="sm" c="dimmed">
-        Слов в шляпе: {context.hat.length}
+        {t('roundIntro.wordsInHat', { n: context.hat.length })}
       </Text>
       {context.teams.map((team) => (
         <Group key={team.id} justify="space-between">

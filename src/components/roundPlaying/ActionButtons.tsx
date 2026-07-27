@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, LoadingOverlay } from '@mantine/core';
 import type { HatEvent } from '../../machine/hatMachine';
 import { vibrate } from '../../utils/haptics';
+import { useI18n } from '../../i18n/i18n';
 import styles from './ActionButtons.module.css';
 
 // Guards against a tap intended for the previous word landing on the new one
@@ -16,6 +17,7 @@ interface ActionButtonsProps {
 }
 
 export function ActionButtons({ allowSkip, vibrationEnabled, wordShownAt, send }: ActionButtonsProps) {
+  const { t } = useI18n();
   const [ready, setReady] = useState(import.meta.env.DEV);
 
   useEffect(() => {
@@ -45,17 +47,17 @@ export function ActionButtons({ allowSkip, vibrationEnabled, wordShownAt, send }
             disabled={!ready}
             onClick={() => act({ type: 'WORD_SKIPPED' }, 15)}
           >
-            Пропустить
+            {t('actionButtons.skip')}
           </Button>
         )}
         <Button variant="outline" color="red" size="md" disabled={!ready} onClick={() => act({ type: 'WORD_FOUL' }, 15)}>
-          Нарушение
+          {t('actionButtons.foul')}
         </Button>
       </div>
       {/* Most frequent action: large, filled, anchored at the very bottom
           edge — the easiest spot to reach one-handed. */}
       <Button size="xl" fullWidth color="green" disabled={!ready} onClick={() => act({ type: 'WORD_GUESSED' }, 30)}>
-        Угадано!
+        {t('actionButtons.guessed')}
       </Button>
     </div>
   );
