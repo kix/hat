@@ -265,3 +265,78 @@ for insert
 to anon, authenticated 
 with check (true);
 ```
+
+-- =====================================================================
+-- 8. СОЦИАЛЬНАЯ ФУНКЦИЯ: ЕЖЕДНЕВНЫЕ ИТОГИ ИГР В TELEGRAM
+-- =====================================================================
+
+Раз в сутки задача `pg_cron` рассылает вошедшим через Telegram игрокам сводку
+их вчерашних игр с UUID-ссылкой на страницу `?summary=<uuid>`, где другие
+участники тоже видят свою статистику. Вся серверная логика — в
+`supabase/migrations/telegram_summaries.sql`.
+
+### Что нужно сделать один раз (в консоли Supabase)
+
+1. **Включить расширения.** Dashboard → Database → Extensions: включить
+   `pg_cron` и `http` (последнее уже используется для входа через Telegram).
+
+2. **Применить миграцию.** Либо через Supabase CLI:
+
+   ```bash
+   supabase link --project-ref kioqswvdyarkbqdgtldx
+   supabase db push   # спросит пароль базы данных
+   ```
+
+   либо вручную — выполнить весь файл
+   `supabase/migrations/20260727200434_telegram_summaries.sql` в SQL Editor. Он создаёт
+   столбец `games.teams_data`, таблицы `app_settings`, `telegram_notifications`,
+   `game_summaries`, функции `get_game_summary()` и
+   `build_and_send_daily_summaries()`.
+
+3. **Создать бота и положить токен в Vault.** У @BotFather создать бота
+   (`/newbot`), скопировать **токен бота** (это НЕ тот client secret, что
+   используется для входа). Dashboard → Project Settings → Vault → New Secret:
+   имя `telegram_bot_token`, значение — токен. Токен нигде в клиентском коде
+   не хранится.
+
+   ```sql
+   -- Альтернатива через SQL:
+   select vault.create_secret('123456:ABC-DEF...', 'telegram_bot_token');
+   ```
+
+4. **Указать адрес приложения и юзернейм бота.**
+
+   ```sql
+   update public.app_settings set value = 'https://ВАШ-АДРЕС/hat/' where key = 'app_base_url';
+   -- при необходимости: update public.app_settings set value = 'UTC' where key = 'summary_tz';
+   ```
+
+   На фронтенде задать `VITE_TELEGRAM_BOT_USERNAME` (юзернейм бота без `@`) —
+   иначе кнопка «Итоги дня в Telegram» не сможет открыть чат с ботом.
+
+5. **Запланировать рассылку.** Раскомментировать вызов `cron.schedule(...)` в
+   конце миграции (или выполнить отдельно). Время задаётся в UTC:
+
+   ```sql
+   select cron.schedule(
+     'hat-daily-summaries', '0 6 * * *',
+     $cron$ select public.build_and_send_daily_summaries(); $cron$
+   );
+   ```
+
+### Проверка вручную
+
+```sql
+-- Отправить сводки за конкретную дату немедленно (возвращает число успешных отправок):
+select public.build_and_send_daily_summaries('2026-07-26'::date);
+-- Диагностика последней попытки по каждому пользователю:
+select user_id, enabled, last_status, last_sent_at from public.telegram_notifications;
+```
+
+### Важное ограничение Telegram
+
+Бот **не может написать пользователю первым**. Вход через Telegram этого не
+даёт — пользователь должен сам открыть бота и нажать «Start». Поэтому в профиле
+есть переключатель «Итоги дня в Telegram», который при включении открывает чат
+с ботом. Пользователям, не нажавшим «Start», Telegram вернёт 403, и запись
+просто помечается ошибкой в `last_status` (рассылка остальным продолжается).

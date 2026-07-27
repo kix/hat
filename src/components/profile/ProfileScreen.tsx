@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Container, Stack, Title, Text, Button, Card, Group, SimpleGrid, Badge, Loader, ThemeIcon } from '@mantine/core';
 import { IconArrowLeft, IconBolt, IconBrain, IconHourglass, IconTrophy, IconUser, IconCalendar } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
+import { TelegramNotificationsCard } from '../notifications/TelegramNotificationsCard';
 
 interface ProfileScreenProps {
   userId: string;
@@ -221,6 +222,14 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
             </Stack>
           </Group>
         </Card>
+
+        {/* Уведомления в Telegram (только для вошедших через Telegram) */}
+        {profile?.user_metadata?.provider === 'telegram' && profile?.user_metadata?.telegram_id && (
+          <TelegramNotificationsCard
+            userId={userId}
+            telegramId={String(profile.user_metadata.telegram_id)}
+          />
+        )}
 
         {/* Статистика */}
         <Title order={3} size="h4" mb={-10}>Статистика партий</Title>

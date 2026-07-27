@@ -13,6 +13,7 @@ import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
 import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
 import { GameOverScreen } from './components/gameOver/GameOverScreen';
 import { ProfileScreen } from './components/profile/ProfileScreen';
+import { SummaryScreen } from './components/summary/SummaryScreen';
 import { AuthMenu, signInWithGoogle, signInWithTelegram } from './components/auth/AuthMenu';
 import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
@@ -27,6 +28,10 @@ function App() {
   const [playerName, setPlayerName] = useState<string>('');
   const [joinRoomCode, setJoinRoomCode] = useState<string>('');
   const [showProfile, setShowProfile] = useState<boolean>(false);
+  // Shareable daily-summary link (?summary=<uuid>), read once on load.
+  const [summaryId, setSummaryId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('summary'),
+  );
 
   // Ссылка на последние настройки для звуков/вибрации
   const settingsRef = useRef<Settings | null>(null);
@@ -150,6 +155,24 @@ function App() {
     multiplayer.leaveRoom();
     setMode(null);
   };
+
+  const closeSummary = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('summary');
+    window.history.replaceState({}, '', url.toString());
+    setSummaryId(null);
+  };
+
+  // =====================================================================
+  // ЭКРАН СВОДКИ ИГР ПО ССЫЛКЕ (?summary=<uuid>)
+  // =====================================================================
+  if (summaryId) {
+    return (
+      <ScreenTransition key="summary">
+        <SummaryScreen summaryId={summaryId} onClose={closeSummary} />
+      </ScreenTransition>
+    );
+  }
 
   // =====================================================================
   // ЭКРАН ПРОФИЛЯ И СТАТИСТИКИ

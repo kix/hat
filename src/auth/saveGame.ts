@@ -25,6 +25,9 @@ export async function saveGameResult(
         winner_team_name: winnerTeam.name,
         history_data: context.history,
         settings: context.settings,
+        // Full roster snapshot so a shared summary page can rebuild the
+        // teams/players faithfully (history_data only carries player ids).
+        teams_data: context.teams,
       })
       .select()
       .single();
