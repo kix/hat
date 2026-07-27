@@ -68,7 +68,7 @@ export function GameOverScreen({ context, send, isHost, participants }: GameOver
       void syncWordTimingsToSupabase(session.user.id);
     }
 
-    if (!savedRef.current) {
+    if (session !== undefined && !savedRef.current) {
       savedRef.current = true;
       const isMultiplayer = !!participants && participants.length > 0;
       const shouldSave = !isMultiplayer || isHost;
@@ -78,7 +78,7 @@ export function GameOverScreen({ context, send, isHost, participants }: GameOver
         });
       }
     }
-  }, [session, isHost, participants]);
+  }, [session, isHost, participants, context]);
 
   return (
     <Container size="xs" py="lg">
