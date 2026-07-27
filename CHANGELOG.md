@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-07-28
+
+### Fixed
+
+- **Session loading race condition.** Fixed a bug where `saveGameResult` would run before the Supabase auth session resolved, causing games to be saved with `currentUserId` as `undefined` and missing participant connections.
+
 ## [1.5.0] - 2026-07-28
 
 ### Added
@@ -153,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.5.1]: https://github.com/kix/hat/releases/tag/v1.5.1
 [1.5.0]: https://github.com/kix/hat/releases/tag/v1.5.0
 [1.4.1]: https://github.com/kix/hat/releases/tag/v1.4.1
 [1.4.0]: https://github.com/kix/hat/releases/tag/v1.4.0
