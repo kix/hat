@@ -58,3 +58,7 @@ on public.game_participants
 for insert 
 to anon, authenticated 
 with check (true);
+
+-- Предоставляем права доступа ролям anon и authenticated
+grant select, insert on public.games to anon, authenticated;
+grant select, insert on public.game_participants to anon, authenticated;

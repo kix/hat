@@ -132,6 +132,17 @@ to anon, authenticated
 using (auth.uid() = host_id);
 
 -- =====================================================================
+-- 4.1. ПРЕДОСТАВЛЕНИЕ ПРАВ ДОСТУПА (TABLE GRANTS)
+-- =====================================================================
+-- В новых проектах Supabase по умолчанию могут быть отозваны права на таблицы.
+-- Эти команды явно разрешают доступ для клиентского API (anon, authenticated):
+
+grant select, insert, update, delete on public.rooms to anon, authenticated;
+grant select, insert, update on public.user_states to anon, authenticated;
+grant select, insert on public.word_solution_times to anon, authenticated;
+grant insert on public.weird_words to anon, authenticated;
+
+-- =====================================================================
 -- 5. ТРИГГЕР ДЛЯ АВТООБНОВЛЕНИЯ СТОЛБЦА updated_at
 -- =====================================================================
 
@@ -264,6 +275,10 @@ on public.game_participants
 for insert 
 to anon, authenticated 
 with check (true);
+
+-- Предоставляем права доступа ролям anon и authenticated
+grant select, insert on public.games to anon, authenticated;
+grant select, insert on public.game_participants to anon, authenticated;
 ```
 
 -- =====================================================================
