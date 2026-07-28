@@ -86,22 +86,49 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
             throw new Error(tr('auth.decodeFailed'));
           }
 
-          // Выполняем анонимный вход в Supabase
-          const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-          if (authError) throw authError;
+          // Извлекаем Telegram ID из OIDC токена (используем decoded.id / decoded.telegram_id, если доступны, с фоллбеком на sub)
+          const telegramId = String(decoded.id || decoded.telegram_id || decoded.sub || '');
+          if (!telegramId) {
+            throw new Error('Telegram ID не найден в claims токена');
+          }
 
-          if (authData.user) {
-            // Сохраняем имя и аватар из Telegram в метаданных пользователя
-            const fullName =
-              [decoded.given_name, decoded.family_name].filter(Boolean).join(' ') ||
-              decoded.nickname ||
-              'Telegram User';
+          // Генерируем детерминированные учетные данные для предотвращения дубликатов аккаунтов
+          const email = `tg_${telegramId}@telegram.hat`;
+          const password = `tg_auth_${telegramId}_${clientSecret}`;
 
+          const fullName =
+            [decoded.given_name, decoded.family_name].filter(Boolean).join(' ') ||
+            decoded.nickname ||
+            'Telegram User';
+
+          // Пытаемся войти под существующим пользователем
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            // Если пользователя нет, регистрируем нового
+            const { error: signUpError } = await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                data: {
+                  full_name: fullName,
+                  avatar_url: decoded.picture || decoded.avatar_url,
+                  telegram_id: telegramId,
+                  provider: 'telegram',
+                },
+              },
+            });
+            if (signUpError) throw signUpError;
+          } else if (signInData.user) {
+            // Если вошли успешно, обновляем метаданные на случай изменения имени/аватара в TG
             await supabase.auth.updateUser({
               data: {
                 full_name: fullName,
-                avatar_url: decoded.picture,
-                telegram_id: decoded.sub,
+                avatar_url: decoded.picture || decoded.avatar_url,
+                telegram_id: telegramId,
                 provider: 'telegram',
               },
             });

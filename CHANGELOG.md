@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.7] - 2026-07-28
+
+### Fixed
+
+- **Telegram OIDC Account Duplication.** Replaced the anonymous login with a stable, deterministic credential login flow linked to the user's real Telegram ID. This ensures users sign in to their existing account instead of creating duplicate anonymous profiles upon clearing browser sessions.
+- **Telegram ID Extraction.** Added fallback checks (`decoded.id` / `decoded.telegram_id`) to retrieve the raw numeric Telegram user ID from the OIDC claims token, falling back to the JWT `sub` pairwise identifier only when necessary.
+
 ## [1.6.5] - 2026-07-28
 
 ### Added
@@ -199,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.7]: https://github.com/kix/hat/releases/tag/v1.6.7
 [1.6.5]: https://github.com/kix/hat/releases/tag/v1.6.5
 [1.6.4]: https://github.com/kix/hat/releases/tag/v1.6.4
 [1.6.3]: https://github.com/kix/hat/releases/tag/v1.6.3
