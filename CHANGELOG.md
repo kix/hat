@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.5] - 2026-07-28
+
+### Added
+
+- **Report Bug Link in Footer.** Added a bug reporting link pointing directly to the GitHub Issues creation page. Fully localized into Russian and English.
+
 ## [1.6.4] - 2026-07-28
 
 ### Added
@@ -193,6 +199,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.5]: https://github.com/kix/hat/releases/tag/v1.6.5
 [1.6.4]: https://github.com/kix/hat/releases/tag/v1.6.4
 [1.6.3]: https://github.com/kix/hat/releases/tag/v1.6.3
 [1.6.2]: https://github.com/kix/hat/releases/tag/v1.6.2

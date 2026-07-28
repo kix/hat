@@ -369,6 +369,10 @@ function App() {
             <Anchor href="https://web.tribute.tg/d/NSu" target="_blank" size="xs" c="dimmed" underline="hover">
               {t('landing.supportAuthor')}
             </Anchor>
+            <Text size="xs" c="dimmed">·</Text>
+            <Anchor href="https://github.com/kix/hat/issues/new" target="_blank" size="xs" c="dimmed" underline="hover">
+              {t('landing.reportBug')}
+            </Anchor>
           </Group>
         </Stack>
       </Container>
