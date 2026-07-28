@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useMachine } from '@xstate/react';
 import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider } from '@mantine/core';
-import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram } from '@tabler/icons-react';
+import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
 import { useGameSounds } from './sounds/useGameSounds';
 import { vibrate } from './utils/haptics';
@@ -338,6 +338,26 @@ function App() {
                 )}
               </Stack>
             )}
+          </Card>
+
+          <Card withBorder padding="lg" radius="md" style={{ background: 'rgba(25, 113, 194, 0.03)' }}>
+            <Stack gap="xs">
+              <Group gap="xs" c="blue">
+                <IconInfoCircle size={20} />
+                <Text fw={700} size="xs" style={{ letterSpacing: 0.5 }}>
+                  {t('landing.howToPlayTitle').toUpperCase()}
+                </Text>
+              </Group>
+              <Text size="xs" style={{ lineHeight: 1.5 }}>
+                {t('landing.howToPlayRule1')}
+              </Text>
+              <Text size="xs" style={{ lineHeight: 1.5 }}>
+                {t('landing.howToPlayRule2')}
+              </Text>
+              <Text size="xs" style={{ lineHeight: 1.5 }}>
+                {t('landing.howToPlayRule3')}
+              </Text>
+            </Stack>
           </Card>
         </Stack>
       </Container>
