@@ -101,38 +101,24 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
             decoded.nickname ||
             'Telegram User';
 
-          // Пытаемся войти под существующим пользователем
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          // Вызываем RPC-функцию для гарантированной регистрации/обновления пользователя напрямую в БД
+          // Это позволяет избежать лимитов отправки писем подтверждения (email rate limit exceeded)
+          const { error: rpcError } = await supabase.rpc('register_telegram_user', {
+            p_telegram_id: telegramId,
+            p_full_name: fullName,
+            p_avatar_url: decoded.picture || decoded.avatar_url || '',
+            p_password: password,
+          });
+
+          if (rpcError) throw rpcError;
+
+          // Выполняем вход с паролем — теперь аккаунт гарантированно существует и подтвержден
+          const { error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
 
-          if (signInError) {
-            // Если пользователя нет, регистрируем нового
-            const { error: signUpError } = await supabase.auth.signUp({
-              email,
-              password,
-              options: {
-                data: {
-                  full_name: fullName,
-                  avatar_url: decoded.picture || decoded.avatar_url,
-                  telegram_id: telegramId,
-                  provider: 'telegram',
-                },
-              },
-            });
-            if (signUpError) throw signUpError;
-          } else if (signInData.user) {
-            // Если вошли успешно, обновляем метаданные на случай изменения имени/аватара в TG
-            await supabase.auth.updateUser({
-              data: {
-                full_name: fullName,
-                avatar_url: decoded.picture || decoded.avatar_url,
-                telegram_id: telegramId,
-                provider: 'telegram',
-              },
-            });
-          }
+          if (signInError) throw signInError;
         } catch (e: any) {
           console.error('Ошибка авторизации через Telegram OIDC:', e);
           const errorMsg = e?.message || e?.details || JSON.stringify(e);

@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.11] - 2026-07-28
+
+### Fixed
+
+- **Bypassed Email Signup Rate Limits.** Created and integrated a `register_telegram_user` security definer database function that registers or updates Telegram users directly in the `auth.users` table with confirmed status (`email_confirmed_at` and `confirmed_at` set to `now()`). This bypasses GoTrue's SMTP signup confirmation emails, completely preventing "email rate limit exceeded" errors for OIDC users.
+
 ## [1.6.10] - 2026-07-28
 
 ### Fixed
@@ -225,6 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.11]: https://github.com/kix/hat/releases/tag/v1.6.11
 [1.6.10]: https://github.com/kix/hat/releases/tag/v1.6.10
 [1.6.9]: https://github.com/kix/hat/releases/tag/v1.6.9
 [1.6.8]: https://github.com/kix/hat/releases/tag/v1.6.8
