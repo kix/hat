@@ -92,33 +92,28 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
             throw new Error('Telegram ID не найден в claims токена');
           }
 
-          // Генерируем детерминированные учетные данные для предотвращения дубликатов аккаунтов
-          const email = `tg_${telegramId}@telegram.com`;
-          const password = `tg_auth_${telegramId}_${clientSecret}`;
-
           const fullName =
             [decoded.given_name, decoded.family_name].filter(Boolean).join(' ') ||
             decoded.nickname ||
             'Telegram User';
 
-          // Вызываем RPC-функцию для гарантированной регистрации/обновления пользователя напрямую в БД
-          // Это позволяет избежать лимитов отправки писем подтверждения (email rate limit exceeded)
-          const { error: rpcError } = await supabase.rpc('register_telegram_user', {
+          // 1. Выполняем анонимный вход в Supabase (гарантированно работает без почтовых лимитов)
+          const { data: signInData, error: signInError } = await supabase.auth.signInAnonymously();
+          if (signInError) throw signInError;
+          if (!signInData.user) throw new Error('Не удалось получить анонимного пользователя');
+
+          // 2. Связываем/объединяем анонимного пользователя с историей и настройками Telegram-аккаунта
+          const { error: rpcError } = await supabase.rpc('link_telegram_user', {
+            p_new_user_id: signInData.user.id,
             p_telegram_id: telegramId,
             p_full_name: fullName,
             p_avatar_url: decoded.picture || decoded.avatar_url || '',
-            p_password: password,
           });
 
           if (rpcError) throw rpcError;
 
-          // Выполняем вход с паролем — теперь аккаунт гарантированно существует и подтвержден
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (signInError) throw signInError;
+          // 3. Обновляем сессию клиента, чтобы подтянуть новые метаданные Telegram в JWT
+          await supabase.auth.refreshSession();
         } catch (e: any) {
           console.error('Ошибка авторизации через Telegram OIDC:', e);
           let errorMsg = '';
