@@ -19,6 +19,7 @@ export const messages: Record<Lang, Record<string, string>> = {
     // landing
     'app.title': 'Шляпа',
     'landing.tagline': 'Популярная игра в объяснение слов. Выберите режим игры, чтобы начать!',
+    'landing.supportAuthor': 'Поддержать автора',
     'landing.howToPlayTitle': 'Как играть',
     'landing.howToPlayRule1': 'Вы разбиваетесь на пары (обязательно нужно чётное количество человек). По кругу передаётся телефон с запущенным приложением. Тот, у кого в паре сейчас в руках телефон — объясняет слово, а второй угадывает. Использовать для подсказки синонимы, созвучия и переводы на другой язык считается нарушением.',
     'landing.howToPlayRule2': 'Если угадали, переходите к следующему слову. Чем больше слов за раунд — тем больше у вас очков!',
@@ -304,6 +305,7 @@ export const messages: Record<Lang, Record<string, string>> = {
     // landing
     'app.title': 'Hat',
     'landing.tagline': 'The popular word-explaining game. Pick a mode to get started!',
+    'landing.supportAuthor': 'Support the author',
     'landing.howToPlayTitle': 'How to Play',
     'landing.howToPlayRule1': 'You split into pairs (an even number of players is required). A phone with the running app is passed around in a circle. The one who has the phone in their hands explains the word, and the other one guesses it. Using synonyms, sound-alikes, or translations to another language is considered a foul.',
     'landing.howToPlayRule2': 'If guessed correctly, proceed to the next word. The more words you guess per round, the more points you get!',

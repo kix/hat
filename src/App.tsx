@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useMachine } from '@xstate/react';
-import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider } from '@mantine/core';
+import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider, Anchor } from '@mantine/core';
 import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
+import packageJson from '../package.json';
 import { useGameSounds } from './sounds/useGameSounds';
 import { vibrate } from './utils/haptics';
 import { rememberPlayerName } from './utils/playerNamesStore';
@@ -359,6 +360,16 @@ function App() {
               </Text>
             </Stack>
           </Card>
+
+          <Group justify="center" gap="xs" mt="sm" style={{ opacity: 0.5 }}>
+            <Text size="xs">
+              v{packageJson.version}
+            </Text>
+            <Text size="xs" c="dimmed">·</Text>
+            <Anchor href="https://web.tribute.tg/d/NSu" target="_blank" size="xs" c="dimmed" underline="hover">
+              {t('landing.supportAuthor')}
+            </Anchor>
+          </Group>
         </Stack>
       </Container>
     );
