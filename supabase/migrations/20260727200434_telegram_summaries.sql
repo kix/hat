@@ -50,7 +50,7 @@ on conflict (key) do nothing;
 -- ---------------------------------------------------------------------
 create table if not exists public.telegram_notifications (
     user_id      uuid primary key references auth.users(id) on delete cascade,
-    telegram_id  text not null,
+    telegram_id  text not null unique,
     enabled      boolean not null default true,
     last_status  text,          -- outcome of the last send attempt
     last_sent_at timestamptz,
