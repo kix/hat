@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.9] - 2026-07-28
+
+### Fixed
+
+- **Game Participant Mapping in History.** Mapped local player IDs (like generic string IDs generated during setup) to their actual Supabase user UUIDs inside the `history_data` JSONB structure (`describerId` and `guesserId`) before saving the game results. This ensures daily summaries and user statistics are compiled correctly for both local and online players.
+- **Auto-Mapping Current User in Setup.** Added the currently logged-in user to the connected participants pool during team configuration, allowing autocomplete/type matching to automatically link the local player slot to their Supabase user account ID in the frontend context.
+
 ## [1.6.8] - 2026-07-28
 
 ### Added
@@ -212,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.9]: https://github.com/kix/hat/releases/tag/v1.6.9
 [1.6.8]: https://github.com/kix/hat/releases/tag/v1.6.8
 [1.6.7]: https://github.com/kix/hat/releases/tag/v1.6.7
 [1.6.5]: https://github.com/kix/hat/releases/tag/v1.6.5

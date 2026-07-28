@@ -18,26 +18,7 @@ export async function saveGameResult(
     const winnerTeam = sortedTeams[0];
     if (!winnerTeam) return null;
 
-    // 1. Сохраняем игру в таблицу games
-    const { data: game, error: gameErr } = await supabase
-      .from('games')
-      .insert({
-        winner_team_name: winnerTeam.name,
-        history_data: context.history,
-        settings: context.settings,
-        // Full roster snapshot so a shared summary page can rebuild the
-        // teams/players faithfully (history_data only carries player ids).
-        teams_data: context.teams,
-      })
-      .select()
-      .single();
-
-    if (gameErr || !game) {
-      console.error('Ошибка сохранения игры:', gameErr);
-      return null;
-    }
-
-    // 2. Строим карту соответствия имен и UUID пользователей
+    // 1. Строим карту соответствия имен и UUID пользователей
     const realUsersMap = new Map<string, string>(); // name -> userId
     
     // Добавляем всех известных участников лобби
@@ -56,9 +37,6 @@ export async function saveGameResult(
       }
     }
 
-    // 3. Формируем список участников для сохранения
-    const participantsToInsert: any[] = [];
-    
     // Собираем набор всех гарантированно реальных UUID пользователей в этой сессии
     const validUserIds = new Set<string>();
     if (currentUserId) {
@@ -70,22 +48,69 @@ export async function saveGameResult(
       }
     });
 
+    // Строим карту соответствия локального player.id -> Supabase UUID
+    const playerIdToUuidMap = new Map<string, string>();
+    for (const team of context.teams) {
+      for (const player of team.players) {
+        if (!player.name) continue;
+        const nameKey = player.name.trim().toLowerCase();
+        const matchedUserId = validUserIds.has(player.id) ? player.id : (realUsersMap.get(nameKey) || null);
+        if (matchedUserId) {
+          playerIdToUuidMap.set(player.id, matchedUserId);
+        }
+      }
+    }
+
+    // В случае фоллбека для локальной игры, если никто не совпал по имени:
+    // Мы сможем смаппить первого игрока на текущего пользователя
+    let hasMatchedAny = false;
+    for (const team of context.teams) {
+      for (const player of team.players) {
+        if (player.name && (validUserIds.has(player.id) || realUsersMap.has(player.name.trim().toLowerCase()))) {
+          hasMatchedAny = true;
+        }
+      }
+    }
+
+    if (!hasMatchedAny && currentUserId && context.teams.length > 0) {
+      const firstTeam = context.teams[0];
+      const firstPlayer = firstTeam.players[0];
+      if (firstPlayer && firstPlayer.name) {
+        playerIdToUuidMap.set(firstPlayer.id, currentUserId);
+      }
+    }
+
+    // Теперь маппим history_data, подменяя локальные ID игроков на их реальные Supabase UUID
+    const mappedHistory = context.history.map((record) => ({
+      ...record,
+      describerId: playerIdToUuidMap.get(record.describerId) || record.describerId,
+      guesserId: playerIdToUuidMap.get(record.guesserId) || record.guesserId,
+    }));
+
+    // 2. Сохраняем игру в таблицу games
+    const { data: game, error: gameErr } = await supabase
+      .from('games')
+      .insert({
+        winner_team_name: winnerTeam.name,
+        history_data: mappedHistory, // Используем отмаппленную историю с реальными UUID!
+        settings: context.settings,
+        teams_data: context.teams,
+      })
+      .select()
+      .single();
+
+    if (gameErr || !game) {
+      console.error('Ошибка сохранения игры:', gameErr);
+      return null;
+    }
+
+    // 3. Формируем список участников для сохранения
+    const participantsToInsert: any[] = [];
     for (const team of context.teams) {
       const isTeamWinner = team.id === winnerTeam.id;
       for (const player of team.players) {
         if (!player.name) continue;
-
-        const nameKey = player.name.trim().toLowerCase();
-        let matchedUserId: string | null = null;
-
-        // Если player.id — это реально известный UUID зарегистрированного пользователя в сессии
-        if (validUserIds.has(player.id)) {
-          matchedUserId = player.id;
-        } else {
-          // Иначе пытаемся сопоставить по имени (для локального режима)
-          matchedUserId = realUsersMap.get(nameKey) || null;
-        }
-
+        const matchedUserId = playerIdToUuidMap.get(player.id);
         if (matchedUserId) {
           participantsToInsert.push({
             game_id: game.id,
@@ -95,21 +120,6 @@ export async function saveGameResult(
             is_winner: isTeamWinner,
           });
         }
-      }
-    }
-
-    // Если в локальной игре ни один игрок не совпал по имени, связываем текущего пользователя с первым игроком
-    if (participantsToInsert.length === 0 && currentUserId && context.teams.length > 0) {
-      const firstTeam = context.teams[0];
-      const firstPlayer = firstTeam.players[0];
-      if (firstPlayer && firstPlayer.name) {
-        participantsToInsert.push({
-          game_id: game.id,
-          user_id: currentUserId,
-          player_name: firstPlayer.name,
-          team_name: firstTeam.name,
-          is_winner: firstTeam.id === winnerTeam.id,
-        });
       }
     }
 

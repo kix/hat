@@ -9,14 +9,17 @@ import { useI18n } from '../../i18n/i18n';
 import type { MultiplayerState } from '../../auth/useMultiplayer';
 import { useState } from 'react';
 
+import type { User } from '@supabase/supabase-js';
+
 interface SetupScreenProps {
   context: HatContext;
   send: (event: HatEvent) => void;
   onBack?: () => void;
   multiplayer?: MultiplayerState;
+  currentUser?: User | null;
 }
 
-export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenProps) {
+export function SetupScreen({ context, send, onBack, multiplayer, currentUser }: SetupScreenProps) {
   const { t } = useI18n();
   const [loadingQr, setLoadingQr] = useState(false);
   const [nfcModalOpen, setNfcModalOpen] = useState(false);
@@ -200,11 +203,26 @@ export function SetupScreen({ context, send, onBack, multiplayer }: SetupScreenP
           <Title order={3} mb="sm">
             {t('setup.teams')}
           </Title>
-          <TeamList
-            teams={context.teams}
-            send={send}
-            connectedParticipants={multiplayer?.participants}
-          />
+          {(() => {
+            const connectedParticipants = [...(multiplayer?.participants || [])];
+            if (currentUser && !connectedParticipants.some((p) => p.userId === currentUser.id)) {
+              const fullName = currentUser.user_metadata?.full_name || currentUser.email || '';
+              if (fullName) {
+                connectedParticipants.push({
+                  userId: currentUser.id,
+                  name: fullName,
+                  isHost: true,
+                });
+              }
+            }
+            return (
+              <TeamList
+                teams={context.teams}
+                send={send}
+                connectedParticipants={connectedParticipants}
+              />
+            );
+          })()}
         </div>
 
         <Divider />

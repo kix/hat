@@ -425,6 +425,7 @@ function App() {
             setMode(null);
           }}
           multiplayer={multiplayer}
+          currentUser={session?.user}
         />
       </ScreenTransition>
     );
