@@ -121,7 +121,15 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
           if (signInError) throw signInError;
         } catch (e: any) {
           console.error('Ошибка авторизации через Telegram OIDC:', e);
-          const errorMsg = e?.message || e?.details || JSON.stringify(e);
+          let errorMsg = '';
+          if (e && typeof e === 'object') {
+            errorMsg = e.message || e.details || e.error_description || JSON.stringify(e);
+            if (errorMsg === '{}') {
+              errorMsg = `${e.name || 'Error'}: ${e.message || 'Unknown error'}`;
+            }
+          } else {
+            errorMsg = String(e);
+          }
           alert(tr('auth.telegramFailed', { error: errorMsg }));
         } finally {
           setLoading(false);

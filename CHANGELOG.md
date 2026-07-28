@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.14] - 2026-07-28
+
+### Fixed
+
+- **Robust Error Messaging in OIDC catch block.** Handled JavaScript native `Error` instances correctly in the auth exception handler to prevent empty JSON string outputs (`{}`) and instead log and show clear name/message pairs.
+
 ## [1.6.13] - 2026-07-28
 
 ### Fixed
@@ -243,6 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.14]: https://github.com/kix/hat/releases/tag/v1.6.14
 [1.6.13]: https://github.com/kix/hat/releases/tag/v1.6.13
 [1.6.12]: https://github.com/kix/hat/releases/tag/v1.6.12
 [1.6.11]: https://github.com/kix/hat/releases/tag/v1.6.11
