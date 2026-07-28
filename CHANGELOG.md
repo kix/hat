@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.10] - 2026-07-28
+
+### Fixed
+
+- **Mock Email Domain Validation.** Changed the generated mock email domain from `telegram.hat` (using an invalid `.hat` TLD which is rejected by Supabase Auth / GoTrue's format validation library) to the universally valid `telegram.com` domain.
+
 ## [1.6.9] - 2026-07-28
 
 ### Fixed
@@ -219,6 +225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.10]: https://github.com/kix/hat/releases/tag/v1.6.10
 [1.6.9]: https://github.com/kix/hat/releases/tag/v1.6.9
 [1.6.8]: https://github.com/kix/hat/releases/tag/v1.6.8
 [1.6.7]: https://github.com/kix/hat/releases/tag/v1.6.7

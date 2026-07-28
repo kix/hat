@@ -93,7 +93,7 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
           }
 
           // Генерируем детерминированные учетные данные для предотвращения дубликатов аккаунтов
-          const email = `tg_${telegramId}@telegram.hat`;
+          const email = `tg_${telegramId}@telegram.com`;
           const password = `tg_auth_${telegramId}_${clientSecret}`;
 
           const fullName =
