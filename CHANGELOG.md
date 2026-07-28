@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.13] - 2026-07-28
+
+### Fixed
+
+- **Telegram ID Database Conflicts.** Updated the `register_telegram_user` DB function to lookup users by their `telegram_id` metadata (rather than strict email matches), and programmatically cleans up any duplicate legacy notification profile rows. This prevents `duplicate key value violates unique constraint "unique_telegram_id"` errors when migrating users from old domain schemes.
+
 ## [1.6.12] - 2026-07-28
 
 ### Fixed
@@ -237,6 +243,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.13]: https://github.com/kix/hat/releases/tag/v1.6.13
 [1.6.12]: https://github.com/kix/hat/releases/tag/v1.6.12
 [1.6.11]: https://github.com/kix/hat/releases/tag/v1.6.11
 [1.6.10]: https://github.com/kix/hat/releases/tag/v1.6.10

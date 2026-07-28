@@ -18,8 +18,15 @@ declare
 begin
   v_email := 'tg_' || p_telegram_id || '@telegram.com';
   
-  -- Check if user already exists
-  select id into v_user_id from auth.users where email = v_email;
+  -- 1. Check if user already exists by telegram_id in metadata
+  select id into v_user_id 
+  from auth.users 
+  where raw_user_meta_data->>'telegram_id' = p_telegram_id;
+  
+  -- 2. Fallback to check by email
+  if v_user_id is null then
+    select id into v_user_id from auth.users where email = v_email;
+  end if;
   
   if v_user_id is null then
     v_user_id := gen_random_uuid();
@@ -55,22 +62,28 @@ begin
       now(),
       now()
     );
-    
-    -- Insert a default row into telegram_notifications
-    insert into public.telegram_notifications (user_id, telegram_id, enabled)
-    values (v_user_id, p_telegram_id, true)
-    on conflict (user_id) do nothing;
   else
-    -- If user exists, update their metadata
+    -- If user exists, update email and metadata
     update auth.users
-    set raw_user_meta_data = raw_user_meta_data || jsonb_build_object(
-      'full_name', p_full_name,
-      'avatar_url', p_avatar_url,
-      'telegram_id', p_telegram_id
-    ),
-    updated_at = now()
+    set email = v_email,
+        raw_user_meta_data = raw_user_meta_data || jsonb_build_object(
+          'full_name', p_full_name,
+          'avatar_url', p_avatar_url,
+          'telegram_id', p_telegram_id
+        ),
+        updated_at = now()
     where id = v_user_id;
   end if;
+  
+  -- Clean up duplicate telegram_notifications rows to prevent unique constraint violation
+  delete from public.telegram_notifications 
+  where telegram_id = p_telegram_id and user_id != v_user_id;
+  
+  -- Upsert notification preferences
+  insert into public.telegram_notifications (user_id, telegram_id, enabled)
+  values (v_user_id, p_telegram_id, true)
+  on conflict (user_id) 
+  do update set telegram_id = excluded.telegram_id;
   
   return v_user_id;
 end;
