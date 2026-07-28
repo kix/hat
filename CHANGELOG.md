@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.8] - 2026-07-28
+
+### Added
+
+- **Improved Telegram Linking UX.** Made the instruction text warning to open the Telegram Bot and press "Start" always visible (under a dashed divider), and dynamically displays the bot handle (e.g. `@bot_username`) so the bot is easy to find.
+
 ## [1.6.7] - 2026-07-28
 
 ### Fixed
@@ -206,6 +212,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.8]: https://github.com/kix/hat/releases/tag/v1.6.8
 [1.6.7]: https://github.com/kix/hat/releases/tag/v1.6.7
 [1.6.5]: https://github.com/kix/hat/releases/tag/v1.6.5
 [1.6.4]: https://github.com/kix/hat/releases/tag/v1.6.4

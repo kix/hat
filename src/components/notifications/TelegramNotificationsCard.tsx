@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Anchor, Card, Group, Stack, Switch, Text, ThemeIcon } from '@mantine/core';
+import { Anchor, Card, Group, Stack, Switch, Text, ThemeIcon, Divider } from '@mantine/core';
 import { IconBrandTelegram } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useI18n } from '../../i18n/i18n';
@@ -76,19 +76,18 @@ export function TelegramNotificationsCard({ userId, telegramId }: TelegramNotifi
           aria-label={t('notif.switchAria')}
         />
       </Group>
-      {enabled && (
-        <Text size="xs" c="dimmed" mt="sm">
-          {t('notif.startHintPre')}{' '}
-          {botLink ? (
-            <Anchor href={botLink} target="_blank" rel="noopener">
-              {t('notif.chatWithBot')}
-            </Anchor>
-          ) : (
-            t('notif.chatWithBot')
-          )}{' '}
-          {t('notif.startHintPost')}
-        </Text>
-      )}
+      <Divider my="sm" variant="dashed" />
+      <Text size="xs" c="dimmed">
+        {t('notif.startHintPre')}{' '}
+        {botLink ? (
+          <Anchor href={botLink} target="_blank" rel="noopener" fw={600}>
+            {t('notif.chatWithBot')}{botUsername ? ` (@${botUsername})` : ''}
+          </Anchor>
+        ) : (
+          t('notif.chatWithBot')
+        )}{' '}
+        {t('notif.startHintPost')}
+      </Text>
     </Card>
   );
 }
