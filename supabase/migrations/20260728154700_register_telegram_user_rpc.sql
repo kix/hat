@@ -33,7 +33,6 @@ begin
       email,
       encrypted_password,
       email_confirmed_at,
-      confirmed_at,
       raw_app_meta_data,
       raw_user_meta_data,
       created_at,
@@ -45,7 +44,6 @@ begin
       'authenticated',
       v_email,
       v_crypted_password,
-      now(),
       now(),
       jsonb_build_object('provider', 'email', 'providers', array['email']),
       jsonb_build_object(

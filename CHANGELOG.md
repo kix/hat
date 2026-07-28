@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.12] - 2026-07-28
+
+### Fixed
+
+- **Supabase Generated Column Error.** Omitted the `confirmed_at` column from the manual INSERT statement in the `register_telegram_user` DB function. In newer versions of Supabase GoTrue, `confirmed_at` is a generated column, so trying to insert values into it triggers database validation errors.
+
 ## [1.6.11] - 2026-07-28
 
 ### Fixed
@@ -231,6 +237,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.12]: https://github.com/kix/hat/releases/tag/v1.6.12
 [1.6.11]: https://github.com/kix/hat/releases/tag/v1.6.11
 [1.6.10]: https://github.com/kix/hat/releases/tag/v1.6.10
 [1.6.9]: https://github.com/kix/hat/releases/tag/v1.6.9
