@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text, Loader } from '@mantine/core';
-import { IconBrandGoogle, IconBrandTelegram, IconUserCircle } from '@tabler/icons-react';
+import { IconBrandTelegram, IconUserCircle } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
 import { useI18n } from '../../i18n/i18n';
@@ -12,17 +12,6 @@ function getCleanCurrentUrl(): string {
   const url = new URL(window.location.href);
   url.searchParams.delete('code');
   return url.toString();
-}
-
-// Инициализация OAuth для Google
-export function signInWithGoogle() {
-  const redirectTo = getCleanCurrentUrl();
-  void supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo,
-    },
-  });
 }
 
 // Инициализация OIDC для Telegram
@@ -171,10 +160,7 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
             <Text size="sm" fw={500}>
               {t('auth.signInToSave')}
             </Text>
-            <Button variant="default" leftSection={<IconBrandGoogle size={18} />} onClick={signInWithGoogle}>
-              {t('auth.google')}
-            </Button>
-            
+
             {clientId ? (
               <Button
                 variant="default"

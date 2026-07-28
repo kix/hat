@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useMachine } from '@xstate/react';
 import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider } from '@mantine/core';
-import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandGoogle, IconBrandTelegram } from '@tabler/icons-react';
+import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
 import { useGameSounds } from './sounds/useGameSounds';
 import { vibrate } from './utils/haptics';
@@ -16,7 +16,7 @@ import { GameOverScreen } from './components/gameOver/GameOverScreen';
 import { ProfileScreen } from './components/profile/ProfileScreen';
 import { SummaryScreen } from './components/summary/SummaryScreen';
 import { GameShareScreen } from './components/summary/GameShareScreen';
-import { AuthMenu, signInWithGoogle, signInWithTelegram } from './components/auth/AuthMenu';
+import { AuthMenu, signInWithTelegram } from './components/auth/AuthMenu';
 import { ColorSchemeToggle } from './components/ColorSchemeToggle';
 import { LanguageToggle } from './components/LanguageToggle';
 import { useI18n } from './i18n/i18n';
@@ -323,13 +323,6 @@ function App() {
                 <Text size="sm" c="dimmed" ta="center">
                   {t('landing.loginPrompt')}
                 </Text>
-                <Button
-                  variant="default"
-                  leftSection={<IconBrandGoogle size={18} />}
-                  onClick={signInWithGoogle}
-                >
-                  {t('auth.google')}
-                </Button>
                 {import.meta.env.VITE_TELEGRAM_CLIENT_ID ? (
                   <Button
                     variant="default"
