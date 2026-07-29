@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.16] - 2026-07-29
+
+### Added
+
+- **Google Analytics Event Tracking.** Integrated safe, ad-blocker-proof event tracking for key application flows: game starts (`game_start`), game ends (`game_end`), multiplayer room creations (`create_room`), room joins (`join_room`), OIDC login clicks (`auth_click`), support donations link clicks (`support_click`), and telegram notifications preferences toggling/bot-starts (`telegram_notifications_toggle` and `bot_start_click`).
+- **Fail-Safe Adblocker Protection.** Wrapped Google Analytics calls to guarantee that browser extensions blocking analytics scripts or tracking services cannot throw exceptions or disrupt the runtime functionality of the game.
+
 ## [1.6.15] - 2026-07-28
 
 ### Fixed
@@ -255,6 +262,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.16]: https://github.com/kix/hat/releases/tag/v1.6.16
 [1.6.15]: https://github.com/kix/hat/releases/tag/v1.6.15
 [1.6.14]: https://github.com/kix/hat/releases/tag/v1.6.14
 [1.6.13]: https://github.com/kix/hat/releases/tag/v1.6.13

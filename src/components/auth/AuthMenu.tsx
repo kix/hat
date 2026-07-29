@@ -6,6 +6,7 @@ import { useAuthSession } from '../../auth/useAuthSession';
 import { useI18n } from '../../i18n/i18n';
 import { tr } from '../../i18n/lang';
 import styles from './AuthMenu.module.css';
+import { trackEvent } from '../../utils/analytics';
 
 // Получение текущего URL без временных параметров авторизации
 function getCleanCurrentUrl(): string {
@@ -181,7 +182,10 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
               <Button
                 variant="default"
                 leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
-                onClick={() => signInWithTelegram(clientId)}
+                onClick={() => {
+                  trackEvent('auth_click', { provider: 'telegram' });
+                  signInWithTelegram(clientId);
+                }}
               >
                 {t('auth.telegram')}
               </Button>

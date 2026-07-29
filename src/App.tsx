@@ -23,6 +23,7 @@ import { LanguageToggle } from './components/LanguageToggle';
 import { useI18n } from './i18n/i18n';
 import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
+import { trackEvent } from './utils/analytics';
 
 function App() {
   const sounds = useGameSounds();
@@ -46,6 +47,7 @@ function App() {
 
   // Ссылка на последние настройки для звуков/вибрации
   const settingsRef = useRef<Settings | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
 
   // Инициализация XState автомата (используется локально и на Хосте)
   const machine = useMemo(
@@ -139,7 +141,28 @@ function App() {
   const send = mode === 'multiplayer' ? multiplayer.sendAction : localSend;
   const currentContext = mode === 'multiplayer' ? (multiplayer.gameContext || localState.context) : localState.context;
   const currentStatus = mode === 'multiplayer' ? multiplayer.gameState : (localState.value as string);
-
+  // Отслеживаем начало и конец игры для аналитики
+  useEffect(() => {
+    if (prevStatusRef.current === 'setup' && currentStatus === 'roundIntro') {
+      trackEvent('game_start', {
+        mode: mode,
+        teams_count: currentContext.teams.length,
+        word_count: currentContext.settings.wordCount,
+        difficulty: currentContext.settings.difficultyLevel,
+        word_pack: currentContext.settings.wordPack,
+        round_duration: currentContext.settings.roundDurationSec,
+      });
+    }
+    if (currentStatus === 'gameOver' && prevStatusRef.current !== 'gameOver') {
+      trackEvent('game_end', {
+        mode: mode,
+        winner_team: currentContext.teams[0]?.name || '',
+        total_words: currentContext.settings.wordCount,
+        rounds_played: currentContext.teams.reduce((acc, t) => acc + t.roundsPlayed, 0),
+      });
+    }
+    prevStatusRef.current = currentStatus;
+  }, [currentStatus, mode, currentContext]);
   // Автоматический выход из комнаты при старте локальной игры хостом
   useEffect(() => {
     if (mode === 'local' && currentStatus !== 'setup' && multiplayer.roomId) {
@@ -152,6 +175,7 @@ function App() {
     const name = playerName.trim() || t('default.host');
     const code = await multiplayer.createRoom(name, localState.context);
     if (code) {
+      trackEvent('create_room');
       setMode('multiplayer');
     }
   };
@@ -165,6 +189,7 @@ function App() {
     const name = playerName.trim() || t('default.player');
     const ok = await multiplayer.joinRoom(joinRoomCode, name);
     if (ok) {
+      trackEvent('join_room');
       setMode('multiplayer');
       // Очищаем URL параметр join
       const url = new URL(window.location.href);
@@ -328,7 +353,10 @@ function App() {
                   <Button
                     variant="default"
                     leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
-                    onClick={() => signInWithTelegram(import.meta.env.VITE_TELEGRAM_CLIENT_ID)}
+                    onClick={() => {
+                      trackEvent('auth_click', { provider: 'telegram' });
+                      signInWithTelegram(import.meta.env.VITE_TELEGRAM_CLIENT_ID);
+                    }}
                   >
                     {t('auth.telegram')}
                   </Button>
@@ -366,11 +394,25 @@ function App() {
               v{packageJson.version}
             </Text>
             <Text size="xs" c="dimmed">·</Text>
-            <Anchor href="https://web.tribute.tg/d/NSu" target="_blank" size="xs" c="dimmed" underline="hover">
+            <Anchor 
+              href="https://web.tribute.tg/d/NSu" 
+              target="_blank" 
+              size="xs" 
+              c="dimmed" 
+              underline="hover"
+              onClick={() => trackEvent('support_click', { provider: 'tribute' })}
+            >
               {t('landing.supportAuthor')}
             </Anchor>
             <Text size="xs" c="dimmed">·</Text>
-            <Anchor href="https://github.com/kix/hat/issues/new" target="_blank" size="xs" c="dimmed" underline="hover">
+            <Anchor 
+              href="https://github.com/kix/hat/issues/new" 
+              target="_blank" 
+              size="xs" 
+              c="dimmed" 
+              underline="hover"
+              onClick={() => trackEvent('bug_report_click')}
+            >
               {t('landing.reportBug')}
             </Anchor>
           </Group>

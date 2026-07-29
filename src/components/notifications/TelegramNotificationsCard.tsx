@@ -3,6 +3,7 @@ import { Anchor, Card, Group, Stack, Switch, Text, ThemeIcon, Divider } from '@m
 import { IconBrandTelegram } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useI18n } from '../../i18n/i18n';
+import { trackEvent } from '../../utils/analytics';
 
 interface TelegramNotificationsCardProps {
   userId: string;
@@ -42,9 +43,13 @@ export function TelegramNotificationsCard({ userId, telegramId }: TelegramNotifi
           { onConflict: 'user_id' },
         );
       if (error) throw error;
+      trackEvent('telegram_notifications_toggle', { enabled: next });
       // On opt-in, open the bot so the user can press Start — required for the
       // bot to be allowed to message them at all.
-      if (next && botLink) window.open(botLink, '_blank', 'noopener');
+      if (next && botLink) {
+        window.open(botLink, '_blank', 'noopener');
+        trackEvent('bot_start_click', { trigger: 'auto_toggle' });
+      }
     } catch (err) {
       console.error('Не удалось сохранить настройку уведомлений:', err);
       setEnabled(!next); // revert on failure
@@ -80,7 +85,13 @@ export function TelegramNotificationsCard({ userId, telegramId }: TelegramNotifi
       <Text size="xs" c="dimmed">
         {t('notif.startHintPre')}{' '}
         {botLink ? (
-          <Anchor href={botLink} target="_blank" rel="noopener" fw={600}>
+          <Anchor 
+            href={botLink} 
+            target="_blank" 
+            rel="noopener" 
+            fw={600}
+            onClick={() => trackEvent('bot_start_click', { trigger: 'link' })}
+          >
             {t('notif.chatWithBot')}{botUsername ? ` (@${botUsername})` : ''}
           </Anchor>
         ) : (
