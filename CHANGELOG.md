@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.17] - 2026-07-29
+
+### Added
+
+- **Google Play & PWA Publishing Assets.** Added a bilingual Privacy Policy page (`public/privacy.html`) and an Android Digital Asset Links verification template (`public/.well-known/assetlinks.json`) required for publishing the application on Google Play via Trusted Web Activity (TWA) or PWABuilder.
+- **Enabled Jekyll-free deployment.** Added a `.nojekyll` configuration file to ensure the `.well-known` subdirectory is served correctly by GitHub Pages.
+
 ## [1.6.16] - 2026-07-29
 
 ### Added
@@ -262,6 +269,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.17]: https://github.com/kix/hat/releases/tag/v1.6.17
 [1.6.16]: https://github.com/kix/hat/releases/tag/v1.6.16
 [1.6.15]: https://github.com/kix/hat/releases/tag/v1.6.15
 [1.6.14]: https://github.com/kix/hat/releases/tag/v1.6.14
