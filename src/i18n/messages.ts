@@ -86,6 +86,17 @@ export const messages: Record<Lang, Record<string, string>> = {
     'roundSettings.poolAvailable': 'Доступно слов в паке: {n}',
     'startGame.start': 'Начать игру',
     'startGame.loadingDict': 'Загружаем словарь…',
+    'setup.gameMode': 'Режим игры',
+    'setup.gameModeTeams': 'Командный',
+    'setup.gameModePairs': 'Парный (вдвоем)',
+    'setup.players': 'Игроки',
+    'setup.player1': 'Первый игрок',
+    'setup.player2': 'Второй игрок',
+    'roundIntro.pairTurn': 'Ход игроков',
+    'roundIntro.scoreTitle': 'Всего разгадано',
+    'resultBanner.pairsTitle': 'Совместный результат',
+    'resultBanner.pairsResult': '{n} разгаданных слов',
+
 
     // round intro
     'roundIntro.teamTurn': 'Ход команды',
@@ -126,6 +137,8 @@ export const messages: Record<Lang, Record<string, string>> = {
     'summaryView.guessedExplained': 'угадал: {g} · объяснил: {e}',
     'summaryView.bestPlayer': 'Лучший игрок',
     'summaryView.bestPlayerSub': '{team} · {n} угаданных слов',
+    'summaryView.bestPlayerSubPairs': '{n} угаданных слов',
+
     'summaryView.hardestWord': 'Самое сложное слово',
     'summaryView.easiestWord': 'Самое простое слово',
     'summaryView.secs': '{n} сек',
@@ -278,8 +291,11 @@ export const messages: Record<Lang, Record<string, string>> = {
     // custom game over stats
     'summaryView.fastestGuessTitle': '⚡️ Самый быстрый ответ',
     'summaryView.fastestGuessSub': 'Разгадал(а) слово «{word}» за {sec} сек (команда {team})!',
+    'summaryView.fastestGuessSubPairs': 'Разгадал(а) слово «{word}» за {sec} сек!',
     'summaryView.slowestGuessTitle': '⏳ Самый неторопливый ответ',
     'summaryView.slowestGuessSub': 'Разгадал(а) слово «{word}» за {sec} сек (команда {team}).',
+    'summaryView.slowestGuessSubPairs': 'Разгадал(а) слово «{word}» за {sec} сек.',
+
     'summaryView.stolenWordsTitle': '🕵️‍♂️ Кражи века (Отыгрыш за чужой счет)',
     'summaryView.stolenWordsSub': 'Утащил(а) слово «{word}» у {victim} ({victimTeam}) после их {reason}!',
     'summaryView.reasonFoul': 'нарушения',
@@ -373,6 +389,17 @@ export const messages: Record<Lang, Record<string, string>> = {
     'roundSettings.poolAvailable': 'Words available in pack: {n}',
     'startGame.start': 'Start game',
     'startGame.loadingDict': 'Loading dictionary…',
+    'setup.gameMode': 'Game Mode',
+    'setup.gameModeTeams': 'Teams',
+    'setup.gameModePairs': 'Pairs (2 players)',
+    'setup.players': 'Players',
+    'setup.player1': 'First player',
+    'setup.player2': 'Second player',
+    'roundIntro.pairTurn': "Players' turn",
+    'roundIntro.scoreTitle': 'Total guessed',
+    'resultBanner.pairsTitle': 'Joint Result',
+    'resultBanner.pairsResult': '{n} words guessed',
+
 
     // round intro
     'roundIntro.teamTurn': "Team's turn",
@@ -413,6 +440,8 @@ export const messages: Record<Lang, Record<string, string>> = {
     'summaryView.guessedExplained': 'guessed: {g} · explained: {e}',
     'summaryView.bestPlayer': 'Best player',
     'summaryView.bestPlayerSub': '{team} · {n} words guessed',
+    'summaryView.bestPlayerSubPairs': '{n} words guessed',
+
     'summaryView.hardestWord': 'Hardest word',
     'summaryView.easiestWord': 'Easiest word',
     'summaryView.secs': '{n}s',
@@ -565,8 +594,11 @@ export const messages: Record<Lang, Record<string, string>> = {
     // custom game over stats
     'summaryView.fastestGuessTitle': '⚡️ Fastest Guess',
     'summaryView.fastestGuessSub': "Guessed '{word}' in {sec}s (team {team})!",
+    'summaryView.fastestGuessSubPairs': "Guessed '{word}' in {sec}s!",
     'summaryView.slowestGuessTitle': '⏳ Slowest Guess',
     'summaryView.slowestGuessSub': "Guessed '{word}' in {sec}s (team {team}).",
+    'summaryView.slowestGuessSubPairs': "Guessed '{word}' in {sec}s.",
+
     'summaryView.stolenWordsTitle': '🕵️‍♂️ Theft of the Century (Guessed after failure)',
     'summaryView.stolenWordsSub': "Stole '{word}' from {victim} ({victimTeam}) after their {reason}!",
     'summaryView.reasonFoul': 'foul',

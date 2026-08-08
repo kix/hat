@@ -250,6 +250,7 @@ describe('roles rotation', () => {
   function playOutRound(actor: ReturnType<typeof createActor<typeof hatMachine>>) {
     actor.send({ type: 'START_ROUND' });
     vi.advanceTimersByTime(120_000);
+    actor.send({ type: 'FINISH_ROUND' });
   }
 
   beforeEach(() => vi.useFakeTimers());
@@ -497,6 +498,7 @@ describe('round start sound', () => {
     actor.send({ type: 'START_ROUND' }); // team A's round
     expect(playRoundStartSound).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(30_000); // times out, hands off to team B
+    actor.send({ type: 'FINISH_ROUND' });
 
     actor.send({ type: 'START_ROUND' }); // team B's round
     expect(playRoundStartSound).toHaveBeenCalledTimes(2);
@@ -519,6 +521,7 @@ describe('round timer', () => {
     actor.send({ type: 'START_ROUND' });
     const drawnWord = actor.getSnapshot().context.currentWord!;
     vi.advanceTimersByTime(30_000);
+    actor.send({ type: 'FINISH_ROUND' });
 
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toBe('roundIntro'); // moved on to team B, hat not empty
@@ -671,6 +674,7 @@ describe('gameOver stats', () => {
     vi.advanceTimersByTime(2000);
     actor.send({ type: 'WORD_GUESSED' }); // word3, 2000ms
     vi.advanceTimersByTime(24_000); // remaining time on word4 -> timeout, 24000ms
+    actor.send({ type: 'FINISH_ROUND' });
 
     // Team B's turn: draws the returned word4 first and guesses it almost
     // instantly, then finishes word5 (guessed) and word6 (foul).
@@ -883,3 +887,74 @@ describe('getCurrentRoundGuessedCount', () => {
     expect(getCurrentRoundGuessedCount(context.teams, context.history, context.currentTeamIndex)).toBe(2);
   });
 });
+
+describe('pairs mode', () => {
+  it('truncates teams on SET_GAME_MODE pairs, and restores on teams', () => {
+    const actor = startActor();
+    // initially 2 teams
+    expect(actor.getSnapshot().context.teams).toHaveLength(2);
+
+    actor.send({ type: 'SET_GAME_MODE', gameMode: 'pairs' });
+    expect(actor.getSnapshot().context.settings.gameMode).toBe('pairs');
+    expect(actor.getSnapshot().context.teams).toHaveLength(1);
+
+    actor.send({ type: 'SET_GAME_MODE', gameMode: 'teams' });
+    expect(actor.getSnapshot().context.settings.gameMode).toBe('teams');
+    expect(actor.getSnapshot().context.teams).toHaveLength(2);
+  });
+
+  it('allows starting a game with 1 team in pairs mode and sets team name', () => {
+    const actor = startActor();
+    actor.send({ type: 'SET_GAME_MODE', gameMode: 'pairs' });
+    actor.send({
+      type: 'UPDATE_PLAYER_NAME',
+      teamId: actor.getSnapshot().context.teams[0].id,
+      playerId: actor.getSnapshot().context.teams[0].players[0].id,
+      name: 'Коля',
+    });
+    actor.send({
+      type: 'UPDATE_PLAYER_NAME',
+      teamId: actor.getSnapshot().context.teams[0].id,
+      playerId: actor.getSnapshot().context.teams[0].players[1].id,
+      name: 'Маша',
+    });
+
+    actor.send({ type: 'START_GAME' });
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.value).toBe('roundIntro');
+    expect(snapshot.context.teams).toHaveLength(1);
+    expect(snapshot.context.teams[0].name).toBe('Коля & Маша');
+  });
+
+  it('alternates roles between rounds in pairs mode', () => {
+    vi.useFakeTimers();
+    const actor = startActor();
+    actor.send({ type: 'SET_GAME_MODE', gameMode: 'pairs' });
+    actor.send({ type: 'SET_ROUND_DURATION', roundDurationSec: 30 });
+    actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+    
+    const teamId = actor.getSnapshot().context.teams[0].id;
+    const p1 = actor.getSnapshot().context.teams[0].players[0];
+    const p2 = actor.getSnapshot().context.teams[0].players[1];
+
+    actor.send({ type: 'UPDATE_PLAYER_NAME', teamId, playerId: p1.id, name: 'Коля' });
+    actor.send({ type: 'UPDATE_PLAYER_NAME', teamId, playerId: p2.id, name: 'Маша' });
+    actor.send({ type: 'START_GAME' });
+
+    // Round 1: Коля explains, Маша guesses
+    const round1Roles = getCurrentRoles(actor.getSnapshot().context.teams[0], 'alternate');
+    expect(round1Roles.describer.id).toBe(p1.id);
+    expect(round1Roles.guesser.id).toBe(p2.id);
+
+    actor.send({ type: 'START_ROUND' });
+    vi.advanceTimersByTime(30_000);
+    actor.send({ type: 'FINISH_ROUND' });
+
+    // Round 2: Маша explains, Коля guesses
+    const round2Roles = getCurrentRoles(actor.getSnapshot().context.teams[0], 'alternate');
+    expect(round2Roles.describer.id).toBe(p2.id);
+    expect(round2Roles.guesser.id).toBe(p1.id);
+    vi.useRealTimers();
+  });
+});
+

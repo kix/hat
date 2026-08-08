@@ -54,6 +54,7 @@ export interface Settings {
   vibrationEnabled: boolean;
   wordPack: 'standard' | 'frequent' | 'custom';
   customWords: string[];
+  gameMode?: 'teams' | 'pairs';
 }
 
 export interface HatContext {
@@ -86,6 +87,7 @@ export type HatEvent =
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
   | { type: 'SET_WORD_PACK'; wordPack: 'standard' | 'frequent' | 'custom' }
   | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
+  | { type: 'SET_GAME_MODE'; gameMode: 'teams' | 'pairs' }
   | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }
   | { type: 'START_GAME' }
   | { type: 'START_ROUND' }
@@ -137,6 +139,7 @@ export function createInitialContext(): HatContext {
       vibrationEnabled: false,
       wordPack: 'standard',
       customWords: [],
+      gameMode: 'teams',
     },
     dictionary: null,
     hat: [],
@@ -305,13 +308,13 @@ export const hatMachine = setup({
     setup: {
       on: {
         ADD_TEAM: {
-          guard: ({ context }) => context.teams.length < MAX_TEAMS,
+          guard: ({ context }) => context.settings.gameMode !== 'pairs' && context.teams.length < MAX_TEAMS,
           actions: assign(({ context }) => ({
             teams: [...context.teams, createTeam(context.dictionary)],
           })),
         },
         REMOVE_TEAM: {
-          guard: ({ context }) => context.teams.length > MIN_TEAMS,
+          guard: ({ context }) => context.settings.gameMode !== 'pairs' && context.teams.length > MIN_TEAMS,
           actions: assign(({ context, event }) => ({
             teams: context.teams.filter((team) => team.id !== event.teamId),
           })),
@@ -391,9 +394,25 @@ export const hatMachine = setup({
             settings: { ...context.settings, customWords: event.customWords },
           })),
         },
+        SET_GAME_MODE: {
+          actions: assign(({ context, event }) => {
+            let teams = context.teams;
+            if (event.gameMode === 'pairs') {
+              teams = [context.teams[0] || createTeam(context.dictionary)];
+            } else {
+              if (teams.length < 2) {
+                teams = [teams[0] || createTeam(context.dictionary), createTeam(context.dictionary)];
+              }
+            }
+            return {
+              settings: { ...context.settings, gameMode: event.gameMode },
+              teams,
+            };
+          }),
+        },
         START_GAME: {
           guard: ({ context }) =>
-            context.teams.length >= 2 &&
+            (context.settings.gameMode === 'pairs' ? context.teams.length === 1 : context.teams.length >= 2) &&
             context.dictionary !== null &&
             context.teams.every((team) => !getDuplicateNameReason(team)),
           actions: [
@@ -415,6 +434,11 @@ export const hatMachine = setup({
                 }));
               }
               const hat = pickRandom(pool, context.settings.wordCount, context.settings.difficultyLevel);
+              const teams = context.teams.map(fillBlankPlayerNames);
+              if (context.settings.gameMode === 'pairs' && teams[0]) {
+                const [p1, p2] = teams[0].players;
+                teams[0].name = `${p1.name} & ${p2.name}`;
+              }
               return {
                 hat,
                 settings: { ...context.settings, wordCount: hat.length },
@@ -422,7 +446,7 @@ export const hatMachine = setup({
                 history: [],
                 currentWord: null,
                 wordShownAt: null,
-                teams: context.teams.map(fillBlankPlayerNames),
+                teams,
               };
             }),
           ],

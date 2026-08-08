@@ -12,11 +12,12 @@ interface TeamCardProps {
   canRemove: boolean;
   send: (event: HatEvent) => void;
   connectedParticipants?: { userId: string; name: string }[];
+  gameMode?: 'teams' | 'pairs';
 }
 
 const MIN_CHARS_FOR_SUGGESTIONS = 2;
 
-export function TeamCard({ team, teamNumber, canRemove, send, connectedParticipants }: TeamCardProps) {
+export function TeamCard({ team, teamNumber, canRemove, send, connectedParticipants, gameMode }: TeamCardProps) {
   const { t } = useI18n();
   const duplicateNameReason = getDuplicateNameReason(team);
 
@@ -88,36 +89,44 @@ export function TeamCard({ team, teamNumber, canRemove, send, connectedParticipa
   return (
     <Card withBorder padding="md">
       <Stack gap="sm">
-        <Text size="xs" c="dimmed">
-          {t('teamCard.team', { n: teamNumber })}
-        </Text>
-        <Group gap="xs" wrap="nowrap">
-          <TextInput
-            aria-label={t('teamCard.teamName')}
-            placeholder={t('teamCard.teamName')}
-            value={team.name}
-            onChange={(event) => send({ type: 'UPDATE_TEAM_NAME', teamId: team.id, name: event.currentTarget.value })}
-            style={{ flex: 1 }}
-          />
-          <ActionIcon
-            aria-label={t('teamCard.regenerate')}
-            variant="light"
-            size="lg"
-            onClick={() => send({ type: 'REGENERATE_TEAM_NAME', teamId: team.id })}
-          >
-            <IconDice5 size={20} />
-          </ActionIcon>
-          <ActionIcon
-            aria-label={t('teamCard.removeTeam')}
-            variant="light"
-            color="red"
-            size="lg"
-            disabled={!canRemove}
-            onClick={() => send({ type: 'REMOVE_TEAM', teamId: team.id })}
-          >
-            <IconTrash size={20} />
-          </ActionIcon>
-        </Group>
+        {gameMode === 'pairs' ? (
+          <Text size="sm" fw={600} c="dimmed">
+            {t('setup.players')}
+          </Text>
+        ) : (
+          <>
+            <Text size="xs" c="dimmed">
+              {t('teamCard.team', { n: teamNumber })}
+            </Text>
+            <Group gap="xs" wrap="nowrap">
+              <TextInput
+                aria-label={t('teamCard.teamName')}
+                placeholder={t('teamCard.teamName')}
+                value={team.name}
+                onChange={(event) => send({ type: 'UPDATE_TEAM_NAME', teamId: team.id, name: event.currentTarget.value })}
+                style={{ flex: 1 }}
+              />
+              <ActionIcon
+                aria-label={t('teamCard.regenerate')}
+                variant="light"
+                size="lg"
+                onClick={() => send({ type: 'REGENERATE_TEAM_NAME', teamId: team.id })}
+              >
+                <IconDice5 size={20} />
+              </ActionIcon>
+              <ActionIcon
+                aria-label={t('teamCard.removeTeam')}
+                variant="light"
+                color="red"
+                size="lg"
+                disabled={!canRemove}
+                onClick={() => send({ type: 'REMOVE_TEAM', teamId: team.id })}
+              >
+                <IconTrash size={20} />
+              </ActionIcon>
+            </Group>
+          </>
+        )}
         <Group gap="xs" grow>
           {team.players.map((player, index) => {
             const participantNames = (connectedParticipants || []).map((p) => p.name);
@@ -131,8 +140,8 @@ export function TeamCard({ team, teamNumber, canRemove, send, connectedParticipa
             return (
               <Group gap="xs" wrap="nowrap" key={player.id} align="flex-start" style={{ flex: 1 }}>
                 <Autocomplete
-                  aria-label={t('default.playerN', { n: index + 1 })}
-                  placeholder={t('default.playerN', { n: index + 1 })}
+                  aria-label={gameMode === 'pairs' ? (index === 0 ? t('setup.player1') : t('setup.player2')) : t('default.playerN', { n: index + 1 })}
+                  placeholder={gameMode === 'pairs' ? (index === 0 ? t('setup.player1') : t('setup.player2')) : t('default.playerN', { n: index + 1 })}
                   description={
                     player.name.trim().length === 0 ? t('teamCard.anon') : (duplicateNameReason ?? undefined)
                   }

@@ -56,6 +56,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
   const slowestGuess = getSlowestGuess(teams, history);
   const stolenWords = getStolenWords(teams, history);
   const ruleBreakers = getRuleBreakers(teams, history);
+  const isPairs = settings.gameMode === 'pairs';
 
   const getFoulLabel = (count: number) => {
     const isEn = t('summaryView.reasonFoul') === 'foul';
@@ -94,26 +95,29 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
       <ResultBanner context={context} />
 
       {/* Рейтинг команд */}
-      <Card withBorder padding="md">
-        <Stack gap="xs">
-          <Text fw={600} size="sm" c="dimmed">
-            {t('summaryView.teamRanking')}
-          </Text>
-          <Stack gap={6}>
-            {sortedTeams.map((team, idx) => (
-              <Group key={team.id} justify="space-between">
-                <Group gap="xs">
-                  <Text fw={500} c={idx === 0 ? 'yellow' : 'dimmed'}>
-                    {idx + 1}.
-                  </Text>
-                  <Text fw={idx === 0 ? 600 : 500}>{team.name}</Text>
+      {!isPairs && (
+        <Card withBorder padding="md">
+          <Stack gap="xs">
+            <Text fw={600} size="sm" c="dimmed">
+              {t('summaryView.teamRanking')}
+            </Text>
+            <Stack gap={6}>
+              {sortedTeams.map((team, idx) => (
+                <Group key={team.id} justify="space-between">
+                  <Group gap="xs">
+                    <Text fw={500} c={idx === 0 ? 'yellow' : 'dimmed'}>
+                      {idx + 1}.
+                    </Text>
+                    <Text fw={idx === 0 ? 600 : 500}>{team.name}</Text>
+                  </Group>
+                  <Text fw={600}>{t('common.points', { n: getTeamScore(history, team.id) })}</Text>
                 </Group>
-                <Text fw={600}>{t('common.points', { n: getTeamScore(history, team.id) })}</Text>
-              </Group>
-            ))}
+              ))}
+            </Stack>
           </Stack>
-        </Stack>
-      </Card>
+        </Card>
+      )}
+
 
       {/* Рейтинг игроков */}
       <Card withBorder padding="md">
@@ -141,9 +145,12 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
                           </Badge>
                         )}
                       </Group>
-                      <Text size="xs" c="dimmed" truncate>
-                        {item.team.name}
-                      </Text>
+                      {!isPairs && (
+                        <Text size="xs" c="dimmed" truncate>
+                          {item.team.name}
+                        </Text>
+                      )}
+
                     </Stack>
                   </Group>
                   <Text size="xs" style={{ flexShrink: 0 }} ta="right">
@@ -163,7 +170,9 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
           <StatCard title={t('summaryView.bestPlayer')}>
             <Text fw={600}>{bestPlayer.player.name}</Text>
             <Text size="sm" c="dimmed">
-              {t('summaryView.bestPlayerSub', { team: bestPlayer.team.name, n: bestPlayer.guessedCount })}
+              {isPairs
+                ? t('summaryView.bestPlayerSubPairs', { n: bestPlayer.guessedCount })
+                : t('summaryView.bestPlayerSub', { team: bestPlayer.team.name, n: bestPlayer.guessedCount })}
             </Text>
           </StatCard>
         )}
@@ -172,11 +181,16 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
           <StatCard title={t('summaryView.fastestGuessTitle')}>
             <Text fw={600}>{fastestGuess.playerName}</Text>
             <Text size="sm" c="dimmed">
-              {t('summaryView.fastestGuessSub', {
-                word: fastestGuess.word,
-                sec: (fastestGuess.timeMs / 1000).toFixed(2),
-                team: fastestGuess.teamName,
-              })}
+              {isPairs
+                ? t('summaryView.fastestGuessSubPairs', {
+                    word: fastestGuess.word,
+                    sec: (fastestGuess.timeMs / 1000).toFixed(2),
+                  })
+                : t('summaryView.fastestGuessSub', {
+                    word: fastestGuess.word,
+                    sec: (fastestGuess.timeMs / 1000).toFixed(2),
+                    team: fastestGuess.teamName,
+                  })}
             </Text>
           </StatCard>
         )}
@@ -185,14 +199,20 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
           <StatCard title={t('summaryView.slowestGuessTitle')}>
             <Text fw={600}>{slowestGuess.playerName}</Text>
             <Text size="sm" c="dimmed">
-              {t('summaryView.slowestGuessSub', {
-                word: slowestGuess.word,
-                sec: (slowestGuess.timeMs / 1000).toFixed(1),
-                team: slowestGuess.teamName,
-              })}
+              {isPairs
+                ? t('summaryView.slowestGuessSubPairs', {
+                    word: slowestGuess.word,
+                    sec: (slowestGuess.timeMs / 1000).toFixed(1),
+                  })
+                : t('summaryView.slowestGuessSub', {
+                    word: slowestGuess.word,
+                    sec: (slowestGuess.timeMs / 1000).toFixed(1),
+                    team: slowestGuess.teamName,
+                  })}
             </Text>
           </StatCard>
         )}
+
 
         {hardestWord && (
           <StatCard title={t('summaryView.hardestWord')}>
@@ -256,8 +276,9 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               {ruleBreakers.map((breaker, idx) => (
                 <Group key={idx} justify="space-between">
                   <Text size="sm" fw={500}>
-                    {breaker.playerName} ({breaker.teamName})
+                    {breaker.playerName} {isPairs ? '' : `(${breaker.teamName})`}
                   </Text>
+
                   <Text size="sm" c="red.6" fw={600}>
                     {getFoulLabel(breaker.foulCount)}
                   </Text>

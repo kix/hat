@@ -93,6 +93,7 @@ export function getHintedWords(
   quickGuessMs: number = DEFAULT_QUICK_GUESS_MS,
 ): HintedWord[] {
   const hinted: HintedWord[] = [];
+  if (teams.length <= 1) return hinted;
 
   history.forEach((record, index) => {
     if (record.result !== 'timeout') return;

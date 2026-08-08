@@ -25,8 +25,14 @@ export function getDuplicateNameReason(team: Team): string | null {
 export function getSetupValidity(context: HatContext): SetupValidity {
   const reasons: string[] = [];
 
-  if (context.teams.length < 2) {
-    reasons.push(tr('validity.needTwoTeams'));
+  if (context.settings.gameMode === 'pairs') {
+    if (context.teams.length < 1) {
+      reasons.push(tr('validity.needOneTeam'));
+    }
+  } else {
+    if (context.teams.length < 2) {
+      reasons.push(tr('validity.needTwoTeams'));
+    }
   }
   for (const team of context.teams) {
     const duplicateReason = getDuplicateNameReason(team);

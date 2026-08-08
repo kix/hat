@@ -1,4 +1,4 @@
-import { Container, Divider, Stack, Title, Button, Card, Text, Group, Badge, Modal, Loader, ThemeIcon } from '@mantine/core';
+import { Container, Divider, Stack, Title, Button, Card, Text, Group, Badge, Modal, Loader, ThemeIcon, SegmentedControl } from '@mantine/core';
 import { IconQrcode, IconCopy, IconCheck, IconUsers, IconTrash, IconWifi, IconAlertTriangle } from '@tabler/icons-react';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { TeamList } from './TeamList';
@@ -201,7 +201,24 @@ export function SetupScreen({ context, send, onBack, multiplayer, currentUser }:
 
         <div>
           <Title order={3} mb="sm">
-            {t('setup.teams')}
+            {t('setup.gameMode')}
+          </Title>
+          <SegmentedControl
+            fullWidth
+            value={context.settings.gameMode || 'teams'}
+            onChange={(value) => send({ type: 'SET_GAME_MODE', gameMode: value as 'teams' | 'pairs' })}
+            data={[
+              { value: 'teams', label: t('setup.gameModeTeams') },
+              { value: 'pairs', label: t('setup.gameModePairs') },
+            ]}
+          />
+        </div>
+
+        <Divider />
+
+        <div>
+          <Title order={3} mb="sm">
+            {context.settings.gameMode === 'pairs' ? t('setup.players') : t('setup.teams')}
           </Title>
           {(() => {
             const connectedParticipants = [...(multiplayer?.participants || [])];
@@ -220,6 +237,7 @@ export function SetupScreen({ context, send, onBack, multiplayer, currentUser }:
                 teams={context.teams}
                 send={send}
                 connectedParticipants={connectedParticipants}
+                gameMode={context.settings.gameMode}
               />
             );
           })()}

@@ -8,9 +8,10 @@ interface TeamListProps {
   teams: Team[];
   send: (event: HatEvent) => void;
   connectedParticipants?: { userId: string; name: string }[];
+  gameMode?: 'teams' | 'pairs';
 }
 
-export function TeamList({ teams, send, connectedParticipants }: TeamListProps) {
+export function TeamList({ teams, send, connectedParticipants, gameMode }: TeamListProps) {
   const { t } = useI18n();
   const atMax = teams.length >= MAX_TEAMS;
   const atMin = teams.length <= MIN_TEAMS;
@@ -22,19 +23,22 @@ export function TeamList({ teams, send, connectedParticipants }: TeamListProps) 
           key={team.id}
           team={team}
           teamNumber={index + 1}
-          canRemove={!atMin}
+          canRemove={!atMin && gameMode !== 'pairs'}
           send={send}
           connectedParticipants={connectedParticipants}
+          gameMode={gameMode}
         />
       ))}
-      {!atMax ? (
-        <Button variant="outline" leftSection={<IconPlus size={18} />} onClick={() => send({ type: 'ADD_TEAM' })}>
-          {t('teamList.addTeam')}
-        </Button>
-      ) : (
-        <Text size="sm" c="dimmed" ta="center">
-          {t('teamList.maxTeams', { n: MAX_TEAMS })}
-        </Text>
+      {gameMode !== 'pairs' && (
+        !atMax ? (
+          <Button variant="outline" leftSection={<IconPlus size={18} />} onClick={() => send({ type: 'ADD_TEAM' })}>
+            {t('teamList.addTeam')}
+          </Button>
+        ) : (
+          <Text size="sm" c="dimmed" ta="center">
+            {t('teamList.maxTeams', { n: MAX_TEAMS })}
+          </Text>
+        )
       )}
     </Stack>
   );
