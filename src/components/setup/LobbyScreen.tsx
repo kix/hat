@@ -37,9 +37,10 @@ export function LobbyScreen({
     (team) => team.players[0].name && team.players[1].name
   ).length;
 
-  const canStart = configuredTeamsCount >= 2 && context.dictionary !== null;
+  const canStart =
+    (context.settings.gameMode === 'pairs' ? configuredTeamsCount >= 1 : configuredTeamsCount >= 2) &&
+    context.dictionary !== null;
 
-  // Обработчик назначения игрока из списка участников в ячейку команды
   const handleAssignPlayer = (teamId: string, playerIndex: 0 | 1, value: string | null) => {
     const selectedPart = participants.find((p) => p.userId === value);
     const playerName = selectedPart ? selectedPart.name : '';
@@ -50,16 +51,8 @@ export function LobbyScreen({
       teamId,
       playerId: playerIndex === 0 ? context.teams.find((t) => t.id === teamId)!.players[0].id : context.teams.find((t) => t.id === teamId)!.players[1].id,
       name: playerName,
+      newPlayerId: playerId || undefined,
     });
-    
-    // Также можно сохранить ID игрока для дальнейшей идентификации
-    if (playerId) {
-      const team = context.teams.find((t) => t.id === teamId);
-      if (team) {
-        const playerSlot = team.players[playerIndex];
-        playerSlot.id = playerId; // Перезаписываем ID на реальный userId
-      }
-    }
   };
 
   // Варианты выбора игроков из участников для селектора
@@ -145,7 +138,7 @@ export function LobbyScreen({
                 <Stack gap="xs">
                   <Group justify="space-between">
                     <Text fw={600} size="sm">
-                      {team.name}
+                      {context.settings.gameMode === 'pairs' ? t('setup.players') : team.name}
                     </Text>
                   </Group>
 
@@ -184,7 +177,7 @@ export function LobbyScreen({
               </Card>
             ))}
 
-            {isHost && context.teams.length < 6 && (
+            {isHost && context.settings.gameMode !== 'pairs' && context.teams.length < 6 && (
               <Button size="xs" variant="light" onClick={() => send({ type: 'ADD_TEAM' })}>
                 {t('lobby.addTeam')}
               </Button>
@@ -223,8 +216,8 @@ export function LobbyScreen({
         {/* Кнопка запуска */}
         {isHost ? (
           <Button size="xl" color="blue" fullWidth disabled={!canStart} onClick={onStartGame}>
-            {!canStart && configuredTeamsCount < 2
-              ? t('lobby.needTeams')
+            {!canStart && configuredTeamsCount < (context.settings.gameMode === 'pairs' ? 1 : 2)
+              ? (context.settings.gameMode === 'pairs' ? t('lobby.needPlayers') : t('lobby.needTeams'))
               : context.dictionary === null
               ? t('lobby.loadingDict')
               : t('lobby.startGame')}
