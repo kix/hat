@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.24] - 2026-08-18
+
+### Changed
+
+- **Оптимизация скорости загрузки (Code Splitting):** Внедрили разделение кода и ленивую загрузку (`React.lazy` + `Suspense`) для 9 экранов игры (лобби, игровой процесс, проверка результатов, профили и т.д.). Объем первого загружаемого скрипта уменьшен на 30% (~270 КБ несжатого JS / ~95 КБ в gzip). Основной экран настроек оставлен статическим для мгновенного старта.
+
 ## [1.6.23] - 2026-08-18
 
 ### Fixed
@@ -295,6 +301,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.24]: https://github.com/kix/hat/releases/tag/v1.6.24
 [1.6.23]: https://github.com/kix/hat/releases/tag/v1.6.23
 [1.6.22]: https://github.com/kix/hat/releases/tag/v1.6.22
 [1.6.21]: https://github.com/kix/hat/releases/tag/v1.6.21

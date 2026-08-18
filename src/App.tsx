@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { useMachine } from '@xstate/react';
-import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider, Anchor } from '@mantine/core';
+import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider, Anchor, LoadingOverlay } from '@mantine/core';
 import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
 import packageJson from '../package.json';
@@ -9,15 +9,17 @@ import { vibrate } from './utils/haptics';
 import { rememberPlayerName } from './utils/playerNamesStore';
 import { ScreenTransition } from './components/ScreenTransition';
 import { SetupScreen } from './components/setup/SetupScreen';
-import { LobbyScreen } from './components/setup/LobbyScreen';
-import { GuestLocalLobbyScreen } from './components/setup/GuestLocalLobbyScreen';
-import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
-import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
-import { GameOverScreen } from './components/gameOver/GameOverScreen';
-import { RoundReviewScreen } from './components/roundReview/RoundReviewScreen';
-import { ProfileScreen } from './components/profile/ProfileScreen';
-import { SummaryScreen } from './components/summary/SummaryScreen';
-import { GameShareScreen } from './components/summary/GameShareScreen';
+
+const LobbyScreen = lazy(() => import('./components/setup/LobbyScreen').then(m => ({ default: m.LobbyScreen })));
+const GuestLocalLobbyScreen = lazy(() => import('./components/setup/GuestLocalLobbyScreen').then(m => ({ default: m.GuestLocalLobbyScreen })));
+const RoundIntroScreen = lazy(() => import('./components/roundIntro/RoundIntroScreen').then(m => ({ default: m.RoundIntroScreen })));
+const RoundPlayingScreen = lazy(() => import('./components/roundPlaying/RoundPlayingScreen').then(m => ({ default: m.RoundPlayingScreen })));
+const GameOverScreen = lazy(() => import('./components/gameOver/GameOverScreen').then(m => ({ default: m.GameOverScreen })));
+const RoundReviewScreen = lazy(() => import('./components/roundReview/RoundReviewScreen').then(m => ({ default: m.RoundReviewScreen })));
+const ProfileScreen = lazy(() => import('./components/profile/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
+const SummaryScreen = lazy(() => import('./components/summary/SummaryScreen').then(m => ({ default: m.SummaryScreen })));
+const GameShareScreen = lazy(() => import('./components/summary/GameShareScreen').then(m => ({ default: m.GameShareScreen })));
+
 import { AuthMenu, signInWithTelegram } from './components/auth/AuthMenu';
 import { ColorSchemeToggle } from './components/ColorSchemeToggle';
 import { LanguageToggle } from './components/LanguageToggle';
@@ -237,9 +239,11 @@ function App() {
   // =====================================================================
   if (summaryId) {
     return (
-      <ScreenTransition key="summary">
-        <SummaryScreen summaryId={summaryId} onClose={closeSummary} />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="summary">
+          <SummaryScreen summaryId={summaryId} onClose={closeSummary} />
+        </ScreenTransition>
+      </Suspense>
     );
   }
 
@@ -248,9 +252,11 @@ function App() {
   // =====================================================================
   if (shareGameId) {
     return (
-      <ScreenTransition key="shareGame">
-        <GameShareScreen gameId={shareGameId} onClose={closeShareGame} />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="shareGame">
+          <GameShareScreen gameId={shareGameId} onClose={closeShareGame} />
+        </ScreenTransition>
+      </Suspense>
     );
   }
 
@@ -259,9 +265,11 @@ function App() {
   // =====================================================================
   if (showProfile && session?.user?.id) {
     return (
-      <ScreenTransition key="profile">
-        <ProfileScreen userId={session.user.id} onBack={() => setShowProfile(false)} />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="profile">
+          <ProfileScreen userId={session.user.id} onBack={() => setShowProfile(false)} />
+        </ScreenTransition>
+      </Suspense>
     );
   }
 
@@ -441,30 +449,34 @@ function App() {
   // =====================================================================
   if (mode === 'multiplayer' && !multiplayer.isHost && multiplayer.gameContext?.isLocalLobby) {
     return (
-      <ScreenTransition key="guestLocalLobby">
-        <GuestLocalLobbyScreen
-          roomId={multiplayer.roomId}
-          playerName={playerName}
-          participants={multiplayer.participants}
-          onLeave={handleLeaveRoom}
-        />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="guestLocalLobby">
+          <GuestLocalLobbyScreen
+            roomId={multiplayer.roomId}
+            playerName={playerName}
+            participants={multiplayer.participants}
+            onLeave={handleLeaveRoom}
+          />
+        </ScreenTransition>
+      </Suspense>
     );
   }
 
   if (mode === 'multiplayer' && currentStatus === 'setup') {
     return (
-      <ScreenTransition key="lobby">
-        <LobbyScreen
-          roomId={multiplayer.roomId}
-          isHost={multiplayer.isHost}
-          participants={multiplayer.participants}
-          context={currentContext}
-          send={send}
-          onLeave={handleLeaveRoom}
-          onStartGame={() => send({ type: 'START_GAME' })}
-        />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="lobby">
+          <LobbyScreen
+            roomId={multiplayer.roomId}
+            isHost={multiplayer.isHost}
+            participants={multiplayer.participants}
+            context={currentContext}
+            send={send}
+            onLeave={handleLeaveRoom}
+            onStartGame={() => send({ type: 'START_GAME' })}
+          />
+        </ScreenTransition>
+      </Suspense>
     );
   }
 
@@ -489,46 +501,54 @@ function App() {
   }
   if (currentStatus === 'roundIntro') {
     return (
-      <ScreenTransition key="roundIntro">
-        <RoundIntroScreen context={currentContext} send={send} />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="roundIntro">
+          <RoundIntroScreen context={currentContext} send={send} />
+        </ScreenTransition>
+      </Suspense>
     );
   }
   if (currentStatus === 'roundPlaying') {
     return (
-      <ScreenTransition key="roundPlaying">
-        <RoundPlayingScreen
-          context={currentContext}
-          send={send}
-          isMultiplayer={mode === 'multiplayer'}
-          currentUserId={session?.user?.id}
-          isHost={multiplayer.isHost}
-        />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="roundPlaying">
+          <RoundPlayingScreen
+            context={currentContext}
+            send={send}
+            isMultiplayer={mode === 'multiplayer'}
+            currentUserId={session?.user?.id}
+            isHost={multiplayer.isHost}
+          />
+        </ScreenTransition>
+      </Suspense>
     );
   }
   if (currentStatus === 'roundReview') {
     return (
-      <ScreenTransition key="roundReview">
-        <RoundReviewScreen
-          context={currentContext}
-          send={send}
-          isMultiplayer={mode === 'multiplayer'}
-          isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
-        />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="roundReview">
+          <RoundReviewScreen
+            context={currentContext}
+            send={send}
+            isMultiplayer={mode === 'multiplayer'}
+            isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
+          />
+        </ScreenTransition>
+      </Suspense>
     );
   }
   if (currentStatus === 'gameOver') {
     return (
-      <ScreenTransition key="gameOver">
-        <GameOverScreen
-          context={currentContext}
-          send={send}
-          isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
-          participants={mode === 'multiplayer' ? multiplayer.participants : []}
-        />
-      </ScreenTransition>
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="gameOver">
+          <GameOverScreen
+            context={currentContext}
+            send={send}
+            isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
+            participants={mode === 'multiplayer' ? multiplayer.participants : []}
+          />
+        </ScreenTransition>
+      </Suspense>
     );
   }
 
