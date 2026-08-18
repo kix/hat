@@ -9,27 +9,15 @@ import { useI18n } from '../../i18n/i18n';
 interface RoundIntroScreenProps {
   context: HatContext;
   send: (event: HatEvent) => void;
-  isMultiplayer?: boolean;
-  isHost?: boolean;
 }
 
-export function RoundIntroScreen({
-  context,
-  send,
-  isMultiplayer = false,
-  isHost = false,
-}: RoundIntroScreenProps) {
+export function RoundIntroScreen({ context, send }: RoundIntroScreenProps) {
   const { t } = useI18n();
   return (
     <Container size="xs" py="lg">
       <ExitGameButton send={send} />
       <Stack gap="lg">
-        <PreviousRoundWords
-          context={context}
-          send={send}
-          isMultiplayer={isMultiplayer}
-          isHost={isHost}
-        />
+        <PreviousRoundWords context={context} />
         <RoleAnnouncement context={context} />
         <Divider />
         <Scoreboard context={context} />

@@ -500,7 +500,7 @@ export const hatMachine = setup({
           {
             guard: ({ context }) => isHatEmpty(context),
             actions: [assign(({ context }) => resolveWord(context, 'guessed')), 'playLowHatGuessedSound'],
-            target: 'gameOver',
+            target: 'roundEnd',
           },
           {
             guard: ({ context }) => isHatRunningLow(context.hat.length),
@@ -514,7 +514,7 @@ export const hatMachine = setup({
           {
             guard: ({ context }) => context.settings.allowSkip && isHatEmpty(context),
             actions: [assign(({ context }) => resolveWord(context, 'skipped')), 'playSkipSound'],
-            target: 'gameOver',
+            target: 'roundEnd',
           },
           {
             guard: ({ context }) => context.settings.allowSkip,
@@ -525,7 +525,7 @@ export const hatMachine = setup({
           {
             guard: ({ context }) => isHatEmpty(context),
             actions: [assign(({ context }) => resolveWord(context, 'foul')), 'playFoulSound'],
-            target: 'gameOver',
+            target: 'roundEnd',
           },
           {
             actions: [assign(({ context }) => resolveWord(context, 'foul')), 'playFoulSound'],
@@ -535,7 +535,7 @@ export const hatMachine = setup({
           {
             guard: ({ context }) => isLocalDevEnvironment() && isHatEmpty(context),
             actions: assign(({ context }) => deleteCurrentWord(context)),
-            target: 'gameOver',
+            target: 'roundEnd',
           },
           {
             guard: () => isLocalDevEnvironment(),
@@ -573,8 +573,7 @@ export const hatMachine = setup({
         };
       }),
       always: [
-        { guard: ({ context }) => isHatEmpty(context), target: 'gameOver' },
-        { target: 'roundIntro' },
+        { target: 'roundReview' },
       ],
     },
 

@@ -490,12 +490,7 @@ function App() {
   if (currentStatus === 'roundIntro') {
     return (
       <ScreenTransition key="roundIntro">
-        <RoundIntroScreen
-          context={currentContext}
-          send={send}
-          isMultiplayer={mode === 'multiplayer'}
-          isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
-        />
+        <RoundIntroScreen context={currentContext} send={send} />
       </ScreenTransition>
     );
   }

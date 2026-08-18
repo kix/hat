@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
-import { Container, Stack, Title, Button } from '@mantine/core';
+import { Container, Stack, Title } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { useAuthSession } from '../../auth/useAuthSession';
 import { syncPreferencesToSupabase } from '../../auth/syncPreferences';
@@ -95,12 +95,6 @@ export function GameOverScreen({ context, send, isHost, participants }: GameOver
         />
 
         {savedGameId && <ShareGameButton gameId={savedGameId} />}
-
-        {isHost && (
-          <Button variant="light" color="orange" onClick={() => send({ type: 'OPEN_REVIEW' })}>
-            {t('gameOver.dispute')}
-          </Button>
-        )}
 
         <PlayAgainButton send={send} />
       </Stack>

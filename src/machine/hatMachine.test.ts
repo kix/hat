@@ -309,6 +309,7 @@ describe('round play', () => {
     actor.send({ type: 'WORD_GUESSED' });
     actor.send({ type: 'WORD_GUESSED' });
     actor.send({ type: 'WORD_GUESSED' });
+    actor.send({ type: 'CONFIRM_REVIEW' });
 
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toBe('gameOver');
@@ -401,7 +402,8 @@ describe('exiting mid-game', () => {
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 1 });
     actor.send({ type: 'START_GAME' });
     actor.send({ type: 'START_ROUND' });
-    actor.send({ type: 'WORD_GUESSED' }); // empties the hat -> gameOver
+    actor.send({ type: 'WORD_GUESSED' }); // empties the hat -> roundReview
+    actor.send({ type: 'CONFIRM_REVIEW' }); // goes to gameOver
 
     actor.send({ type: 'RESTART' });
     const snapshot = actor.getSnapshot();
@@ -453,6 +455,7 @@ describe('low-hat guessed sound', () => {
     actor.send({ type: 'START_ROUND' }); // hat: 0 remaining, currentWord holds the only word
 
     actor.send({ type: 'WORD_GUESSED' });
+    actor.send({ type: 'CONFIRM_REVIEW' });
     expect(actor.getSnapshot().value).toBe('gameOver');
     expect(playLowHatGuessedSound).toHaveBeenCalledTimes(1);
     expect(playGuessedSound).not.toHaveBeenCalled();
@@ -470,6 +473,7 @@ describe('game over sound', () => {
     expect(playGameOverSound).not.toHaveBeenCalled();
 
     actor.send({ type: 'WORD_GUESSED' });
+    actor.send({ type: 'CONFIRM_REVIEW' });
     expect(actor.getSnapshot().value).toBe('gameOver');
     expect(playGameOverSound).toHaveBeenCalledTimes(1);
   });
@@ -502,6 +506,7 @@ describe('round start sound', () => {
     expect(playRoundStartSound).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(30_000); // times out, hands off to team B
     actor.send({ type: 'FINISH_ROUND' });
+    actor.send({ type: 'CONFIRM_REVIEW' });
 
     actor.send({ type: 'START_ROUND' }); // team B's round
     expect(playRoundStartSound).toHaveBeenCalledTimes(2);
@@ -525,6 +530,7 @@ describe('round timer', () => {
     const drawnWord = actor.getSnapshot().context.currentWord!;
     vi.advanceTimersByTime(30_000);
     actor.send({ type: 'FINISH_ROUND' });
+    actor.send({ type: 'CONFIRM_REVIEW' });
 
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toBe('roundIntro'); // moved on to team B, hat not empty
@@ -678,6 +684,7 @@ describe('gameOver stats', () => {
     actor.send({ type: 'WORD_GUESSED' }); // word3, 2000ms
     vi.advanceTimersByTime(24_000); // remaining time on word4 -> timeout, 24000ms
     actor.send({ type: 'FINISH_ROUND' });
+    actor.send({ type: 'CONFIRM_REVIEW' });
 
     // Team B's turn: draws the returned word4 first and guesses it almost
     // instantly, then finishes word5 (guessed) and word6 (foul).
@@ -688,6 +695,7 @@ describe('gameOver stats', () => {
     actor.send({ type: 'WORD_GUESSED' }); // word5, 4000ms
     vi.advanceTimersByTime(500);
     actor.send({ type: 'WORD_FOUL' }); // word6, 500ms
+    actor.send({ type: 'CONFIRM_REVIEW' });
 
     return { actor, teamA, teamB };
   }
@@ -816,7 +824,8 @@ describe('getLastRoundRecap', () => {
     actor.send({ type: 'START_ROUND' });
 
     actor.send({ type: 'WORD_GUESSED' });
-    actor.send({ type: 'WORD_GUESSED' }); // empties the hat -> straight to gameOver
+    actor.send({ type: 'WORD_GUESSED' }); // empties the hat -> roundReview
+    actor.send({ type: 'CONFIRM_REVIEW' }); // goes to gameOver
 
     const snapshot = actor.getSnapshot();
     expect(snapshot.value).toBe('gameOver');
@@ -976,10 +985,6 @@ describe('pairs mode', () => {
       vi.advanceTimersByTime(60_000);
       actor.send({ type: 'FINISH_ROUND' });
 
-      expect(actor.getSnapshot().value).toBe('roundIntro');
-
-      // Now open review
-      actor.send({ type: 'OPEN_REVIEW' });
       expect(actor.getSnapshot().value).toBe('roundReview');
 
       // Change word from guessed to skipped
