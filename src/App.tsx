@@ -14,6 +14,7 @@ import { GuestLocalLobbyScreen } from './components/setup/GuestLocalLobbyScreen'
 import { RoundIntroScreen } from './components/roundIntro/RoundIntroScreen';
 import { RoundPlayingScreen } from './components/roundPlaying/RoundPlayingScreen';
 import { GameOverScreen } from './components/gameOver/GameOverScreen';
+import { RoundReviewScreen } from './components/roundReview/RoundReviewScreen';
 import { ProfileScreen } from './components/profile/ProfileScreen';
 import { SummaryScreen } from './components/summary/SummaryScreen';
 import { GameShareScreen } from './components/summary/GameShareScreen';
@@ -126,21 +127,35 @@ function App() {
     }
   }, [localState, multiplayer.isHost, multiplayer.roomId, mode]);
 
-  // Ленивая загрузка словаря — русского или английского, в зависимости от языка
-  useEffect(() => {
-    void (async () => {
-      const entries =
-        lang === 'en'
-          ? (await import('./data/dictionaryEn')).dictionaryEn
-          : (await import('./data/dictionary')).dictionary;
-      localSend({ type: 'DICTIONARY_LOADED', entries });
-    })();
-  }, [localSend, lang]);
-
   // Общие методы управления действиями (роутинг send)
   const send = mode === 'multiplayer' ? multiplayer.sendAction : localSend;
   const currentContext = mode === 'multiplayer' ? (multiplayer.gameContext || localState.context) : localState.context;
   const currentStatus = mode === 'multiplayer' ? multiplayer.gameState : (localState.value as string);
+
+  // Ленивая загрузка словаря — русского или английского, в зависимости от языка и настроек набора слов
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      let entries: any[] = [];
+      if (lang === 'en') {
+        entries = (await import('./data/dictionaryEn')).dictionaryEn;
+      } else {
+        const frequent = (await import('./data/dictionaryRuFrequent')).dictionaryRuFrequent;
+        if (currentContext.settings.wordPack === 'standard') {
+          const standard = (await import('./data/dictionaryRuStandard')).dictionaryRuStandard;
+          entries = [...frequent, ...standard];
+        } else {
+          entries = frequent;
+        }
+      }
+      if (active) {
+        localSend({ type: 'DICTIONARY_LOADED', entries });
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [localSend, lang, currentContext.settings.wordPack]);
   // Отслеживаем начало и конец игры для аналитики
   useEffect(() => {
     if (prevStatusRef.current === 'setup' && currentStatus === 'roundIntro') {
@@ -475,7 +490,12 @@ function App() {
   if (currentStatus === 'roundIntro') {
     return (
       <ScreenTransition key="roundIntro">
-        <RoundIntroScreen context={currentContext} send={send} />
+        <RoundIntroScreen
+          context={currentContext}
+          send={send}
+          isMultiplayer={mode === 'multiplayer'}
+          isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
+        />
       </ScreenTransition>
     );
   }
@@ -488,6 +508,18 @@ function App() {
           isMultiplayer={mode === 'multiplayer'}
           currentUserId={session?.user?.id}
           isHost={multiplayer.isHost}
+        />
+      </ScreenTransition>
+    );
+  }
+  if (currentStatus === 'roundReview') {
+    return (
+      <ScreenTransition key="roundReview">
+        <RoundReviewScreen
+          context={currentContext}
+          send={send}
+          isMultiplayer={mode === 'multiplayer'}
+          isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
         />
       </ScreenTransition>
     );

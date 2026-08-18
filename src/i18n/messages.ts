@@ -131,6 +131,7 @@ export const messages: Record<Lang, Record<string, string>> = {
 
     // game over / summary view
     'gameOver.title': 'Игра окончена',
+    'gameOver.dispute': 'Обжаловать последний раунд',
     'summaryView.teamRanking': 'Рейтинг команд',
     'summaryView.playerRanking': 'Рейтинг игроков',
     'summaryView.you': 'вы',
@@ -149,6 +150,15 @@ export const messages: Record<Lang, Record<string, string>> = {
     'prevRound.roundEnded': 'Раунд команды «{team}» завершён',
     'prevRound.guessedWords': 'Угаданные слова',
     'prevRound.nothing': 'Ничего не угадано 🙈',
+    'prevRound.dispute': 'Обжаловать результат',
+    'review.title': 'Работа над ошибками',
+    'review.confirm': 'Подтвердить результаты',
+    'review.hostReviewing': 'Хост проверяет ответы...',
+    'review.guessed': 'Угадано',
+    'review.skipped': 'Пропуск',
+    'review.foul': 'Нарушение',
+    'review.timeout': 'Не успели',
+    'review.noWords': 'В этом раунде не было разыграно ни одного слова.',
 
     // notifications
     'notif.title': 'Итоги дня в Telegram',
@@ -435,6 +445,7 @@ export const messages: Record<Lang, Record<string, string>> = {
 
     // game over / summary view
     'gameOver.title': 'Game over',
+    'gameOver.dispute': 'Dispute last round',
     'summaryView.teamRanking': 'Team ranking',
     'summaryView.playerRanking': 'Player ranking',
     'summaryView.you': 'you',
@@ -453,6 +464,15 @@ export const messages: Record<Lang, Record<string, string>> = {
     'prevRound.roundEnded': "{team}'s round is over",
     'prevRound.guessedWords': 'Guessed words',
     'prevRound.nothing': 'Nothing guessed 🙈',
+    'prevRound.dispute': 'Dispute result',
+    'review.title': 'Work on errors',
+    'review.confirm': 'Confirm results',
+    'review.hostReviewing': 'Host is reviewing results...',
+    'review.guessed': 'Guessed',
+    'review.skipped': 'Skipped',
+    'review.foul': 'Foul',
+    'review.timeout': 'Timeout',
+    'review.noWords': 'No words were played in this round.',
 
     // notifications
     'notif.title': 'Daily summary on Telegram',

@@ -99,7 +99,10 @@ export type HatEvent =
   | { type: 'TICK' }
   | { type: 'RESTART' }
   | { type: 'FINISH_ROUND' }
-  | { type: 'EXIT_GAME' };
+  | { type: 'EXIT_GAME' }
+  | { type: 'OPEN_REVIEW' }
+  | { type: 'UPDATE_WORD_RESULT'; word: string; result: WordResult }
+  | { type: 'CONFIRM_REVIEW' };
 
 function createTeam(dictionaryEntries: DictionaryEntry[] | null): Team {
   return {
@@ -137,7 +140,7 @@ export function createInitialContext(): HatContext {
       rolesMode: 'alternate',
       soundEnabled: true,
       vibrationEnabled: false,
-      wordPack: 'standard',
+      wordPack: 'frequent',
       customWords: [],
       gameMode: 'teams',
     },
@@ -473,6 +476,9 @@ export const hatMachine = setup({
           target: 'setup',
           actions: assign(({ context }) => resetToSetup(context)),
         },
+        OPEN_REVIEW: {
+          target: 'roundReview',
+        },
       },
     },
 
@@ -572,12 +578,69 @@ export const hatMachine = setup({
       ],
     },
 
+    roundReview: {
+      on: {
+        UPDATE_WORD_RESULT: {
+          actions: assign(({ context, event }) => {
+            const { word, result: newResult } = event;
+            const lastRecord = context.history[context.history.length - 1];
+            if (!lastRecord) return {};
+
+            const recordIndex = context.history.findIndex(
+              (r) => r.word === word && r.teamId === lastRecord.teamId && r.roundIndex === lastRecord.roundIndex
+            );
+            if (recordIndex === -1) return {};
+
+            const oldRecord = context.history[recordIndex];
+            const oldResult = oldRecord.result;
+            if (oldResult === newResult) return {};
+
+            const newHistory = [...context.history];
+            newHistory[recordIndex] = { ...oldRecord, result: newResult };
+
+            let newHat = [...context.hat];
+            const wasInHat = oldResult === 'timeout';
+            const shouldBeInHat = newResult === 'timeout';
+
+            if (wasInHat && !shouldBeInHat) {
+              newHat = newHat.filter((w) => w.word !== word);
+            } else if (!wasInHat && shouldBeInHat) {
+              const entry = (context.dictionary ?? []).find((w) => w.word === word) || {
+                word,
+                difficulty: oldRecord.difficulty,
+                frequency: 4.0,
+                levenshtein_zipf_frequency: 4.0,
+              };
+              const insertAt = Math.floor(Math.random() * (newHat.length + 1));
+              newHat = [...newHat.slice(0, insertAt), entry, ...newHat.slice(insertAt)];
+            }
+
+            return {
+              history: newHistory,
+              hat: newHat,
+            };
+          }),
+        },
+        CONFIRM_REVIEW: [
+          { guard: ({ context }) => isHatEmpty(context), target: 'gameOver' },
+          { target: 'roundIntro' },
+        ],
+        EXIT_GAME: {
+          target: 'setup',
+          actions: assign(({ context }) => resetToSetup(context)),
+        },
+      },
+    },
+
     gameOver: {
       entry: 'playGameOverSound',
       on: {
         RESTART: {
           target: 'setup',
           actions: assign(({ context }) => resetToSetup(context)),
+        },
+        OPEN_REVIEW: {
+          target: 'roundReview',
         },
       },
     },

@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.20] - 2026-08-18
+
+### Added
+
+- **Экран проверки слов («Работа над ошибками»):** Добавлен новый экран обжалования раунда по кнопке «Обжаловать результат» на экранах вступления следующего раунда и окончания игры. Позволяет изменять результаты слов (угадано, пропуск, нарушение, не успели). При изменении таймаута слова автоматически возвращаются в шляпу или удаляются из неё.
+- **Дробление русского словаря (Dictionary Splitting):** Разделили массивный словарь (5.3 МБ) на две части: `dictionaryRuFrequent.ts` (~6.9k популярных слов, ~620 КБ) и `dictionaryRuStandard.ts` (~44k сложных/редких слов, ~4 МБ). По умолчанию загружается только чанк частых слов, что сократило размер начальной загрузки на 90%. Сложный словарь подгружается лениво по требованию при выборе режима «Все слова».
+- **Инструменты курирования слов:** Обновили dev-middleware в `vite.config.ts` для поддержки поиска и редактирования слов в любом из новых файлов словарей при разметке или удалении прямо из UI игры.
+
 ## [1.6.17] - 2026-07-29
 
 ### Added
@@ -269,6 +277,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.20]: https://github.com/kix/hat/releases/tag/v1.6.20
 [1.6.17]: https://github.com/kix/hat/releases/tag/v1.6.17
 [1.6.16]: https://github.com/kix/hat/releases/tag/v1.6.16
 [1.6.15]: https://github.com/kix/hat/releases/tag/v1.6.15

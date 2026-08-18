@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createActor } from 'xstate';
 import { hatMachine, MAX_TEAMS, MIN_TEAMS, type Team, type WordRecord } from './hatMachine';
-import { dictionary } from '../data/dictionary';
+import { dictionaryRuFrequent } from '../data/dictionaryRuFrequent';
+import { dictionaryRuStandard } from '../data/dictionaryRuStandard';
+const dictionary = [...dictionaryRuFrequent, ...dictionaryRuStandard];
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
 import { getTeamScore, scoreDeltaForResult } from '../utils/scoring';
@@ -25,6 +27,7 @@ function remainingWordCount(context: { hat: unknown[]; currentWord: unknown }): 
 function startActor(machine: typeof hatMachine = hatMachine): ReturnType<typeof createActor<typeof hatMachine>> {
   const actor = createActor(machine).start();
   actor.send({ type: 'DICTIONARY_LOADED', entries: dictionary });
+  actor.send({ type: 'SET_WORD_PACK', wordPack: 'standard' });
   return actor;
 }
 
@@ -955,6 +958,70 @@ describe('pairs mode', () => {
     expect(round2Roles.describer.id).toBe(p2.id);
     expect(round2Roles.guesser.id).toBe(p1.id);
     vi.useRealTimers();
+  });
+
+  describe('roundReview', () => {
+    it('can transition from roundIntro to roundReview and back via CONFIRM_REVIEW', () => {
+      vi.useFakeTimers();
+      const actor = startActor();
+      setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+      actor.send({ type: 'START_GAME' });
+      actor.send({ type: 'START_ROUND' });
+      
+      const snapshot = actor.getSnapshot();
+      const word = snapshot.context.currentWord?.word;
+      expect(word).toBeDefined();
+      
+      actor.send({ type: 'WORD_GUESSED' });
+      vi.advanceTimersByTime(60_000);
+      actor.send({ type: 'FINISH_ROUND' });
+
+      expect(actor.getSnapshot().value).toBe('roundIntro');
+
+      // Now open review
+      actor.send({ type: 'OPEN_REVIEW' });
+      expect(actor.getSnapshot().value).toBe('roundReview');
+
+      // Change word from guessed to skipped
+      actor.send({ type: 'UPDATE_WORD_RESULT', word: word!, result: 'skipped' });
+      
+      // Confirm review -> should go back to roundIntro
+      actor.send({ type: 'CONFIRM_REVIEW' });
+      expect(actor.getSnapshot().value).toBe('roundIntro');
+
+      // Score should reflect the change (guessed was +1, now skipped is -1)
+      const firstTeam = actor.getSnapshot().context.teams[0];
+      const score = getTeamScore(actor.getSnapshot().context.history, firstTeam.id);
+      expect(score).toBe(-1); // -1 for skip
+
+      vi.useRealTimers();
+    });
+
+    it('returns a word to the hat when changed from guessed to timeout during review', () => {
+      vi.useFakeTimers();
+      const actor = startActor();
+      setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 10 });
+      actor.send({ type: 'START_GAME' });
+      actor.send({ type: 'START_ROUND' });
+
+      const word = actor.getSnapshot().context.currentWord?.word;
+      actor.send({ type: 'WORD_GUESSED' });
+      const initialHatLength = actor.getSnapshot().context.hat.length;
+
+      vi.advanceTimersByTime(60_000);
+      actor.send({ type: 'FINISH_ROUND' });
+
+      actor.send({ type: 'OPEN_REVIEW' });
+      actor.send({ type: 'UPDATE_WORD_RESULT', word: word!, result: 'timeout' });
+
+      expect(actor.getSnapshot().context.hat.some(w => w.word === word)).toBe(true);
+      expect(actor.getSnapshot().context.hat.length).toBe(initialHatLength + 2);
+
+      actor.send({ type: 'CONFIRM_REVIEW' });
+      expect(actor.getSnapshot().value).toBe('roundIntro');
+      vi.useRealTimers();
+    });
   });
 });
 

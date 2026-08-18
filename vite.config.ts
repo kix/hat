@@ -6,7 +6,11 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const DICTIONARY_PATH = fileURLToPath(new URL('./src/data/dictionary.ts', import.meta.url))
+const DICTIONARY_PATHS = [
+  fileURLToPath(new URL('./src/data/dictionaryRuFrequent.ts', import.meta.url)),
+  fileURLToPath(new URL('./src/data/dictionaryRuStandard.ts', import.meta.url)),
+  fileURLToPath(new URL('./src/data/dictionaryEn.ts', import.meta.url)),
+]
 const RARE_WORD_FREQUENCY = 0.05
 
 function readJsonBody(req: IncomingMessage): Promise<unknown> {
@@ -34,7 +38,7 @@ function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// Dev-only word-list curation: lets the running app edit dictionary.ts
+// Dev-only word-list curation: lets the running app edit the dictionary files
 // straight from the UI instead of hand-editing 50k lines. Only wired up by
 // configureServer, which Vite never calls for a production build.
 function wordCurationPlugin(): Plugin {
@@ -50,10 +54,17 @@ function wordCurationPlugin(): Plugin {
             if (typeof word !== 'string' || !word) return respondJson(res, 400, { error: 'missing word' })
 
             const lineRe = new RegExp(`^ *\\{ word: "${escapeForRegExp(word)}", difficulty:.*\\},?\\n`, 'm')
-            const text = readFileSync(DICTIONARY_PATH, 'utf-8')
-            if (!lineRe.test(text)) return respondJson(res, 404, { error: 'word not found' })
+            let found = false
+            for (const path of DICTIONARY_PATHS) {
+              const text = readFileSync(path, 'utf-8')
+              if (lineRe.test(text)) {
+                writeFileSync(path, text.replace(lineRe, ''))
+                found = true
+                break
+              }
+            }
 
-            writeFileSync(DICTIONARY_PATH, text.replace(lineRe, ''))
+            if (!found) return respondJson(res, 404, { error: 'word not found' })
             respondJson(res, 200, { ok: true })
           },
           (error) => respondJson(res, 400, { error: String(error) }),
@@ -72,10 +83,17 @@ function wordCurationPlugin(): Plugin {
               `^( *\\{ word: "${escapeForRegExp(word)}", difficulty: "\\w+", frequency: )[\\d.]+(,.*\\},?\\n)`,
               'm',
             )
-            const text = readFileSync(DICTIONARY_PATH, 'utf-8')
-            if (!lineRe.test(text)) return respondJson(res, 404, { error: 'word not found' })
+            let found = false
+            for (const path of DICTIONARY_PATHS) {
+              const text = readFileSync(path, 'utf-8')
+              if (lineRe.test(text)) {
+                writeFileSync(path, text.replace(lineRe, `$1${RARE_WORD_FREQUENCY}$2`))
+                found = true
+                break
+              }
+            }
 
-            writeFileSync(DICTIONARY_PATH, text.replace(lineRe, `$1${RARE_WORD_FREQUENCY}$2`))
+            if (!found) return respondJson(res, 404, { error: 'word not found' })
             respondJson(res, 200, { ok: true })
           },
           (error) => respondJson(res, 400, { error: String(error) }),
