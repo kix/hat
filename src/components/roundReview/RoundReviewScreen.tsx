@@ -1,5 +1,5 @@
-import { Button, Container, Stack, Title, Text, Card, Group, SegmentedControl } from '@mantine/core';
-import type { HatContext, HatEvent, WordResult } from '../../machine/hatMachine';
+import { Button, Container, Stack, Title, Text, Card, Group, SimpleGrid } from '@mantine/core';
+import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { useI18n } from '../../i18n/i18n';
 import { ExitGameButton } from '../shared/ExitGameButton';
 
@@ -63,24 +63,44 @@ export function RoundReviewScreen({
                     <Text fw={700} size="md" ta="center">
                       {record.word}
                     </Text>
-                    <SegmentedControl
-                      fullWidth
-                      value={record.result}
-                      onChange={(value) =>
-                        send({
-                          type: 'UPDATE_WORD_RESULT',
-                          word: record.word,
-                          result: value as WordResult,
-                        })
-                      }
-                      disabled={!canEdit}
-                      data={[
-                        { value: 'guessed', label: t('review.guessed') },
-                        { value: 'skipped', label: t('review.skipped') },
-                        { value: 'foul', label: t('review.foul') },
-                        { value: 'timeout', label: t('review.timeout') },
-                      ]}
-                    />
+                    <SimpleGrid cols={2} spacing="xs">
+                      <Button
+                        size="sm"
+                        variant={record.result === 'guessed' ? 'filled' : 'light'}
+                        color="green"
+                        onClick={() => send({ type: 'UPDATE_WORD_RESULT', word: record.word, result: 'guessed' })}
+                        disabled={!canEdit}
+                      >
+                        {t('review.guessed')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={record.result === 'skipped' ? 'filled' : 'light'}
+                        color="gray"
+                        onClick={() => send({ type: 'UPDATE_WORD_RESULT', word: record.word, result: 'skipped' })}
+                        disabled={!canEdit}
+                      >
+                        {t('review.skipped')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={record.result === 'foul' ? 'filled' : 'light'}
+                        color="red"
+                        onClick={() => send({ type: 'UPDATE_WORD_RESULT', word: record.word, result: 'foul' })}
+                        disabled={!canEdit}
+                      >
+                        {t('review.foul')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={record.result === 'timeout' ? 'filled' : 'light'}
+                        color="blue"
+                        onClick={() => send({ type: 'UPDATE_WORD_RESULT', word: record.word, result: 'timeout' })}
+                        disabled={!canEdit}
+                      >
+                        {t('review.timeout')}
+                      </Button>
+                    </SimpleGrid>
                   </Stack>
                 </Card>
               ))}

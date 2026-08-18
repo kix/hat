@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.21] - 2026-08-18
+
+### Fixed
+
+- **Горизонтальный скролл на мобильных устройствах:** Заменили горизонтальный `SegmentedControl` на адаптивную сетку кнопок 2x2 на экране «Работы над ошибками». Это предотвращает растягивание карточек и появление горизонтального скролла на узких экранах смартфонов.
+
 ## [1.6.20] - 2026-08-18
 
 ### Added
@@ -277,6 +283,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.21]: https://github.com/kix/hat/releases/tag/v1.6.21
 [1.6.20]: https://github.com/kix/hat/releases/tag/v1.6.20
 [1.6.17]: https://github.com/kix/hat/releases/tag/v1.6.17
 [1.6.16]: https://github.com/kix/hat/releases/tag/v1.6.16
