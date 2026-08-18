@@ -68,6 +68,13 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
       />
 
       <Switch
+        label={t('roundSettings.enableReview')}
+        description={t('roundSettings.enableReviewDesc')}
+        checked={settings.enableReview}
+        onChange={(event) => send({ type: 'SET_ENABLE_REVIEW', enableReview: event.currentTarget.checked })}
+      />
+
+      <Switch
         label={t('roundSettings.sound')}
         checked={settings.soundEnabled}
         onChange={(event) => send({ type: 'SET_SOUND_ENABLED', soundEnabled: event.currentTarget.checked })}

@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.25] - 2026-08-18
+
+### Added
+
+- **Тумблер отключения проверки слов:** Добавлена настройка «Работа над ошибками» (переключатель Switch на экране настроек). Если опция выключена, раунд будет переходить сразу к следующей команде (или к экрану конца игры), минуя экран пересмотра ответов раунда.
+
 ## [1.6.24] - 2026-08-18
 
 ### Changed
@@ -301,6 +307,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.25]: https://github.com/kix/hat/releases/tag/v1.6.25
 [1.6.24]: https://github.com/kix/hat/releases/tag/v1.6.24
 [1.6.23]: https://github.com/kix/hat/releases/tag/v1.6.23
 [1.6.22]: https://github.com/kix/hat/releases/tag/v1.6.22

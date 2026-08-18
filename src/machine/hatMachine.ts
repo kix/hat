@@ -55,6 +55,7 @@ export interface Settings {
   wordPack: 'standard' | 'frequent' | 'custom';
   customWords: string[];
   gameMode?: 'teams' | 'pairs';
+  enableReview: boolean;
 }
 
 export interface HatContext {
@@ -85,6 +86,7 @@ export type HatEvent =
   | { type: 'SET_ROLES_MODE'; rolesMode: RolesMode }
   | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
+  | { type: 'SET_ENABLE_REVIEW'; enableReview: boolean }
   | { type: 'SET_WORD_PACK'; wordPack: 'standard' | 'frequent' | 'custom' }
   | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
   | { type: 'SET_GAME_MODE'; gameMode: 'teams' | 'pairs' }
@@ -118,6 +120,7 @@ function createTeam(dictionaryEntries: DictionaryEntry[] | null): Team {
 
 // Player names are optional in setup; anyone left blank gets the same
 // "Игрок N" placeholder shown in the input as their real name for the game.
+// (Fallback is filled in by setup, keeping whatever was input).
 function fillBlankPlayerNames(team: Team): Team {
   return {
     ...team,
@@ -140,6 +143,7 @@ export function createInitialContext(): HatContext {
       rolesMode: 'alternate',
       soundEnabled: true,
       vibrationEnabled: false,
+      enableReview: true,
       wordPack: 'frequent',
       customWords: [],
       gameMode: 'teams',
@@ -387,6 +391,11 @@ export const hatMachine = setup({
             settings: { ...context.settings, vibrationEnabled: event.vibrationEnabled },
           })),
         },
+        SET_ENABLE_REVIEW: {
+          actions: assign(({ context, event }) => ({
+            settings: { ...context.settings, enableReview: event.enableReview },
+          })),
+        },
         SET_WORD_PACK: {
           actions: assign(({ context, event }) => ({
             settings: { ...context.settings, wordPack: event.wordPack },
@@ -573,6 +582,8 @@ export const hatMachine = setup({
         };
       }),
       always: [
+        { guard: ({ context }) => !context.settings.enableReview && isHatEmpty(context), target: 'gameOver' },
+        { guard: ({ context }) => !context.settings.enableReview, target: 'roundIntro' },
         { target: 'roundReview' },
       ],
     },

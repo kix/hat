@@ -1027,6 +1027,32 @@ describe('pairs mode', () => {
       expect(actor.getSnapshot().value).toBe('roundIntro');
       vi.useRealTimers();
     });
+
+    it('skips review state and transitions directly when enableReview is false', () => {
+      vi.useFakeTimers();
+      const actor = startActor();
+      setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });
+      actor.send({ type: 'SET_ENABLE_REVIEW', enableReview: false });
+      actor.send({ type: 'START_GAME' });
+      actor.send({ type: 'START_ROUND' });
+
+      actor.send({ type: 'WORD_GUESSED' });
+      actor.send({ type: 'WORD_GUESSED' });
+      vi.advanceTimersByTime(60_000);
+      actor.send({ type: 'FINISH_ROUND' });
+
+      expect(actor.getSnapshot().value).toBe('roundIntro');
+
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_GUESSED' });
+      actor.send({ type: 'WORD_GUESSED' });
+      actor.send({ type: 'WORD_GUESSED' });
+
+      expect(actor.getSnapshot().value).toBe('gameOver');
+
+      vi.useRealTimers();
+    });
   });
 });
 
