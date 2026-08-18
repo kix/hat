@@ -140,8 +140,22 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
               onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: value })}
               label={(value) => `${value}`}
               marks={[
-                { value: 10, label: '10' },
-                { value: 100, label: '100' },
+                {
+                  value: 10,
+                  label: (
+                    <div style={{ transform: 'translateX(50%)', display: 'inline-block' }}>
+                      10
+                    </div>
+                  ),
+                },
+                {
+                  value: 100,
+                  label: (
+                    <div style={{ transform: 'translateX(-50%)', display: 'inline-block' }}>
+                      100
+                    </div>
+                  ),
+                },
               ]}
               mx="xs"
               mb="lg"
@@ -158,8 +172,22 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
               onChange={(value) => send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: value / 100 })}
               label={(value) => `${value}%`}
               marks={[
-                { value: 0, label: t('roundSettings.easier') },
-                { value: 100, label: t('roundSettings.harder') },
+                {
+                  value: 0,
+                  label: (
+                    <div style={{ transform: 'translateX(50%)', display: 'inline-block' }}>
+                      {t('roundSettings.easier')}
+                    </div>
+                  ),
+                },
+                {
+                  value: 100,
+                  label: (
+                    <div style={{ transform: 'translateX(-50%)', display: 'inline-block' }}>
+                      {t('roundSettings.harder')}
+                    </div>
+                  ),
+                },
               ]}
               mx="xs"
               mb="lg"

@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.23] - 2026-08-18
+
+### Fixed
+
+- **Горизонтальный скролл на домашнем экране:** Сдвинули подписи делений (`marks`) на слайдерах количества слов и сложности игры с помощью translateX смещений. Это предотвращает выход текста «Сложнее» за правый край экрана и устраняет нежелательный горизонтальный скролл на мобильных устройствах.
+
 ## [1.6.22] - 2026-08-18
 
 ### Changed
@@ -289,6 +295,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.23]: https://github.com/kix/hat/releases/tag/v1.6.23
 [1.6.22]: https://github.com/kix/hat/releases/tag/v1.6.22
 [1.6.21]: https://github.com/kix/hat/releases/tag/v1.6.21
 [1.6.20]: https://github.com/kix/hat/releases/tag/v1.6.20
