@@ -11,7 +11,7 @@ import { getCurrentRoles } from '../../utils/roles';
 import { RoundTimer } from './RoundTimer';
 import { HatCountBadge } from './HatCountBadge';
 import { RoundGuessedCount } from './RoundGuessedCount';
-import { WordDisplay } from './WordDisplay';
+import { SwipeableWordCard } from './SwipeableWordCard';
 import { ActionButtons } from './ActionButtons';
 import { DeleteWordButton } from './DeleteWordButton';
 import { MarkWordRareButton } from './MarkWordRareButton';
@@ -95,7 +95,13 @@ export function RoundPlayingScreen({
         // ЭКРАН ОБЪЯСНЯЮЩЕГО
         context.currentWord ? (
           <>
-            <WordDisplay word={context.currentWord.word} hidden={wordHidden} />
+            <SwipeableWordCard
+              word={context.currentWord.word}
+              hidden={wordHidden}
+              allowSkip={context.settings.allowSkip}
+              onSwipeRight={() => handleSend({ type: 'WORD_GUESSED' })}
+              onSwipeLeft={() => handleSend({ type: 'WORD_SKIPPED' })}
+            />
 
             <Group justify="center" pb="sm">
               <HideWordButton hidden={wordHidden} onClick={() => setWordHidden((hidden) => !hidden)} />

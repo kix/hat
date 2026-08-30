@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.26] - 2026-08-31
+
+### Added
+
+- **Свайп-жесты для карточек слов:** Добавлен новый интерактивный свайп-интерфейс `SwipeableWordCard` для экрана объясняющего. Игроки могут свайпать карточку со словом вправо (отметить как угаданное) или влево (пропустить слово, если разрешено). Поддерживает сглаженную анимацию отклонения и цветовой оверлей-фидбек во время перетаскивания.
+- **Поддержка тач- и мышь-событий:** Жесты работают на мобильных устройствах (сенсорный ввод с блокировкой системного скролла страницы) и на компьютерах (перетаскивание мышью).
+
 ## [1.6.25] - 2026-08-18
 
 ### Added
@@ -307,6 +314,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.26]: https://github.com/kix/hat/releases/tag/v1.6.26
 [1.6.25]: https://github.com/kix/hat/releases/tag/v1.6.25
 [1.6.24]: https://github.com/kix/hat/releases/tag/v1.6.24
 [1.6.23]: https://github.com/kix/hat/releases/tag/v1.6.23
