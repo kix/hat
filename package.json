@@ -1,7 +1,7 @@
 {
   "name": "claude-hat",
   "private": true,
-  "version": "1.6.26",
+  "version": "1.6.27",
   "type": "module",
   "scripts": {
     "dev": "vite",

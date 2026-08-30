@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.27] - 2026-08-31
+
+### Fixed
+
+- **Вход через Telegram падал с ошибкой `record "new" has no field "updated_at"`:** На проде у таблицы `public.user_states` отсутствовала колонка `updated_at`, хотя на неё навешан триггер `trigger_update_user_states_time`, который её выставляет при любом `UPDATE`. RPC-функция `link_telegram_user` как раз обновляет `user_states` при переносе анонимного профиля на Telegram-аккаунт — из-за этого падал весь вход. Добавлена миграция `20260831120000_fix_user_states_updated_at.sql`, приводящая схему в соответствие с `supabase_setup.md`, и применена на боевой базе.
+
 ## [1.6.26] - 2026-08-31
 
 ### Added
