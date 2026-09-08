@@ -1,4 +1,4 @@
-import { SegmentedControl, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
+import { Group, SegmentedControl, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { DictionaryEntry } from '../../data/dictionary';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
@@ -146,28 +146,16 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
               max={100}
               onChange={(value) => send({ type: 'SET_WORD_COUNT', wordCount: value })}
               label={(value) => `${value}`}
-              marks={[
-                {
-                  value: 10,
-                  label: (
-                    <div style={{ transform: 'translateX(50%)', display: 'inline-block' }}>
-                      10
-                    </div>
-                  ),
-                },
-                {
-                  value: 100,
-                  label: (
-                    <div style={{ transform: 'translateX(-50%)', display: 'inline-block' }}>
-                      100
-                    </div>
-                  ),
-                },
-              ]}
               mx="xs"
-              mb="lg"
-              styles={{ markLabel: { whiteSpace: 'nowrap' } }}
             />
+            <Group justify="space-between" mx="xs" mt={4} mb="lg">
+              <Text size="xs" c="dimmed">
+                10
+              </Text>
+              <Text size="xs" c="dimmed">
+                100
+              </Text>
+            </Group>
           </div>
 
           <div>
@@ -178,28 +166,16 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
               value={Math.round(settings.difficultyLevel * 100)}
               onChange={(value) => send({ type: 'SET_DIFFICULTY_LEVEL', difficultyLevel: value / 100 })}
               label={(value) => `${value}%`}
-              marks={[
-                {
-                  value: 0,
-                  label: (
-                    <div style={{ transform: 'translateX(50%)', display: 'inline-block' }}>
-                      {t('roundSettings.easier')}
-                    </div>
-                  ),
-                },
-                {
-                  value: 100,
-                  label: (
-                    <div style={{ transform: 'translateX(-50%)', display: 'inline-block' }}>
-                      {t('roundSettings.harder')}
-                    </div>
-                  ),
-                },
-              ]}
               mx="xs"
-              mb="lg"
-              styles={{ markLabel: { whiteSpace: 'nowrap' } }}
             />
+            <Group justify="space-between" mx="xs" mt={4} mb="lg">
+              <Text size="xs" c="dimmed">
+                {t('roundSettings.easier')}
+              </Text>
+              <Text size="xs" c="dimmed">
+                {t('roundSettings.harder')}
+              </Text>
+            </Group>
             <Text size="xs" c="dimmed" mt={4}>
               {poolSize === null
                 ? t('roundSettings.dictLoading')

@@ -412,7 +412,7 @@ function App() {
             </Stack>
           </Card>
 
-          <Group justify="center" gap="xs" mt="sm" style={{ opacity: 0.5 }}>
+          <Group justify="center" gap="xs" mt="sm" wrap="wrap" style={{ opacity: 0.5 }}>
             <Text size="xs">
               v{packageJson.version}
             </Text>

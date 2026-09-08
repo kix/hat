@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.28] - 2026-09-08
+
+### Fixed
+
+- **Горизонтальный скролл на мобильных устройствах (Pixel 8a):**
+  - Заменили абсолютные метки слайдеров (`marks`) на стандартный flex-блок (`Group justify="space-between"`), исключив выход надписей «Сложнее» / «100» за пределы трека слайдера.
+  - Сократили названия вкладок в `SegmentedControl` («Частотный», «Парный»), исключив переполнение кнопок на узких экранах.
+  - Добавили `overflow-x: hidden` для `html`, `body` и `#root`, а также перенос строк `wrap="wrap"` для футера стартового экрана.
+
 ## [1.6.27] - 2026-08-31
 
 ### Fixed
@@ -320,6 +329,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.28]: https://github.com/kix/hat/releases/tag/v1.6.28
+[1.6.27]: https://github.com/kix/hat/releases/tag/v1.6.27
 [1.6.26]: https://github.com/kix/hat/releases/tag/v1.6.26
 [1.6.25]: https://github.com/kix/hat/releases/tag/v1.6.25
 [1.6.24]: https://github.com/kix/hat/releases/tag/v1.6.24
