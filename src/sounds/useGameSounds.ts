@@ -7,11 +7,15 @@ import {
   playRoundStartBeep,
   playSkipBeep,
   playTickBeep,
+  playUrgentTickBeep,
+  playTimeUpBeep,
 } from './beeps';
 
 export interface GameSounds {
   playRoundStart: () => void;
   playTick: () => void;
+  playUrgentTick: (secondsLeft?: number) => void;
+  playTimeUp: () => void;
   playGuessed: () => void;
   playLowHatGuessed: () => void;
   playSkip: () => void;
@@ -35,11 +39,13 @@ export function useGameSounds(): GameSounds {
 
   const playRoundStart = useCallback(() => withContext(playRoundStartBeep), [withContext]);
   const playTick = useCallback(() => withContext(playTickBeep), [withContext]);
+  const playUrgentTick = useCallback((secondsLeft?: number) => withContext((ctx) => playUrgentTickBeep(ctx, secondsLeft)), [withContext]);
+  const playTimeUp = useCallback(() => withContext(playTimeUpBeep), [withContext]);
   const playGuessed = useCallback(() => withContext(playGuessedBeep), [withContext]);
   const playLowHatGuessed = useCallback(() => withContext(playLowHatGuessedBeep), [withContext]);
   const playSkip = useCallback(() => withContext(playSkipBeep), [withContext]);
   const playFoul = useCallback(() => withContext(playFoulBeep), [withContext]);
   const playGameOver = useCallback(() => withContext(playGameOverBeep), [withContext]);
 
-  return { playRoundStart, playTick, playGuessed, playLowHatGuessed, playSkip, playFoul, playGameOver };
+  return { playRoundStart, playTick, playUrgentTick, playTimeUp, playGuessed, playLowHatGuessed, playSkip, playFoul, playGameOver };
 }

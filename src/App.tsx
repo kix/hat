@@ -61,9 +61,19 @@ function App() {
           playRoundStartSound: () => {
             if (settingsRef.current?.soundEnabled) sounds.playRoundStart();
           },
-          playTickSound: () => {
-            if (settingsRef.current?.soundEnabled) sounds.playTick();
+          playTickSound: ({ context }: { context: HatContext }) => {
+            if (settingsRef.current?.soundEnabled) {
+              if (context.timeRemainingSec <= 5 && context.timeRemainingSec > 0) {
+                sounds.playUrgentTick(context.timeRemainingSec);
+              } else {
+                sounds.playTick();
+              }
+            }
             if (settingsRef.current?.vibrationEnabled) vibrate(10);
+          },
+          playTimeUpSound: () => {
+            if (settingsRef.current?.soundEnabled) sounds.playTimeUp();
+            if (settingsRef.current?.vibrationEnabled) vibrate([50, 50, 100]);
           },
           playGuessedSound: () => {
             if (settingsRef.current?.soundEnabled) sounds.playGuessed();

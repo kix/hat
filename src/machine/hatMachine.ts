@@ -292,6 +292,7 @@ export const hatMachine = setup({
   actions: {
     playRoundStartSound: () => {},
     playTickSound: () => {},
+    playTimeUpSound: () => {},
     playGuessedSound: () => {},
     playLowHatGuessedSound: () => {},
     playSkipSound: () => {},
@@ -502,6 +503,8 @@ export const hatMachine = setup({
             enqueue.assign({ timeRemainingSec });
             if (timeRemainingSec > 0 && timeRemainingSec <= 10) {
               enqueue('playTickSound');
+            } else if (timeRemainingSec === 0) {
+              enqueue('playTimeUpSound');
             }
           }),
         },

@@ -9,6 +9,7 @@ interface SwipeableWordCardProps {
   allowSkip?: boolean;
   onSwipeRight: () => void;
   onSwipeLeft: () => void;
+  onSwipeUp?: () => void;
 }
 
 export function SwipeableWordCard({
@@ -17,6 +18,7 @@ export function SwipeableWordCard({
   allowSkip = false,
   onSwipeRight,
   onSwipeLeft,
+  onSwipeUp,
 }: SwipeableWordCardProps) {
   const { t } = useI18n();
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -48,27 +50,43 @@ export function SwipeableWordCard({
     if (!isDragging) return;
     setIsDragging(false);
 
-    const threshold = 120; // Порог для свайпа в пикселях
-    if (dragOffset.x > threshold) {
-      onSwipeRight();
-    } else if (dragOffset.x < -threshold && allowSkip) {
-      onSwipeLeft();
+    const thresholdX = 120; // Порог для горизонтального свайпа
+    const thresholdY = 90;  // Порог для вертикального свайпа
+
+    const isHorizontal = Math.abs(dragOffset.x) > Math.abs(dragOffset.y);
+
+    if (isHorizontal) {
+      if (dragOffset.x > thresholdX) {
+        onSwipeRight();
+      } else if (dragOffset.x < -thresholdX && allowSkip) {
+        onSwipeLeft();
+      } else {
+        setDragOffset({ x: 0, y: 0 });
+      }
     } else {
-      // Возвращаем в центр, если порог не пройден
-      setDragOffset({ x: 0, y: 0 });
+      if (dragOffset.y < -thresholdY && onSwipeUp) {
+        onSwipeUp();
+      } else {
+        setDragOffset({ x: 0, y: 0 });
+      }
     }
   };
 
   // Вычисление углов и стилей трансформации
   const rotate = dragOffset.x * 0.08; // Угол поворота при перетаскивании
   const transform = `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0) rotate(${rotate}deg)`;
+
+  const isUpDominant = Math.abs(dragOffset.y) > Math.abs(dragOffset.x) && dragOffset.y < -30;
   
   // Рассчитываем силу оттенка в зависимости от расстояния
   const rightOpacity = Math.min(Math.max(dragOffset.x / 150, 0), 0.15);
   const leftOpacity = Math.min(Math.max(-dragOffset.x / 150, 0), 0.15);
+  const upOpacity = Math.min(Math.max(-dragOffset.y / 120, 0), 0.18);
 
   let overlayColor = 'transparent';
-  if (rightOpacity > 0) {
+  if (isUpDominant && onSwipeUp) {
+    overlayColor = `rgba(250, 82, 82, ${upOpacity})`; // Красный для Нарушение
+  } else if (rightOpacity > 0) {
     overlayColor = `rgba(64, 192, 87, ${rightOpacity})`; // Зеленый для Угадано
   } else if (leftOpacity > 0 && allowSkip) {
     overlayColor = `rgba(134, 142, 150, ${leftOpacity})`; // Серый для Пропуск
@@ -76,7 +94,9 @@ export function SwipeableWordCard({
 
   // Определение цвета рамки при свайпе
   let borderColor = 'var(--mantine-color-default-border)';
-  if (dragOffset.x > 30) {
+  if (isUpDominant && onSwipeUp) {
+    borderColor = 'var(--mantine-color-red-filled)';
+  } else if (dragOffset.x > 30) {
     borderColor = 'var(--mantine-color-green-filled)';
   } else if (dragOffset.x < -30 && allowSkip) {
     borderColor = 'var(--mantine-color-gray-filled)';
@@ -146,8 +166,26 @@ export function SwipeableWordCard({
           }}
         />
 
-        {/* Бейджи-подсказки при свайпах */}
-        {dragOffset.x > 50 && (
+        {/* Бейдж нарушения при свайпе вверх */}
+        {isUpDominant && onSwipeUp && dragOffset.y < -40 && (
+          <Badge
+            color="red"
+            variant="filled"
+            size="lg"
+            style={{
+              position: 'absolute',
+              top: 20,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 2,
+            }}
+          >
+            {t('review.foul')}
+          </Badge>
+        )}
+
+        {/* Бейджи-подсказки при горизонтальных свайпах */}
+        {!isUpDominant && dragOffset.x > 50 && (
           <Badge
             color="green"
             variant="filled"
@@ -164,7 +202,7 @@ export function SwipeableWordCard({
           </Badge>
         )}
 
-        {dragOffset.x < -50 && allowSkip && (
+        {!isUpDominant && dragOffset.x < -50 && allowSkip && (
           <Badge
             color="gray"
             variant="filled"

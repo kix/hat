@@ -52,6 +52,27 @@ export function RoundPlayingScreen({
   // this instead captures the moment this word's render actually commits.
   const renderedAtRef = useRef<number | null>(null);
   const [wordHidden, setWordHidden] = useState(false);
+  const [flashType, setFlashType] = useState<'guessed' | 'skipped' | 'foul' | null>(null);
+  const flashTimerRef = useRef<number | null>(null);
+
+  const triggerFlash = (type: 'guessed' | 'skipped' | 'foul') => {
+    if (flashTimerRef.current) {
+      window.clearTimeout(flashTimerRef.current);
+    }
+    setFlashType(type);
+    flashTimerRef.current = window.setTimeout(() => {
+      setFlashType(null);
+    }, 280);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) {
+        window.clearTimeout(flashTimerRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     renderedAtRef.current = Date.now();
     // Every new word starts visible — hiding is a per-word choice, not a
@@ -63,7 +84,11 @@ export function RoundPlayingScreen({
   const handleSend = (event: HatEvent) => {
     if (!currentWord) return;
     if (event.type === 'WORD_SKIPPED') {
+      triggerFlash('skipped');
       void logWeirdWord(currentWord);
+    }
+    if (event.type === 'WORD_FOUL') {
+      triggerFlash('foul');
     }
     if (event.type === 'DELETE_WORD') {
       void deleteWordFromDictionary(currentWord);
@@ -71,16 +96,36 @@ export function RoundPlayingScreen({
     if (event.type === 'MARK_WORD_RARE') {
       void markWordRareInDictionary(currentWord);
     }
-    if (event.type === 'WORD_GUESSED' && session?.user) {
-      recordWordTiming(currentWord, Date.now() - (renderedAtRef.current ?? Date.now()));
+    if (event.type === 'WORD_GUESSED') {
+      triggerFlash('guessed');
+      if (session?.user) {
+        recordWordTiming(currentWord, Date.now() - (renderedAtRef.current ?? Date.now()));
+      }
     }
     send(event);
   };
 
   const isTimeUp = context.timeRemainingSec <= 0;
 
+  const flashBoxShadow =
+    flashType === 'guessed'
+      ? 'inset 0 0 0 6px var(--mantine-color-green-filled), 0 0 30px rgba(64, 192, 87, 0.3)'
+      : flashType === 'foul'
+      ? 'inset 0 0 0 6px var(--mantine-color-red-filled), 0 0 30px rgba(250, 82, 82, 0.3)'
+      : flashType === 'skipped'
+      ? 'inset 0 0 0 6px var(--mantine-color-gray-5), 0 0 30px rgba(134, 142, 150, 0.2)'
+      : 'none';
+
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: flashBoxShadow,
+        transition: 'box-shadow 0.15s ease-out',
+      }}
+    >
       {/* Только хост или локальный игрок может досрочно выйти из игры */}
       {(!isMultiplayer || isHost) && <ExitGameButton send={send} />}
       
@@ -101,6 +146,7 @@ export function RoundPlayingScreen({
               allowSkip={context.settings.allowSkip}
               onSwipeRight={() => handleSend({ type: 'WORD_GUESSED' })}
               onSwipeLeft={() => handleSend({ type: 'WORD_SKIPPED' })}
+              onSwipeUp={() => handleSend({ type: 'WORD_FOUL' })}
             />
 
             <Group justify="center" pb="sm">

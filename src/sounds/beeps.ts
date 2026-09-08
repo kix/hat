@@ -34,6 +34,18 @@ export function playTickBeep(ctx: AudioContext): void {
   beep(ctx, { freq: 880, durationMs: 90, type: 'sine', gain: 0.15 });
 }
 
+export function playUrgentTickBeep(ctx: AudioContext, secondsLeft: number = 5): void {
+  // Rising pitch as time runs out (from 920Hz up to 1320Hz on last second)
+  const baseFreq = 880 + Math.max(0, 6 - secondsLeft) * 85;
+  beep(ctx, { freq: baseFreq, durationMs: 70, type: 'sine', gain: 0.18 });
+  beep(ctx, { freq: baseFreq * 1.25, durationMs: 50, type: 'sine', gain: 0.12, delayMs: 50 });
+}
+
+export function playTimeUpBeep(ctx: AudioContext): void {
+  beep(ctx, { freq: 350, durationMs: 160, type: 'sawtooth', gain: 0.2 });
+  beep(ctx, { freq: 220, durationMs: 280, type: 'sawtooth', gain: 0.22, delayMs: 140 });
+}
+
 export function playGuessedBeep(ctx: AudioContext): void {
   beep(ctx, { freq: 660, durationMs: 110, type: 'sine', gain: 0.2 });
   beep(ctx, { freq: 990, durationMs: 150, type: 'sine', gain: 0.2, delayMs: 90 });

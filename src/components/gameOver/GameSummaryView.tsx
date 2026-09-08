@@ -26,6 +26,13 @@ interface GameSummaryViewProps {
   highlightPlayerId?: string;
 }
 
+function getRankIcon(idx: number): string {
+  if (idx === 0) return '🥇';
+  if (idx === 1) return '🥈';
+  if (idx === 2) return '🥉';
+  return `${idx + 1}.`;
+}
+
 // Pure, read-only rendering of a finished game: winner banner, team and
 // player rankings, last round recap, and the highlight stat cards. Shared by
 // GameOverScreen (post-game) and SummaryScreen (shared link) so both stay in
@@ -105,8 +112,8 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               {sortedTeams.map((team, idx) => (
                 <Group key={team.id} justify="space-between">
                   <Group gap="xs">
-                    <Text fw={500} c={idx === 0 ? 'yellow' : 'dimmed'}>
-                      {idx + 1}.
+                    <Text fw={500} style={{ minWidth: 24, textAlign: 'center' }}>
+                      {getRankIcon(idx)}
                     </Text>
                     <Text fw={idx === 0 ? 600 : 500}>{team.name}</Text>
                   </Group>
@@ -131,8 +138,8 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               return (
                 <Group key={item.player.id} justify="space-between" wrap="nowrap">
                   <Group gap="xs" style={{ minWidth: 0, flexShrink: 1 }}>
-                    <Text fw={500} c={idx === 0 ? 'yellow' : 'dimmed'}>
-                      {idx + 1}.
+                    <Text fw={500} style={{ minWidth: 24, textAlign: 'center' }}>
+                      {getRankIcon(idx)}
                     </Text>
                     <Stack gap={0} style={{ minWidth: 0 }}>
                       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -168,7 +175,10 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
       <SimpleGrid cols={1} spacing="sm">
         {bestPlayer && (
           <StatCard title={t('summaryView.bestPlayer')}>
-            <Text fw={600}>{bestPlayer.player.name}</Text>
+            <Group justify="space-between" align="center">
+              <Text fw={700} size="lg">🏆 {bestPlayer.player.name}</Text>
+              <Badge color="yellow" variant="filled" size="sm">MVP</Badge>
+            </Group>
             <Text size="sm" c="dimmed">
               {isPairs
                 ? t('summaryView.bestPlayerSubPairs', { n: bestPlayer.guessedCount })
