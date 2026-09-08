@@ -1,6 +1,7 @@
 import { Group, SegmentedControl, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { DictionaryEntry } from '../../data/dictionary';
+import { prefetchRuStandard } from '../../data/dictionaryLoader';
 import type { HatEvent, Settings } from '../../machine/hatMachine';
 import { useI18n } from '../../i18n/i18n';
 
@@ -95,7 +96,7 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
         />
       )}
 
-      <div>
+      <div onMouseEnter={prefetchRuStandard} onTouchStart={prefetchRuStandard}>
         <Text size="sm" fw={500} mb={4}>
           {t('roundSettings.wordPack')}
         </Text>

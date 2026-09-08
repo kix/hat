@@ -27,6 +27,7 @@ import { useI18n } from './i18n/i18n';
 import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
 import { trackEvent } from './utils/analytics';
+import { loadDictionary, prefetchDictionaries } from './data/dictionaryLoader';
 
 function App() {
   const sounds = useGameSounds();
@@ -134,22 +135,11 @@ function App() {
   const currentContext = mode === 'multiplayer' ? (multiplayer.gameContext || localState.context) : localState.context;
   const currentStatus = mode === 'multiplayer' ? multiplayer.gameState : (localState.value as string);
 
-  // Ленивая загрузка словаря — русского или английского, в зависимости от языка и настроек набора слов
+  // Загрузка словаря — русского или английского, в зависимости от языка и настроек набора слов
   useEffect(() => {
     let active = true;
     void (async () => {
-      let entries: any[] = [];
-      if (lang === 'en') {
-        entries = (await import('./data/dictionaryEn')).dictionaryEn;
-      } else {
-        const frequent = (await import('./data/dictionaryRuFrequent')).dictionaryRuFrequent;
-        if (currentContext.settings.wordPack === 'standard') {
-          const standard = (await import('./data/dictionaryRuStandard')).dictionaryRuStandard;
-          entries = [...frequent, ...standard];
-        } else {
-          entries = frequent;
-        }
-      }
+      const entries = await loadDictionary(lang, currentContext.settings.wordPack);
       if (active) {
         localSend({ type: 'DICTIONARY_LOADED', entries });
       }
@@ -158,6 +148,27 @@ function App() {
       active = false;
     };
   }, [localSend, lang, currentContext.settings.wordPack]);
+
+  // Фоновая предзагрузка остальных словарей во время простоя (idle time)
+  useEffect(() => {
+    const idleCallback =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback
+        : (cb: () => void) => window.setTimeout(cb, 2000);
+
+    const cancelIdle =
+      typeof window.cancelIdleCallback === 'function'
+        ? window.cancelIdleCallback
+        : (id: number) => window.clearTimeout(id);
+
+    const handle = idleCallback(() => {
+      prefetchDictionaries();
+    });
+
+    return () => {
+      cancelIdle(handle as any);
+    };
+  }, []);
   // Отслеживаем начало и конец игры для аналитики
   useEffect(() => {
     if (prevStatusRef.current === 'setup' && currentStatus === 'roundIntro') {
