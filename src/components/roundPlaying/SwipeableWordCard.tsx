@@ -110,14 +110,14 @@ export function SwipeableWordCard({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 'var(--mantine-spacing-lg)',
-        touchAction: 'none', // Отключаем стандартный скролл при перетаскивании
-        userSelect: 'none',
-        overflow: 'hidden',
       }}
-      onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
+      onMouseMove={(e) => {
+        if (isDragging) handleMove(e.clientX, e.clientY);
+      }}
       onMouseUp={handleEnd}
       onMouseLeave={handleEnd}
       onTouchMove={(e) => {
+        if (!isDragging) return;
         const touch = e.touches[0];
         if (touch) handleMove(touch.clientX, touch.clientY);
       }}
@@ -148,6 +148,8 @@ export function SwipeableWordCard({
           transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease',
           boxShadow: isDragging ? '0 15px 30px rgba(0,0,0,0.15)' : 'var(--mantine-shadow-md)',
           zIndex: 10,
+          touchAction: 'none',
+          userSelect: 'none',
         }}
       >
         {/* Индикаторный слой (Overlay) для цветового фидбека при свайпе */}

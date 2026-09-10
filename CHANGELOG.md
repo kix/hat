@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.31] - 2026-09-10
+
+### Fixed
+
+- **Исправление вертикальной прокрутки страниц на мобильных и десктопных браузерах:**
+  - Удалены глобальные блокирующие свойства `overflow-x: hidden`, `overscroll-behavior-y: none` и `user-select: none` с `html` и `body`.
+  - Заменено `overflow-x: hidden` на современный `overflow-x: clip` для безопасного отсечения горизонтального переполнения без создания вложенных контейнеров скролла и без блокировки вертикальной прокрутки окна.
+  - В компоненте `SwipeableWordCard` свойство `touch-action: none` ограничено самой карточкой слова вместо всего экрана, что вернуло естественную прокрутку и свайпы при задевании окружающего пространства.
+
 ## [1.6.30] - 2026-09-08
 
 ### Added
