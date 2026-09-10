@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.32] - 2026-09-10
+
+### Added
+
+- **Отображение истории изменений (Changelog) на фронтенде:**
+  - Номер версии приложения в футере стартового экрана (`v1.6.32`) стал кликабельной ссылкой, открывающей модальное окно со структурированной историей изменений.
+  - Автоматический парсинг `CHANGELOG.md` с визуальным выделением категорий (`Added`, `Fixed`, `Changed`, `Removed`, `Security`), поддержкой markdown-форматирования (жирный шрифт, инлайн-код, списки, ссылки на GitHub Releases) и бейджем текущей версии.
+  - Ленивая загрузка модуля модального окна и данных чейнджлога (`React.lazy` + `Suspense`) для сохранения скорости первой загрузки страницы.
+  - Поддержка прямого перехода по URL-параметру `?changelog` и трекинг событий аналитики (`changelog_click`).
+  - Полная локализация интерфейса чейнджлога на русский и английский языки.
+
 ## [1.6.31] - 2026-09-10
 
 ### Fixed
@@ -363,6 +374,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.32]: https://github.com/kix/hat/releases/tag/v1.6.32
+[1.6.31]: https://github.com/kix/hat/releases/tag/v1.6.31
+[1.6.30]: https://github.com/kix/hat/releases/tag/v1.6.30
 [1.6.29]: https://github.com/kix/hat/releases/tag/v1.6.29
 [1.6.28]: https://github.com/kix/hat/releases/tag/v1.6.28
 [1.6.27]: https://github.com/kix/hat/releases/tag/v1.6.27

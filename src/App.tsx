@@ -19,6 +19,7 @@ const RoundReviewScreen = lazy(() => import('./components/roundReview/RoundRevie
 const ProfileScreen = lazy(() => import('./components/profile/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
 const SummaryScreen = lazy(() => import('./components/summary/SummaryScreen').then(m => ({ default: m.SummaryScreen })));
 const GameShareScreen = lazy(() => import('./components/summary/GameShareScreen').then(m => ({ default: m.GameShareScreen })));
+const ChangelogModal = lazy(() => import('./components/changelog/ChangelogModal').then(m => ({ default: m.ChangelogModal })));
 
 import { AuthMenu, signInWithTelegram } from './components/auth/AuthMenu';
 import { ColorSchemeToggle } from './components/ColorSchemeToggle';
@@ -40,6 +41,9 @@ function App() {
   const [playerName, setPlayerName] = useState<string>('');
   const [joinRoomCode, setJoinRoomCode] = useState<string>('');
   const [showProfile, setShowProfile] = useState<boolean>(false);
+  const [showChangelog, setShowChangelog] = useState<boolean>(
+    () => new URLSearchParams(window.location.search).has('changelog'),
+  );
   // Shareable daily-summary link (?summary=<uuid>), read once on load.
   const [summaryId, setSummaryId] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get('summary'),
@@ -48,6 +52,15 @@ function App() {
   const [shareGameId, setShareGameId] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get('game'),
   );
+
+  const closeChangelog = useCallback(() => {
+    setShowChangelog(false);
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('changelog')) {
+      url.searchParams.delete('changelog');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
 
   // Ссылка на последние настройки для звуков/вибрации
   const settingsRef = useRef<Settings | null>(null);
@@ -434,9 +447,19 @@ function App() {
           </Card>
 
           <Group justify="center" gap="xs" mt="sm" wrap="wrap" style={{ opacity: 0.5 }}>
-            <Text size="xs">
+            <Anchor
+              component="button"
+              type="button"
+              size="xs"
+              c="dimmed"
+              underline="hover"
+              onClick={() => {
+                trackEvent('changelog_click');
+                setShowChangelog(true);
+              }}
+            >
               v{packageJson.version}
-            </Text>
+            </Anchor>
             <Text size="xs" c="dimmed">·</Text>
             <Anchor 
               href="https://web.tribute.tg/d/NSu" 
@@ -460,6 +483,12 @@ function App() {
               {t('landing.reportBug')}
             </Anchor>
           </Group>
+
+          {showChangelog && (
+            <Suspense fallback={null}>
+              <ChangelogModal opened={showChangelog} onClose={closeChangelog} />
+            </Suspense>
+          )}
         </Stack>
       </Container>
     );

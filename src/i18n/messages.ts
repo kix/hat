@@ -320,6 +320,17 @@ export const messages: Record<Lang, Record<string, string>> = {
     'summaryView.foulCountPlural1': '{n} нарушение',
     'summaryView.foulCountPlural2': '{n} нарушения',
     'summaryView.foulCountPlural5': '{n} нарушений',
+
+    // changelog
+    'changelog.title': 'История изменений',
+    'changelog.latest': 'Текущая версия',
+    'changelog.added': 'Новое',
+    'changelog.fixed': 'Исправления',
+    'changelog.changed': 'Изменения',
+    'changelog.removed': 'Удалено',
+    'changelog.security': 'Безопасность',
+    'changelog.viewOnGithub': 'GitHub Release',
+    'changelog.close': 'Закрыть',
   },
 
   en: {
@@ -638,5 +649,16 @@ export const messages: Record<Lang, Record<string, string>> = {
     'summaryView.foulCountPlural1': '{n} foul',
     'summaryView.foulCountPlural2': '{n} fouls',
     'summaryView.foulCountPlural5': '{n} fouls',
+
+    // changelog
+    'changelog.title': 'Changelog',
+    'changelog.latest': 'Current version',
+    'changelog.added': 'Added',
+    'changelog.fixed': 'Fixed',
+    'changelog.changed': 'Changed',
+    'changelog.removed': 'Removed',
+    'changelog.security': 'Security',
+    'changelog.viewOnGithub': 'GitHub Release',
+    'changelog.close': 'Close',
   },
 };
