@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.37] - 2026-09-11
+
+### Performance
+
+- **Оптимизация скорости загрузки (Lighthouse Core Web Vitals):**
+  - Устранена блокировка рендеринга шрифтов Google Fonts (переход на асинхронную загрузку с предзагрузкой стилей и системным стеком шрифтов).
+  - Скрипт `telegram-web-app.js` переведён в режим `defer`, чтобы не блокировать начальный парсинг HTML.
+  - Оптимизирована фоновая предзагрузка тяжёлых словарей (4 МБ): отключена фоновая загрузка на посадочной странице, чтобы не перегружать пропускную способность мобильного интернета при первом визите.
+  - Добавлена обработка ошибок и плавный fallback для аватаров пользователей, предотвращающий консольные ошибки сети 404.
+
 ## [1.6.36] - 2026-09-11
 
 ### Added

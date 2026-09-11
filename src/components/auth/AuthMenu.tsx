@@ -55,6 +55,12 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
   const clientId = import.meta.env.VITE_TELEGRAM_CLIENT_ID;
   const clientSecret = import.meta.env.VITE_TELEGRAM_CLIENT_SECRET;
   const [loading, setLoading] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrl]);
 
   // Обработка OIDC-кода от Telegram в URL
   useEffect(() => {
@@ -152,7 +158,16 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
           {loading ? (
             <Loader size={18} color="blue" />
           ) : isRealUser ? (
-            <Avatar size={28} radius="xl" src={user?.user_metadata?.avatar_url as string | undefined} />
+            <Avatar
+              size={28}
+              radius="xl"
+              src={!avatarError && avatarUrl ? avatarUrl : undefined}
+              imageProps={{
+                onError: () => setAvatarError(true),
+              }}
+            >
+              {(user?.user_metadata?.full_name as string | undefined)?.[0]?.toUpperCase() ?? <IconUserCircle size={20} />}
+            </Avatar>
           ) : (
             <IconUserCircle size={22} />
           )}

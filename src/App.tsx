@@ -191,26 +191,21 @@ function App() {
     };
   }, [localSend, lang, currentContext.settings.wordPack]);
 
-  // Фоновая предзагрузка остальных словарей во время простоя (idle time)
+  // Фоновая предзагрузка остальных словарей во время простоя (только после перехода к настройке игры)
   useEffect(() => {
-    const idleCallback =
-      typeof window.requestIdleCallback === 'function'
-        ? window.requestIdleCallback
-        : (cb: () => void) => window.setTimeout(cb, 2000);
-
-    const cancelIdle =
-      typeof window.cancelIdleCallback === 'function'
-        ? window.cancelIdleCallback
-        : (id: number) => window.clearTimeout(id);
-
-    const handle = idleCallback(() => {
-      prefetchDictionaries();
-    });
+    if (mode === null) return;
+    const timeoutId = window.setTimeout(() => {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => prefetchDictionaries());
+      } else {
+        prefetchDictionaries();
+      }
+    }, 8000);
 
     return () => {
-      cancelIdle(handle as any);
+      window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [mode]);
   // Отслеживаем начало и конец игры для аналитики
   useEffect(() => {
     if (prevStatusRef.current === 'setup' && currentStatus === 'roundIntro') {

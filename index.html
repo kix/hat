@@ -11,11 +11,20 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Шляпа" />
     <title>Шляпа</title>
+    <!-- Preconnect to Google Fonts & gstatic -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Non-render-blocking Google Fonts with print/all swap pattern -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&display=swap" />
+    </noscript>
+
+    <!-- Telegram WebApp SDK (deferred to not block rendering) -->
+    <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-QFSVFWHCKK"></script>
     <script>
