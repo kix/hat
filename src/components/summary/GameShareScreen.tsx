@@ -87,7 +87,12 @@ export function GameShareScreen({ gameId, onClose }: GameShareScreenProps) {
               highlightPlayerId={viewerId}
             />
             <Divider />
-            <ShareGameButton gameId={game.id} />
+            <ShareGameButton
+              gameId={game.id}
+              teams={game.teams}
+              history={game.history}
+              settings={game.settings}
+            />
           </>
         )}
       </Stack>

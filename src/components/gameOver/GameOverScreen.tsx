@@ -94,7 +94,12 @@ export function GameOverScreen({ context, send, isHost, participants }: GameOver
           highlightPlayerId={session?.user?.id}
         />
 
-        {savedGameId && <ShareGameButton gameId={savedGameId} />}
+        <ShareGameButton
+          gameId={savedGameId || undefined}
+          teams={context.teams}
+          history={context.history}
+          settings={context.settings}
+        />
 
         <PlayAgainButton send={send} />
       </Stack>
