@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.35] - 2026-09-11
+
+### Security
+
+- **Обновление зависимостей безопасности:**
+  - Обновлен пакет `fast-uri` с версии 3.1.4 до 3.1.7 для устранения уязвимостей безопасности (GHSA-qw65-cvwx-89v3, GHSA-58mr-gqgx-xq4g, GHSA-5jgf-p345-68v8, GHSA-fph4-wmhf-6fwf, GHSA-f65p-4m7j-42xc, GHSA-7p8r-x3mc-p8w7).
+
 ## [1.6.34] - 2026-09-11
 
 ### Added
@@ -403,6 +410,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.35]: https://github.com/kix/hat/releases/tag/v1.6.35
 [1.6.34]: https://github.com/kix/hat/releases/tag/v1.6.34
 [1.6.33]: https://github.com/kix/hat/releases/tag/v1.6.33
 [1.6.32]: https://github.com/kix/hat/releases/tag/v1.6.32
