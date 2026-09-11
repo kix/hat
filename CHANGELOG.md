@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.34] - 2026-09-11
+
+### Added
+
+- **Генерация карточек результатов для Telegram Stories и чатов:**
+  - Реализован высококачественный Canvas 2D рендерер и экспорт изображений в форматах **Stories (9:16, 1080×1920)** и **Пост в чат (4:5, 1080×1350)**.
+  - Отрисовка подиума победителей с пьедесталом (🥇 1, 🥈 2, 🥉 3 места), очками, именами участников и короной.
+  - Блок номинаций MVP и рекордов: *«Молния»* (самый быстрый ответ), *«Эрудит»* (лидер по отгаданным словам), *«Главный грабитель»* (перехват слов) и *«Железные нервы»* (ответ на последних секундах).
+  - Модальное окно предпросмотра с быстрыми действиями: шеринг через Web Share API, копирование картинки в буфер обмена (`ClipboardItem`) и скачивание файла PNG.
+
 ## [1.6.33] - 2026-09-11
 
 ### Added
@@ -393,6 +403,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.34]: https://github.com/kix/hat/releases/tag/v1.6.34
 [1.6.33]: https://github.com/kix/hat/releases/tag/v1.6.33
 [1.6.32]: https://github.com/kix/hat/releases/tag/v1.6.32
 [1.6.31]: https://github.com/kix/hat/releases/tag/v1.6.31
