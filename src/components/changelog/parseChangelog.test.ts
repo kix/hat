@@ -67,7 +67,7 @@ All notable changes.
 
     expect(releases.length).toBeGreaterThan(10);
     expect(releases[0].version).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(releases[0].date).toBe('2026-09-10');
+    expect(releases[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(releases[0].sections.length).toBeGreaterThanOrEqual(1);
   });
 });

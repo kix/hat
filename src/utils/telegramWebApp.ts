@@ -55,6 +55,14 @@ export interface TelegramWebAppAPI {
     notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
     selectionChanged: () => void;
   };
+  Accelerometer?: {
+    isStarted: boolean;
+    x: number;
+    y: number;
+    z: number;
+    start: (params?: { refresh_rate?: number }, callback?: (success: boolean) => void) => void;
+    stop: (callback?: (success: boolean) => void) => void;
+  };
   ready: () => void;
   expand: () => void;
   close: () => void;
