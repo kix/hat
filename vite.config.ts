@@ -157,6 +157,26 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/@mantine')) {
+            return 'mantine';
+          }
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase';
+          }
+          if (id.includes('node_modules/xstate') || id.includes('node_modules/@xstate')) {
+            return 'xstate';
+          }
+          if (id.includes('node_modules/@tabler/icons-react')) {
+            return 'tabler-icons';
+          }
+        },
+      },
+    },
+  },
   server: {
     port: process.env.PORT ? Number(process.env.PORT) : 5173,
   },

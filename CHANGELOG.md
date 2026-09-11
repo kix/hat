@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.33] - 2026-09-11
+
+### Added
+
+- **Поддержка Telegram Mini App (TMA):**
+  - Подключен официальный Telegram WebApp SDK с автоматическим разворачиванием окна (`expand`), жизненным циклом и подтверждением закрытия.
+  - Реализована бесшовная авто-авторизация (`useTelegramAutoAuth`): пользователи, запускающие игру внутри Telegram, мгновенно входят в систему со своим именем, Telegram ID и аватаром без лишних кликов.
+  - Нативная кнопка «Назад» в шапке Telegram (`useTelegramBackButton`) привязана к экрану профиля и навигации.
+  - Нативный тактильный отклик через `Telegram.WebApp.HapticFeedback` (`impactOccurred` / `notificationOccurred`) для четкой вибрации на смартфонах с фоллбеком на `navigator.vibrate`.
+- **Мета-игра, профили и достижения 2.0:**
+  - Добавлена расширенная система достижений с прогресс-барами (8 ачивок: *«Молния»*, *«Эрудит»*, *«Железные нервы»*, *«Чемпион»*, *«Телепат»*, *«Ветеран Шляпы»*, *«Идеальный дуэт»*, *«Чистая игра»*).
+  - Секция синергии с напарниками с расчетом количества совместных игр и процента побед.
+  - Карточки личных рекордов слов (самое быстрое и самое сложное разгаданное слово).
+
+### Changed
+
+- **Оптимизация бандла (Manual Chunks):**
+  - Настроено ручное разделение чанков для библиотек Mantine UI, Supabase, XState и Tabler Icons, уменьшив размер входного бандла `index.js` с 667 КБ до 264 КБ (~82 КБ в gzip).
+
 ## [1.6.32] - 2026-09-10
 
 ### Added
@@ -374,6 +393,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.33]: https://github.com/kix/hat/releases/tag/v1.6.33
 [1.6.32]: https://github.com/kix/hat/releases/tag/v1.6.32
 [1.6.31]: https://github.com/kix/hat/releases/tag/v1.6.31
 [1.6.30]: https://github.com/kix/hat/releases/tag/v1.6.30

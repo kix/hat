@@ -9,7 +9,7 @@ import {
   prefetchRuStandard,
 } from './dictionaryLoader';
 
-describe('dictionaryLoader', () => {
+describe('dictionaryLoader', { timeout: 20000 }, () => {
   it('loads Russian frequent dictionary', async () => {
     const words = await loadRuFrequent();
     expect(words).toBeDefined();

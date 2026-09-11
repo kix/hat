@@ -29,6 +29,8 @@ import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
 import { trackEvent } from './utils/analytics';
 import { loadDictionary, prefetchDictionaries } from './data/dictionaryLoader';
+import { initTelegramWebApp, getTelegramUser } from './utils/telegramWebApp';
+import { useTelegramAutoAuth } from './auth/useTelegramAutoAuth';
 
 function App() {
   const sounds = useGameSounds();
@@ -124,6 +126,21 @@ function App() {
 
   // Подключаем хук сетевой игры
   const multiplayer = useMultiplayer(handleActionFromClient);
+
+  // Автоматический вход при запуске внутри Telegram Mini App
+  useTelegramAutoAuth();
+
+  // Инициализация Telegram WebApp и предзаполнение имени из Telegram
+  useEffect(() => {
+    initTelegramWebApp();
+    const tgUser = getTelegramUser();
+    if (tgUser && !playerName) {
+      const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUser.username;
+      if (name) {
+        setPlayerName(name);
+      }
+    }
+  }, [playerName]);
 
   // Прокидываем настройки
   settingsRef.current = mode === 'multiplayer' && !multiplayer.isHost && multiplayer.gameContext

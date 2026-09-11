@@ -1,9 +1,36 @@
-import { useEffect, useState } from 'react';
-import { Container, Stack, Title, Text, Button, Card, Group, SimpleGrid, Badge, Loader, ThemeIcon } from '@mantine/core';
-import { IconArrowLeft, IconBolt, IconBrain, IconHourglass, IconTrophy, IconUser, IconCalendar } from '@tabler/icons-react';
+import { useEffect, useState, useMemo } from 'react';
+import {
+  Container,
+  Stack,
+  Title,
+  Text,
+  Button,
+  Card,
+  Group,
+  SimpleGrid,
+  Badge,
+  Loader,
+  ThemeIcon,
+  Progress,
+} from '@mantine/core';
+import {
+  IconArrowLeft,
+  IconBolt,
+  IconBrain,
+  IconHourglass,
+  IconTrophy,
+  IconUser,
+  IconCalendar,
+  IconTarget,
+  IconAward,
+  IconHeartHandshake,
+  IconShieldCheck,
+  IconFlame,
+} from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { TelegramNotificationsCard } from '../notifications/TelegramNotificationsCard';
 import { useI18n } from '../../i18n/i18n';
+import { useTelegramBackButton } from '../../utils/telegramWebApp';
 
 interface ProfileScreenProps {
   userId: string;
@@ -33,12 +60,61 @@ interface UserParticipation {
   games: GameRecord;
 }
 
+interface PartnerStat {
+  name: string;
+  count: number;
+  wins: number;
+}
+
+interface WordRecord {
+  word: string;
+  sec: number;
+}
+
+function WordRecordCard({
+  title,
+  icon,
+  color,
+  record,
+  secLabel,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  color: string;
+  record: WordRecord;
+  secLabel: string;
+}) {
+  return (
+    <Card withBorder padding="sm" radius="md">
+      <Stack gap={2}>
+        <Group gap="xs">
+          <ThemeIcon color={color} size="sm" variant="light">
+            {icon}
+          </ThemeIcon>
+          <Text size="xs" c="dimmed" fw={600}>
+            {title}
+          </Text>
+        </Group>
+        <Text fw={700} size="md" c={`${color}.8`} truncate="end">
+          «{record.word}»
+        </Text>
+        <Text size="xs" c="dimmed">
+          {record.sec} {secLabel}
+        </Text>
+      </Stack>
+    </Card>
+  );
+}
+
 export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
   const { t, lang } = useI18n();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [participations, setParticipations] = useState<UserParticipation[]>([]);
-  const [partnerStats, setPartnerStats] = useState<{ name: string; count: number } | null>(null);
+  const [partnerStats, setPartnerStats] = useState<PartnerStat[]>([]);
+
+  // Hook Telegram WebApp back button
+  useTelegramBackButton(onBack);
 
   useEffect(() => {
     void (async () => {
@@ -63,46 +139,42 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
         const validParticipations = (parts || []).filter((p) => p.games) as UserParticipation[];
         setParticipations(validParticipations);
 
-        // 3. Вычисляем любимого напарника
+        // 3. Вычисляем синергию с напарниками
         if (validParticipations.length > 0) {
           const gameIds = validParticipations.map((p) => p.game_id);
-          
-          // Получаем всех участников этих же игр
+
           const { data: allParts } = await supabase
             .from('game_participants')
             .select('*')
             .in('game_id', gameIds);
 
           if (allParts) {
-            const partnersCount: { [name: string]: number } = {};
+            const map: Record<string, { count: number; wins: number }> = {};
 
             validParticipations.forEach((userPart) => {
-              // Ищем напарника по той же игре, в той же команде, но с другим user_id
               const partner = allParts.find(
                 (p) =>
                   p.game_id === userPart.game_id &&
                   p.team_name === userPart.team_name &&
-                  p.user_id !== userId
+                  p.user_id !== userId,
               );
 
-              if (partner && partner.player_name) {
-                partnersCount[partner.player_name] = (partnersCount[partner.player_name] || 0) + 1;
+              if (partner?.player_name) {
+                if (!map[partner.player_name]) {
+                  map[partner.player_name] = { count: 0, wins: 0 };
+                }
+                map[partner.player_name].count += 1;
+                if (userPart.is_winner) {
+                  map[partner.player_name].wins += 1;
+                }
               }
             });
 
-            // Находим напарника с наибольшим количеством совместных игр
-            let bestPartner = '';
-            let maxGames = 0;
-            Object.keys(partnersCount).forEach((name) => {
-              if (partnersCount[name] > maxGames) {
-                maxGames = partnersCount[name];
-                bestPartner = name;
-              }
-            });
+            const sortedPartners = Object.entries(map)
+              .map(([name, data]) => ({ name, count: data.count, wins: data.wins }))
+              .sort((a, b) => b.count - a.count);
 
-            if (bestPartner) {
-              setPartnerStats({ name: bestPartner, count: maxGames });
-            }
+            setPartnerStats(sortedPartners);
           }
         }
       } catch (err) {
@@ -113,9 +185,148 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
     })();
   }, [userId]);
 
+  // --- ВЫЧИСЛЕНИЕ СТАТИСТИКИ И АЧИВОК ---
+  const stats = useMemo(() => {
+    const totalGames = participations.length;
+    const wins = participations.filter((p) => p.is_winner).length;
+    const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+
+    let totalGuessTimeMs = 0;
+    let totalSolvedWordsCount = 0;
+    let fastest: WordRecord | null = null;
+    let hardest: WordRecord | null = null;
+    let maxWordsInRound = 0;
+
+    let hasLightning = false;
+    let hasErudite = false;
+    let hasIronNerves = false;
+    let hasCleanGame = false;
+
+    const topPartner = partnerStats[0] || null;
+    const maxPartnerGames = topPartner?.count || 0;
+
+    participations.forEach((part) => {
+      const history = part.games?.history_data || [];
+      const settings = part.games?.settings;
+      const roundDurationMs = (settings?.roundDurationSec || 60) * 1000;
+
+      let hardestWordInGame: any = null;
+      let maxTimeMs = 0;
+      history.forEach((record) => {
+        if (record.result === 'guessed' && record.timeMs > maxTimeMs) {
+          maxTimeMs = record.timeMs;
+          hardestWordInGame = record;
+        }
+      });
+
+      if (part.is_winner) {
+        const userTeamRecords = history.filter(
+          (r) => r.guesserId === userId || r.describerId === userId,
+        );
+        const fouls = userTeamRecords.filter((r) => r.result === 'foul').length;
+        if (userTeamRecords.length > 0 && fouls === 0) {
+          hasCleanGame = true;
+        }
+      }
+
+      const roundCounts: Record<string, number> = {};
+
+      history.forEach((record) => {
+        if (record.result !== 'guessed') return;
+
+        const isUserGuesser = record.guesserId === userId;
+        const isUserDescriber = record.describerId === userId;
+
+        if (isUserGuesser || isUserDescriber) {
+          totalGuessTimeMs += record.timeMs;
+          totalSolvedWordsCount++;
+
+          const timeSec = Number((record.timeMs / 1000).toFixed(1));
+          if (!fastest || record.timeMs < fastest.sec * 1000) {
+            fastest = { word: record.word, sec: timeSec };
+          }
+          if (!hardest || record.timeMs > hardest.sec * 1000) {
+            hardest = { word: record.word, sec: timeSec };
+          }
+
+          const rKey = `${record.roundNumber ?? 0}_${record.describerId ?? ''}`;
+          roundCounts[rKey] = (roundCounts[rKey] || 0) + 1;
+          if (roundCounts[rKey] > maxWordsInRound) {
+            maxWordsInRound = roundCounts[rKey];
+          }
+        }
+
+        if (isUserGuesser) {
+          if (record.timeMs < 1500) {
+            hasLightning = true;
+          }
+          if (roundDurationMs - record.timeMs <= 1500) {
+            hasIronNerves = true;
+          }
+        }
+
+        if (hardestWordInGame && record.word === hardestWordInGame.word && (isUserGuesser || isUserDescriber)) {
+          hasErudite = true;
+        }
+      });
+    });
+
+    const hasChampion = wins >= 5;
+    const hasVeteran = totalGames >= 10;
+    const hasTelepath = maxWordsInRound >= 5;
+    const hasPerfectDuo = maxPartnerGames >= 5;
+
+    const avgSpeedSec =
+      totalSolvedWordsCount > 0 ? (totalGuessTimeMs / totalSolvedWordsCount / 1000).toFixed(1) : '—';
+
+    return {
+      totalGames,
+      wins,
+      winRate,
+      totalSolvedWordsCount,
+      avgSpeedSec,
+      fastestWord: fastest,
+      hardestWord: hardest,
+      hasLightning,
+      hasErudite,
+      hasIronNerves,
+      hasChampion,
+      hasTelepath,
+      hasVeteran,
+      hasPerfectDuo,
+      hasCleanGame,
+      maxWordsInRound,
+      maxPartnerGames,
+      topPartner,
+    };
+  }, [participations, partnerStats, userId]);
+
+  const {
+    totalGames,
+    wins,
+    winRate,
+    totalSolvedWordsCount,
+    avgSpeedSec,
+    hasLightning,
+    hasErudite,
+    hasIronNerves,
+    hasChampion,
+    hasTelepath,
+    hasVeteran,
+    hasPerfectDuo,
+    hasCleanGame,
+    maxWordsInRound,
+    maxPartnerGames,
+    topPartner,
+  } = stats;
+
   if (loading) {
     return (
-      <Container size="xs" py="xl" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Container
+        size="xs"
+        py="xl"
+        style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
         <Stack align="center" gap="md">
           <Loader size="xl" />
           <Text c="dimmed">{t('profile.loadingStats')}</Text>
@@ -124,81 +335,83 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
     );
   }
 
-  // --- ВЫЧИСЛЕНИЕ СТАТИСТИКИ ---
-  const totalGames = participations.length;
-  const wins = participations.filter((p) => p.is_winner).length;
-  const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
-
-  // Сбор всех сыгранных слов пользователя (где он угадывал или объяснял)
-  let userGuessedWordsCount = 0;
-  let userExplainedWordsCount = 0;
-  let totalGuessTimeMs = 0;
-  let totalSolvedWordsCount = 0;
-
-  // Переменные для проверки ачивок
-  let hasLightning = false;     // Молния (угадал < 1.5 сек)
-  let hasErudite = false;      // Эрудит (разгадал самое сложное слово)
-  let hasIronNerves = false;    // Железные нервы (на последней секунде раунда)
-
-  participations.forEach((part) => {
-    const history = part.games?.history_data || [];
-    const settings = part.games?.settings;
-    const roundDurationMs = (settings?.roundDurationSec || 60) * 1000;
-
-    // Находим самое сложное слово этой конкретной игры (по максимальному времени)
-    let hardestWordInGame: any = null;
-    let maxTimeMs = 0;
-    history.forEach((record) => {
-      if (record.result === 'guessed' && record.timeMs > maxTimeMs) {
-        maxTimeMs = record.timeMs;
-        hardestWordInGame = record;
-      }
-    });
-
-    history.forEach((record) => {
-      if (record.result !== 'guessed') return;
-
-      const isUserGuesser = record.guesserId === userId;
-      const isUserDescriber = record.describerId === userId;
-
-      if (isUserGuesser) {
-        userGuessedWordsCount++;
-        totalGuessTimeMs += record.timeMs;
-        totalSolvedWordsCount++;
-
-        // Проверка ачивки: Молния (быстрее 1.5 секунд)
-        if (record.timeMs < 1500) {
-          hasLightning = true;
-        }
-
-        // Проверка ачивки: Железные нервы (в последние 1.5 секунды раунда)
-        if (roundDurationMs - record.timeMs <= 1500) {
-          hasIronNerves = true;
-        }
-      }
-
-      if (isUserDescriber) {
-        userExplainedWordsCount++;
-        totalGuessTimeMs += record.timeMs;
-        totalSolvedWordsCount++;
-      }
-
-      // Проверка ачивки: Эрудит (угадал или объяснил самое сложное слово в игре)
-      if (hardestWordInGame && record.word === hardestWordInGame.word && (isUserGuesser || isUserDescriber)) {
-        hasErudite = true;
-      }
-    });
-  });
-
-  const avgSpeedSec = totalSolvedWordsCount > 0 ? (totalGuessTimeMs / totalSolvedWordsCount / 1000).toFixed(1) : '—';
-
-  // Форматирование даты регистрации
   const registerDate = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'ru-RU', {
         year: 'numeric',
         month: 'long',
       })
     : '—';
+
+  const achievementsList = [
+    {
+      id: 'lightning',
+      title: t('profile.achLightning'),
+      desc: t('profile.achLightningDesc'),
+      icon: <IconBolt size={18} />,
+      color: 'yellow',
+      unlocked: hasLightning,
+    },
+    {
+      id: 'erudite',
+      title: t('profile.achErudite'),
+      desc: t('profile.achEruditeDesc'),
+      icon: <IconBrain size={18} />,
+      color: 'blue',
+      unlocked: hasErudite,
+    },
+    {
+      id: 'ironNerves',
+      title: t('profile.achIronNerves'),
+      desc: t('profile.achIronNervesDesc'),
+      icon: <IconHourglass size={18} />,
+      color: 'red',
+      unlocked: hasIronNerves,
+    },
+    {
+      id: 'champion',
+      title: t('profile.achChampion'),
+      desc: t('profile.achChampionDesc'),
+      icon: <IconTrophy size={18} />,
+      color: 'teal',
+      unlocked: hasChampion,
+      progress: { current: Math.min(wins, 5), total: 5 },
+    },
+    {
+      id: 'telepath',
+      title: t('profile.achTelepath'),
+      desc: t('profile.achTelepathDesc'),
+      icon: <IconTarget size={18} />,
+      color: 'grape',
+      unlocked: hasTelepath,
+      progress: { current: Math.min(maxWordsInRound, 5), total: 5 },
+    },
+    {
+      id: 'veteran',
+      title: t('profile.achVeteran'),
+      desc: t('profile.achVeteranDesc'),
+      icon: <IconAward size={18} />,
+      color: 'orange',
+      unlocked: hasVeteran,
+      progress: { current: Math.min(totalGames, 10), total: 10 },
+    },
+    {
+      id: 'perfectDuo',
+      title: t('profile.achPerfectDuo'),
+      desc: t('profile.achPerfectDuoDesc'),
+      icon: <IconHeartHandshake size={18} />,
+      color: 'indigo',
+      unlocked: hasPerfectDuo,
+      progress: { current: Math.min(maxPartnerGames, 5), total: 5 },
+    },
+    {
+      id: 'cleanGame',
+      title: t('profile.achCleanGame'),
+      desc: t('profile.achCleanGameDesc'),
+      icon: <IconShieldCheck size={18} />,
+      color: 'green',
+      unlocked: hasCleanGame,
+    },
+  ];
 
   return (
     <Container size="xs" py="lg">
@@ -228,7 +441,7 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
           </Group>
         </Card>
 
-        {/* Уведомления в Telegram (только для вошедших через Telegram) */}
+        {/* Уведомления в Telegram */}
         {profile?.user_metadata?.provider === 'telegram' && profile?.user_metadata?.telegram_id && (
           <TelegramNotificationsCard
             userId={userId}
@@ -237,104 +450,189 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
         )}
 
         {/* Статистика */}
-        <Title order={3} size="h4" mb={-10}>{t('profile.statsTitle')}</Title>
+        <Title order={3} size="h4" mb={-10}>
+          {t('profile.statsTitle')}
+        </Title>
         <SimpleGrid cols={2} spacing="sm">
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>{t('profile.gamesPlayed')}</Text>
-              <Title order={2} c="blue">{totalGames}</Title>
+              <Text size="xs" c="dimmed" fw={600}>
+                {t('profile.gamesPlayed')}
+              </Text>
+              <Title order={2} c="blue">
+                {totalGames}
+              </Title>
             </Stack>
           </Card>
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>{t('profile.winRate')}</Text>
-              <Title order={2} c="teal">{winRate}%</Title>
-              <Text size="xs" c="dimmed">{t('profile.wins', { n: wins })}</Text>
+              <Text size="xs" c="dimmed" fw={600}>
+                {t('profile.winRate')}
+              </Text>
+              <Title order={2} c="teal">
+                {winRate}%
+              </Title>
+              <Text size="xs" c="dimmed">
+                {t('profile.wins', { n: wins })}
+              </Text>
             </Stack>
           </Card>
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>{t('profile.avgSpeed')}</Text>
-              <Title order={2} c="orange">{avgSpeedSec} {avgSpeedSec !== '—' ? t('profile.secShort') : ''}</Title>
-              <Text size="xs" c="dimmed">{t('profile.solvedWords', { n: totalSolvedWordsCount })}</Text>
+              <Text size="xs" c="dimmed" fw={600}>
+                {t('profile.avgSpeed')}
+              </Text>
+              <Title order={2} c="orange">
+                {avgSpeedSec} {avgSpeedSec !== '—' ? t('profile.secShort') : ''}
+              </Title>
+              <Text size="xs" c="dimmed">
+                {t('profile.solvedWords', { n: totalSolvedWordsCount })}
+              </Text>
             </Stack>
           </Card>
           <Card withBorder padding="md" radius="md">
             <Stack gap={4} align="center">
-              <Text size="xs" c="dimmed" fw={600}>{t('profile.favPartner')}</Text>
+              <Text size="xs" c="dimmed" fw={600}>
+                {t('profile.favPartner')}
+              </Text>
               <Text fw={700} c="indigo" truncate="end" style={{ maxWidth: '100%' }}>
-                {partnerStats ? partnerStats.name : '—'}
+                {topPartner ? topPartner.name : '—'}
               </Text>
               <Text size="xs" c="dimmed">
-                {partnerStats ? t('profile.jointGames', { n: partnerStats.count }) : t('profile.playInPairs')}
+                {topPartner ? t('profile.jointGames', { n: topPartner.count }) : t('profile.playInPairs')}
               </Text>
             </Stack>
           </Card>
         </SimpleGrid>
 
+        {/* Личные рекорды слов */}
+        {(stats.fastestWord || stats.hardestWord) && (
+          <>
+            <Title order={3} size="h4" mb={-10}>
+              {t('profile.recordsTitle')}
+            </Title>
+            <SimpleGrid cols={2} spacing="sm">
+              {stats.fastestWord && (
+                <WordRecordCard
+                  title={t('profile.fastestWord')}
+                  icon={<IconBolt size={14} />}
+                  color="yellow"
+                  record={stats.fastestWord}
+                  secLabel={t('profile.secShort')}
+                />
+              )}
+              {stats.hardestWord && (
+                <WordRecordCard
+                  title={t('profile.hardestWord')}
+                  icon={<IconFlame size={14} />}
+                  color="indigo"
+                  record={stats.hardestWord}
+                  secLabel={t('profile.secShort')}
+                />
+              )}
+            </SimpleGrid>
+          </>
+        )}
+
         {/* Ачивки / Достижения */}
-        <Title order={3} size="h4" mb={-10}>{t('profile.achievements')}</Title>
+        <Title order={3} size="h4" mb={-10}>
+          {t('profile.achievements')}
+        </Title>
         <Stack gap="xs">
-          {/* Молния */}
-          <Card withBorder padding="sm" radius="md" opacity={hasLightning ? 1 : 0.4} style={{ borderLeft: hasLightning ? '4px solid #fab005' : '1px solid var(--mantine-color-border)' }}>
-            <Group justify="space-between" wrap="nowrap">
-              <Group gap="sm" wrap="nowrap">
-                <ThemeIcon color="yellow" size="lg" variant={hasLightning ? 'filled' : 'light'}>
-                  <IconBolt size={18} />
-                </ThemeIcon>
-                <Stack gap={2}>
-                  <Text fw={600} size="sm">{t('profile.achLightning')}</Text>
-                  <Text size="xs" c="dimmed">{t('profile.achLightningDesc')}</Text>
-                </Stack>
+          {achievementsList.map((ach) => (
+            <Card
+              key={ach.id}
+              withBorder
+              padding="sm"
+              radius="md"
+              opacity={ach.unlocked ? 1 : 0.6}
+              style={{
+                borderLeft: ach.unlocked ? `4px solid var(--mantine-color-${ach.color}-filled)` : '1px solid var(--mantine-color-border)',
+              }}
+            >
+              <Group justify="space-between" wrap="nowrap" align="flex-start">
+                <Group gap="sm" wrap="nowrap" align="flex-start" style={{ flex: 1, minWidth: 0 }}>
+                  <ThemeIcon color={ach.color} size="lg" variant={ach.unlocked ? 'filled' : 'light'} mt={2}>
+                    {ach.icon}
+                  </ThemeIcon>
+                  <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
+                    <Text fw={600} size="sm">
+                      {ach.title}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {ach.desc}
+                    </Text>
+                    {ach.progress && !ach.unlocked && (
+                      <Stack gap={2} mt={4}>
+                        <Progress
+                          value={(ach.progress.current / ach.progress.total) * 100}
+                          size="xs"
+                          radius="xl"
+                          color={ach.color}
+                        />
+                        <Text size="10px" c="dimmed">
+                          {t('profile.progressLabel', {
+                            current: ach.progress.current,
+                            total: ach.progress.total,
+                          })}
+                        </Text>
+                      </Stack>
+                    )}
+                  </Stack>
+                </Group>
+                <Badge color={ach.unlocked ? ach.color : 'gray'} variant={ach.unlocked ? 'light' : 'outline'}>
+                  {ach.unlocked ? t('profile.unlocked') : t('profile.locked')}
+                </Badge>
               </Group>
-              <Badge color={hasLightning ? 'yellow' : 'gray'} variant="light">
-                {hasLightning ? t('profile.unlocked') : t('profile.locked')}
-              </Badge>
-            </Group>
-          </Card>
-
-          {/* Эрудит */}
-          <Card withBorder padding="sm" radius="md" opacity={hasErudite ? 1 : 0.4} style={{ borderLeft: hasErudite ? '4px solid #1c7ed6' : '1px solid var(--mantine-color-border)' }}>
-            <Group justify="space-between" wrap="nowrap">
-              <Group gap="sm" wrap="nowrap">
-                <ThemeIcon color="blue" size="lg" variant={hasErudite ? 'filled' : 'light'}>
-                  <IconBrain size={18} />
-                </ThemeIcon>
-                <Stack gap={2}>
-                  <Text fw={600} size="sm">{t('profile.achErudite')}</Text>
-                  <Text size="xs" c="dimmed">{t('profile.achEruditeDesc')}</Text>
-                </Stack>
-              </Group>
-              <Badge color={hasErudite ? 'blue' : 'gray'} variant="light">
-                {hasErudite ? t('profile.unlocked') : t('profile.locked')}
-              </Badge>
-            </Group>
-          </Card>
-
-          {/* Железные нервы */}
-          <Card withBorder padding="sm" radius="md" opacity={hasIronNerves ? 1 : 0.4} style={{ borderLeft: hasIronNerves ? '4px solid #fa5252' : '1px solid var(--mantine-color-border)' }}>
-            <Group justify="space-between" wrap="nowrap">
-              <Group gap="sm" wrap="nowrap">
-                <ThemeIcon color="red" size="lg" variant={hasIronNerves ? 'filled' : 'light'}>
-                  <IconHourglass size={18} />
-                </ThemeIcon>
-                <Stack gap={2}>
-                  <Text fw={600} size="sm">{t('profile.achIronNerves')}</Text>
-                  <Text size="xs" c="dimmed">{t('profile.achIronNervesDesc')}</Text>
-                </Stack>
-              </Group>
-              <Badge color={hasIronNerves ? 'red' : 'gray'} variant="light">
-                {hasIronNerves ? t('profile.unlocked') : t('profile.locked')}
-              </Badge>
-            </Group>
-          </Card>
+            </Card>
+          ))}
         </Stack>
 
+        {/* Синергия с напарниками */}
+        {partnerStats.length > 0 && (
+          <>
+            <Title order={3} size="h4" mb={-10}>
+              {t('profile.synergyTitle')}
+            </Title>
+            <Stack gap="xs">
+              {partnerStats.slice(0, 5).map((partner) => {
+                const partnerWinRate = Math.round((partner.wins / partner.count) * 100);
+                return (
+                  <Card key={partner.name} withBorder padding="sm" radius="md">
+                    <Group justify="space-between">
+                      <Group gap="xs">
+                        <ThemeIcon color="indigo" size="md" variant="light" radius="xl">
+                          <IconUser size={16} />
+                        </ThemeIcon>
+                        <Stack gap={0}>
+                          <Text fw={600} size="sm">
+                            {partner.name}
+                          </Text>
+                          <Text size="xs" c="dimmed">
+                            {t('profile.jointGames', { n: partner.count })}
+                          </Text>
+                        </Stack>
+                      </Group>
+                      <Badge color={partnerWinRate >= 50 ? 'teal' : 'gray'} variant="light">
+                        {partnerWinRate}% {t('profile.winRate').toLowerCase()}
+                      </Badge>
+                    </Group>
+                  </Card>
+                );
+              })}
+            </Stack>
+          </>
+        )}
+
         {/* История игр */}
-        <Title order={3} size="h4" mb={-10}>{t('profile.historyTitle')}</Title>
+        <Title order={3} size="h4" mb={-10}>
+          {t('profile.historyTitle')}
+        </Title>
         {totalGames === 0 ? (
           <Card withBorder padding="md" radius="md" ta="center">
-            <Text size="sm" c="dimmed">{t('profile.noGames')}</Text>
+            <Text size="sm" c="dimmed">
+              {t('profile.noGames')}
+            </Text>
           </Card>
         ) : (
           <Stack gap="xs">
@@ -349,11 +647,12 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
                   minute: '2-digit',
                 },
               );
-              
-              // Подсчет угаданных слов его команды в этой игре
+
               const gameHistory = game.history_data || [];
               const teamGuesses = gameHistory.filter(
-                (r) => r.result === 'guessed' && r.teamId === gameHistory.find((h) => h.teamId && h.guesserId === userId)?.teamId
+                (r) =>
+                  r.result === 'guessed' &&
+                  r.teamId === gameHistory.find((h) => h.teamId && h.guesserId === userId)?.teamId,
               ).length;
 
               return (
@@ -361,22 +660,32 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
                   <Group justify="space-between">
                     <Stack gap={2}>
                       <Group gap="xs">
-                        <Text fw={600} size="sm">{t('profile.teamLabel', { team: part.team_name })}</Text>
+                        <Text fw={600} size="sm">
+                          {t('profile.teamLabel', { team: part.team_name })}
+                        </Text>
                         <Badge color={part.is_winner ? 'green' : 'gray'} size="xs" variant="filled">
                           {part.is_winner ? t('profile.win') : t('profile.loss')}
                         </Badge>
                       </Group>
-                      <Text size="xs" c="dimmed">{t('profile.wonLabel', { team: game.winner_team_name })}</Text>
-                      <Text size="xs" c="dimmed">{dateStr}</Text>
+                      <Text size="xs" c="dimmed">
+                        {t('profile.wonLabel', { team: game.winner_team_name })}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {dateStr}
+                      </Text>
                     </Stack>
                     <Stack gap={2} align="flex-end">
                       <Group gap="xs">
                         <ThemeIcon color="green" size="xs" radius="xl" variant="light">
                           <IconTrophy size={10} />
                         </ThemeIcon>
-                        <Text size="xs" fw={500}>{t('profile.wordsGuessedCount', { n: teamGuesses })}</Text>
+                        <Text size="xs" fw={500}>
+                          {t('profile.wordsGuessedCount', { n: teamGuesses })}
+                        </Text>
                       </Group>
-                      <Text size="xs" c="dimmed">{t('profile.wordsInGame', { n: game.settings?.wordCount })}</Text>
+                      <Text size="xs" c="dimmed">
+                        {t('profile.wordsInGame', { n: game.settings?.wordCount })}
+                      </Text>
                     </Stack>
                   </Group>
                 </Card>
