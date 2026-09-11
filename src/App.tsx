@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { useMachine } from '@xstate/react';
-import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider, Anchor, LoadingOverlay } from '@mantine/core';
-import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle } from '@tabler/icons-react';
+import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider, Anchor, LoadingOverlay, ThemeIcon } from '@mantine/core';
+import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle, IconExternalLink } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
 import packageJson from '../package.json';
 import { useGameSounds } from './sounds/useGameSounds';
@@ -29,7 +29,7 @@ import { useAuthSession } from './auth/useAuthSession';
 import { useMultiplayer } from './auth/useMultiplayer';
 import { trackEvent } from './utils/analytics';
 import { loadDictionary, prefetchDictionaries } from './data/dictionaryLoader';
-import { initTelegramWebApp, getTelegramUser } from './utils/telegramWebApp';
+import { initTelegramWebApp, getTelegramUser, isTelegramWebApp, TELEGRAM_TWA_LINK } from './utils/telegramWebApp';
 import { useTelegramAutoAuth } from './auth/useTelegramAutoAuth';
 import { useDropScream } from './sounds/useDropScream';
 
@@ -445,6 +445,42 @@ function App() {
             )}
           </Card>
 
+          {!isTelegramWebApp() && (
+            <Card
+              withBorder
+              padding="md"
+              radius="md"
+              component="a"
+              href={TELEGRAM_TWA_LINK}
+              target="_blank"
+              rel="noopener"
+              style={{
+                textDecoration: 'none',
+                background: 'linear-gradient(135deg, rgba(34, 158, 217, 0.08) 0%, rgba(34, 158, 217, 0.02) 100%)',
+                borderColor: 'rgba(34, 158, 217, 0.25)',
+                cursor: 'pointer',
+              }}
+              onClick={() => trackEvent('twa_link_click', { location: 'landing_banner' })}
+            >
+              <Group justify="space-between" align="center" wrap="nowrap">
+                <Group gap="sm" wrap="nowrap">
+                  <ThemeIcon size="lg" radius="md" color="blue" variant="light">
+                    <IconBrandTelegram size={22} color="#229ED9" />
+                  </ThemeIcon>
+                  <Stack gap={1}>
+                    <Text fw={600} size="sm">
+                      {t('landing.twaBannerTitle')}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {t('landing.twaBannerDesc')}
+                    </Text>
+                  </Stack>
+                </Group>
+                <IconExternalLink size={16} style={{ opacity: 0.6, flexShrink: 0 }} />
+              </Group>
+            </Card>
+          )}
+
           <Card withBorder padding="lg" radius="md" style={{ background: 'rgba(25, 113, 194, 0.03)' }}>
             <Stack gap="xs">
               <Group gap="xs" c="blue">
@@ -479,6 +515,22 @@ function App() {
             >
               v{packageJson.version}
             </Anchor>
+            {!isTelegramWebApp() && (
+              <>
+                <Text size="xs" c="dimmed">·</Text>
+                <Anchor
+                  href={TELEGRAM_TWA_LINK}
+                  target="_blank"
+                  rel="noopener"
+                  size="xs"
+                  c="dimmed"
+                  underline="hover"
+                  onClick={() => trackEvent('twa_link_click', { location: 'footer' })}
+                >
+                  {t('landing.playInTelegram')}
+                </Anchor>
+              </>
+            )}
             <Text size="xs" c="dimmed">·</Text>
             <Anchor 
               href="https://web.tribute.tg/d/NSu" 

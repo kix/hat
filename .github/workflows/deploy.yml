@@ -46,6 +46,8 @@ jobs:
         env:
           VITE_TELEGRAM_CLIENT_ID: ${{ secrets.VITE_TELEGRAM_CLIENT_ID || vars.VITE_TELEGRAM_CLIENT_ID }}
           VITE_TELEGRAM_CLIENT_SECRET: ${{ secrets.VITE_TELEGRAM_CLIENT_SECRET }}
+          VITE_TELEGRAM_BOT_NAME: ${{ vars.VITE_TELEGRAM_BOT_NAME || 'hat_gae_bot' }}
+          VITE_TELEGRAM_BOT_USERNAME: ${{ vars.VITE_TELEGRAM_BOT_NAME || 'hat_gae_bot' }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

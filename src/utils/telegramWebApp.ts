@@ -149,3 +149,12 @@ export function useTelegramBackButton(onBack: () => void, visible = true): void 
     };
   }, [onBack, visible]);
 }
+
+export const TELEGRAM_BOT_USERNAME =
+  (import.meta.env.VITE_TELEGRAM_BOT_NAME as string | undefined) ||
+  (import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string | undefined) ||
+  'hat_gae_bot';
+
+export const TELEGRAM_TWA_LINK = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=hat`;
+export const TELEGRAM_BOT_LINK = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=hat`;
+

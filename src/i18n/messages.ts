@@ -19,6 +19,10 @@ export const messages: Record<Lang, Record<string, string>> = {
     // landing
     'app.title': 'Шляпа',
     'landing.tagline': 'Популярная игра в объяснение слов. Выберите режим игры, чтобы начать!',
+    'landing.playInTelegram': 'Играть в Telegram',
+    'landing.openInTelegram': 'Открыть в Telegram Mini App',
+    'landing.twaBannerTitle': 'Играйте прямо в Telegram',
+    'landing.twaBannerDesc': 'Мгновенный вход без паролей, виброотклик и запуск из любого чата',
     'landing.supportAuthor': 'Поддержать автора',
     'landing.reportBug': 'Сообщить об ошибке',
     'landing.howToPlayTitle': 'Как играть',
@@ -387,6 +391,10 @@ export const messages: Record<Lang, Record<string, string>> = {
     // landing
     'app.title': 'Hat',
     'landing.tagline': 'The popular word-explaining game. Pick a mode to get started!',
+    'landing.playInTelegram': 'Play in Telegram',
+    'landing.openInTelegram': 'Open in Telegram Mini App',
+    'landing.twaBannerTitle': 'Play inside Telegram',
+    'landing.twaBannerDesc': 'Instant sign-in, haptics, and launch directly from any chat',
     'landing.supportAuthor': 'Support the author',
     'landing.reportBug': 'Report a bug',
     'landing.howToPlayTitle': 'How to Play',

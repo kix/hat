@@ -4,14 +4,15 @@ import { IconBrandTelegram } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useI18n } from '../../i18n/i18n';
 import { trackEvent } from '../../utils/analytics';
+import { TELEGRAM_BOT_LINK, TELEGRAM_BOT_USERNAME } from '../../utils/telegramWebApp';
 
 interface TelegramNotificationsCardProps {
   userId: string;
   telegramId: string;
 }
 
-const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string | undefined;
-const botLink = botUsername ? `https://t.me/${botUsername}?start=hat` : undefined;
+const botUsername = TELEGRAM_BOT_USERNAME;
+const botLink = TELEGRAM_BOT_LINK;
 
 // Lets a Telegram-logged-in user opt in to the daily game-summary DM. Because
 // Telegram forbids bots from cold-messaging, enabling also nudges the user to

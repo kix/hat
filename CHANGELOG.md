@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.36] - 2026-09-11
+
+### Added
+
+- **Ссылки на Telegram Mini App из веб-версии:**
+  - Добавлен промо-баннер на стартовом экране веб-версии для быстрого перехода в Telegram Mini App (`t.me/hat_gae_bot?startapp=hat`).
+  - Добавлена ссылка «Играть в Telegram» в футер главной страницы и опция «Открыть в Telegram Mini App» в выпадающее меню авторизации.
+  - Ссылки и баннеры автоматически скрываются при запуске внутри Telegram.
+
 ## [1.6.35] - 2026-09-11
 
 ### Security
@@ -410,6 +419,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     target difficulty, replacing the spiky `1/distance` reciprocal, with a
     single `DIFFICULTY_BANDWIDTH` knob controlling the spread.
 
+[1.6.36]: https://github.com/kix/hat/releases/tag/v1.6.36
 [1.6.35]: https://github.com/kix/hat/releases/tag/v1.6.35
 [1.6.34]: https://github.com/kix/hat/releases/tag/v1.6.34
 [1.6.33]: https://github.com/kix/hat/releases/tag/v1.6.33

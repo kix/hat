@@ -7,6 +7,7 @@ import { useI18n } from '../../i18n/i18n';
 import { tr } from '../../i18n/lang';
 import styles from './AuthMenu.module.css';
 import { trackEvent } from '../../utils/analytics';
+import { isTelegramWebApp, TELEGRAM_TWA_LINK } from '../../utils/telegramWebApp';
 
 // Получение текущего URL без временных параметров авторизации
 function getCleanCurrentUrl(): string {
@@ -193,6 +194,22 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
               <Text size="xs" c="dimmed" ta="center">
                 {t('auth.telegramNotConfigured')}
               </Text>
+            )}
+
+            {!isTelegramWebApp() && (
+              <Anchor
+                href={TELEGRAM_TWA_LINK}
+                target="_blank"
+                rel="noopener"
+                size="xs"
+                ta="center"
+                c="dimmed"
+                underline="hover"
+                mt={4}
+                onClick={() => trackEvent('twa_link_click', { location: 'auth_menu' })}
+              >
+                {t('landing.openInTelegram')}
+              </Anchor>
             )}
           </Stack>
         )}
