@@ -1,5 +1,9 @@
 // Supabase Edge Function: telegram-bot
-// Handles Telegram Webhook requests, sends welcome message with WebApp Mini App button upon /start
+// Handles Telegram Webhook requests:
+// - /start (welcome message with WebApp button)
+// - /hardest (weekly hardest words digest)
+// - /start join_<uuid> (local player verification deep link)
+// - callback_query (inline button clicks for player verification)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -18,7 +22,6 @@ Deno.serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 
-    // If GET request, return status info
     if (req.method === 'GET') {
       return new Response(
         JSON.stringify({
@@ -32,7 +35,7 @@ Deno.serve(async (req: Request) => {
 
     const payload = await req.json();
 
-    // Option 1: Delegate to Postgres RPC if Supabase client is initialized
+    // Option 1: Delegate to Postgres RPC
     if (supabaseUrl && supabaseServiceKey) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       const { data, error } = await supabase.rpc('handle_telegram_webhook', {
@@ -48,8 +51,78 @@ Deno.serve(async (req: Request) => {
     }
 
     // Option 2: Fallback handling directly in Edge Function
+    if (!telegramBotToken) {
+      return new Response(JSON.stringify({ ok: true, ignored: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    const appUrl = Deno.env.get('APP_BASE_URL') || 'https://kix.github.io/hat/';
+
+    // A. Handle Callback Query (Button click)
+    const callbackQuery = payload?.callback_query;
+    if (callbackQuery) {
+      const cbData = callbackQuery.data || '';
+      const cbId = callbackQuery.id;
+      const cbChatId = callbackQuery.message?.chat?.id;
+      const msgId = callbackQuery.message?.message_id;
+
+      if (cbData.startsWith('pv_c:') || cbData.startsWith('pv_r:')) {
+        const isConfirm = cbData.startsWith('pv_c:');
+        const verifId = cbData.split(':')[1];
+        const nameChoice = cbData.split(':')[2];
+        const fromUser = callbackQuery.from;
+        const tgName = [fromUser?.first_name, fromUser?.last_name].filter(Boolean).join(' ') || fromUser?.username || 'Игрок';
+        const chosenName = nameChoice === 'user' && fromUser?.username ? `@${fromUser.username}` : tgName;
+
+        if (supabaseUrl && supabaseServiceKey) {
+          const supabase = createClient(supabaseUrl, supabaseServiceKey);
+          await supabase
+            .from('local_player_verifications')
+            .update({
+              status: isConfirm ? 'confirmed' : 'rejected',
+              chosen_name: isConfirm ? chosenName : null,
+              target_telegram_id: String(fromUser?.id),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', verifId);
+        }
+
+        await fetch(`https://api.telegram.org/bot${telegramBotToken}/answerCallbackQuery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            callback_query_id: cbId,
+            text: isConfirm ? `✅ Участие подтверждено: ${chosenName}` : '❌ Приглашение отклонено',
+          }),
+        });
+
+        if (cbChatId && msgId) {
+          await fetch(`https://api.telegram.org/bot${telegramBotToken}/editMessageText`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: cbChatId,
+              message_id: msgId,
+              text: isConfirm
+                ? `🎩 <b>Участие в игре «Шляпа» подтверждено!</b>\n\nИмя в игре: <b>${escapeHtml(chosenName)}</b>\nВаш опыт и очки пойдут в профиль!`
+                : '❌ <b>Приглашение в игру отклонено.</b>',
+              parse_mode: 'HTML',
+            }),
+          });
+        }
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    // B. Handle Message
     const message = payload?.message;
-    if (!message || !telegramBotToken) {
+    if (!message) {
       return new Response(JSON.stringify({ ok: true, ignored: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -59,7 +132,6 @@ Deno.serve(async (req: Request) => {
     const chatId = message.chat?.id;
     const text = (message.text || '').trim();
     const firstName = message.from?.first_name || 'друг';
-    const appUrl = Deno.env.get('APP_BASE_URL') || 'https://kix.github.io/hat/';
 
     if (text.startsWith('/start')) {
       const replyText = `🎩 <b>Привет, ${escapeHtml(firstName)}! Добро пожаловать в игру «Шляпа»!</b>\n\nКлассическая интеллектуальная игра для весёлой компании и вечеринок: объясняйте и отгадывайте слова на время!\n\n👇 Нажмите кнопку ниже, чтобы запустить игру прямо сейчас:`;
@@ -83,6 +155,34 @@ Deno.serve(async (req: Request) => {
                 {
                   text: '🌐 Открыть в браузере',
                   url: appUrl,
+                },
+              ],
+            ],
+          },
+          disable_web_page_preview: false,
+        }),
+      });
+    } else if (text.startsWith('/hardest')) {
+      let hardestText = '🧠 <b>Сложнейшие слова в «Шляпе»:</b>\n\nОткройте приложение, чтобы увидеть статистику и таблицу лидеров!';
+      if (supabaseUrl && supabaseServiceKey) {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const { data } = await supabase.rpc('build_hardest_words_digest', { p_limit: 10, p_days: 7 });
+        if (data) hardestText = data;
+      }
+
+      await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: hardestText,
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '🎮 Играть в «Шляпу»',
+                  web_app: { url: appUrl },
                 },
               ],
             ],

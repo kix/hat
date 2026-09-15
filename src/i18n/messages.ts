@@ -103,6 +103,21 @@ export const messages: Record<Lang, Record<string, string>> = {
     'resultBanner.pairsTitle': 'Совместный результат',
     'resultBanner.pairsResult': '{n} разгаданных слов',
 
+    // telegram username auth
+    'tgAuth.modalTitle': 'Подтверждение через Telegram',
+    'tgAuth.inputLabel': 'Telegram @юзернейм игрока',
+    'tgAuth.inputPlaceholder': '@username или username',
+    'tgAuth.sendRequest': 'Отправить запрос в Telegram',
+    'tgAuth.waitingConfirm': 'Запрос отправлен игроку в Telegram. Ожидаем выбор имени...',
+    'tgAuth.notInBot': 'Игрок ещё не запускал бота. Отправьте ему персональную ссылку:',
+    'tgAuth.copyLink': 'Скопировать ссылку для игрока',
+    'tgAuth.copied': 'Ссылка скопирована!',
+    'tgAuth.confirmed': 'Игрок подтвердил участие! Имя: {name}',
+    'tgAuth.rejected': 'Игрок отклонил приглашение',
+    'tgAuth.btnAria': 'Подтвердить игрока через Telegram',
+    'tgAuth.verifiedBadge': 'Авторизован в Telegram',
+    'tgAuth.error': 'Ошибка проверки: {error}',
+
 
     // round intro
     'roundIntro.teamTurn': 'Ход команды',
@@ -518,8 +533,23 @@ export const messages: Record<Lang, Record<string, string>> = {
     'setup.player2': 'Second player',
     'roundIntro.pairTurn': "Players' turn",
     'roundIntro.scoreTitle': 'Total guessed',
-    'resultBanner.pairsTitle': 'Joint Result',
+    'resultBanner.pairsTitle': 'Combined result',
     'resultBanner.pairsResult': '{n} words guessed',
+
+    // telegram username auth
+    'tgAuth.modalTitle': 'Telegram Verification',
+    'tgAuth.inputLabel': "Player's Telegram @username",
+    'tgAuth.inputPlaceholder': '@username or username',
+    'tgAuth.sendRequest': 'Send Request to Telegram',
+    'tgAuth.waitingConfirm': 'Request sent to player via Telegram. Waiting for name selection...',
+    'tgAuth.notInBot': "Player hasn't started the bot yet. Share this direct link with them:",
+    'tgAuth.copyLink': 'Copy link for player',
+    'tgAuth.copied': 'Link copied!',
+    'tgAuth.confirmed': 'Player confirmed! Name: {name}',
+    'tgAuth.rejected': 'Player declined invitation',
+    'tgAuth.btnAria': 'Verify player via Telegram',
+    'tgAuth.verifiedBadge': 'Verified in Telegram',
+    'tgAuth.error': 'Verification error: {error}',
 
 
     // round intro

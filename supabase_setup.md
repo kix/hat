@@ -382,8 +382,8 @@ TELEGRAM_BOT_TOKEN="ВАШ_ТОКЕН_БОТА" APP_BASE_URL="https://ВАШ-А�
 select public.setup_telegram_bot_menu('https://ВАШ-АДРЕС/hat/');
 ```
 
-### Настройка Webhook для ответа на /start
-Чтобы бот мгновенно отвечал на команду `/start` в чате:
+### Настройка Webhook для ответа на /start и /hardest
+Чтобы бот мгновенно отвечал на команды `/start` и `/hardest` в чате:
 1. Разверните Edge Function `supabase functions deploy telegram-bot` или укажите прямой webhook URL:
    `https://<project-ref>.supabase.co/functions/v1/telegram-bot`
 2. Установите Webhook в Telegram:
@@ -392,4 +392,56 @@ select public.setup_telegram_bot_menu('https://ВАШ-АДРЕС/hat/');
      -H "Content-Type: application/json" \
      -d '{"url": "https://<project-ref>.supabase.co/functions/v1/telegram-bot"}'
    ```
+
+---
+
+## 10. 🧠 Еженедельный дайджест самых сложных слов в Telegram
+
+Раз в неделю (по понедельникам в 10:00 МСК / 07:00 UTC) игрокам, подключившим уведомления бота, автоматически отправляется подборка топ-10 самых сложных слов за прошедшую неделю (или за всё время) с их толкованиями и средним временем угадывания.
+
+### Применение миграции
+Выполните файл миграции `supabase/migrations/20260915170000_weekly_hardest_words.sql` в SQL Editor Supabase.
+
+Он создаст:
+- Таблицу `public.word_definitions` со словарными толкованиями;
+- Хранимую функцию `public.build_hardest_words_digest(limit, days)`;
+- Процедуру рассылки `public.send_weekly_hardest_words(limit, days)`;
+- Обработку команды `/hardest` в боте.
+
+### Запуск еженедельного расписания (pg_cron)
+В Supabase SQL Editor выполните:
+```sql
+select cron.schedule(
+    'hat-weekly-hardest-words',
+    '0 7 * * 1',
+    $cron$ select public.send_weekly_hardest_words(10, 7); $cron$
+);
+```
+
+### Ручной запуск рассылки
+- Через SQL:
+  ```sql
+  select * from public.send_weekly_hardest_words(10, 7);
+  ```
+- Через Node.js скрипт:
+  ```bash
+  node scripts/sendWeeklyHardestWords.mjs
+  ```
+
+---
+
+## 11. 👥 Авторизация участников локальной игры через Telegram-юзернеймы
+
+Позволяет добавлять игроков в локальную партию по их Telegram @юзернейму. Бот отправляет игроку запрос на подтверждение участия с выбором отображаемого имени (реальное имя или юзернейм).
+
+### Применение миграции
+Выполните `supabase/migrations/20260915180000_telegram_username_auth.sql` в SQL Editor.
+
+Он создает:
+- Таблицу соответствия юзернеймов `public.telegram_users`;
+- Таблицу запросов подтверждения `public.local_player_verifications`;
+- Хранимую функцию `public.request_telegram_player_verification(username, host_name)`;
+- Обработку подтверждений и deep-link `join_<id>` в боте.
+
+
 

@@ -76,10 +76,11 @@ async function main() {
     console.log('   ✅ Menu Button успешно установлена!');
 
     // 3. Настраиваем список команд бота
-    console.log('⚙️ 2. Настройка команд бота (/start, /help)...');
+    console.log('⚙️ 2. Настройка команд бота (/start, /hardest, /help)...');
     await tgCall('setMyCommands', {
       commands: [
         { command: 'start', description: '🎮 Запустить игру «Шляпа»' },
+        { command: 'hardest', description: '🧠 Топ сложных слов недели' },
         { command: 'help', description: 'ℹ️ Правила игры и информация' },
       ],
     });
