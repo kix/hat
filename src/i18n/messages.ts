@@ -118,6 +118,18 @@ export const messages: Record<Lang, Record<string, string>> = {
     'tgAuth.verifiedBadge': 'Авторизован в Telegram',
     'tgAuth.error': 'Ошибка проверки: {error}',
 
+    // telegram profile linking for desktop
+    'tgLink.cardTitle': 'Профиль Telegram',
+    'tgLink.notLinkedDesc': 'Привяжите Telegram, чтобы получать дайджесты слов, участвовать в лидерборде и подтверждать профиль в играх.',
+    'tgLink.linkViaBot': 'Привязать через Telegram-бота',
+    'tgLink.orByUsername': 'Или укажите @юзернейм:',
+    'tgLink.sendRequest': 'Отправить запрос',
+    'tgLink.requestSent': 'Запрос отправлен в Telegram. Подтвердите привязку в чате с ботом...',
+    'tgLink.notInBot': 'Бот ещё не знает ваш @юзернейм. Нажмите «Привязать через Telegram-бота» выше.',
+    'tgLink.linkedAs': 'Привязан: {name}',
+    'tgLink.unlink': 'Отвязать',
+
+
 
     // round intro
     'roundIntro.teamTurn': 'Ход команды',
@@ -550,6 +562,18 @@ export const messages: Record<Lang, Record<string, string>> = {
     'tgAuth.btnAria': 'Verify player via Telegram',
     'tgAuth.verifiedBadge': 'Verified in Telegram',
     'tgAuth.error': 'Verification error: {error}',
+
+    // telegram profile linking for desktop
+    'tgLink.cardTitle': 'Telegram Profile',
+    'tgLink.notLinkedDesc': 'Link your Telegram profile to receive word digests, compete on the leaderboard, and verify yourself in games.',
+    'tgLink.linkViaBot': 'Link via Telegram Bot',
+    'tgLink.orByUsername': 'Or enter your @username:',
+    'tgLink.sendRequest': 'Request Link',
+    'tgLink.requestSent': 'Request sent to Telegram. Please confirm in the bot chat...',
+    'tgLink.notInBot': "The bot doesn't know your @username yet. Click 'Link via Telegram Bot' above.",
+    'tgLink.linkedAs': 'Linked: {name}',
+    'tgLink.unlink': 'Unlink',
+
 
 
     // round intro

@@ -7,7 +7,7 @@ import { useI18n } from '../../i18n/i18n';
 import { tr } from '../../i18n/lang';
 import styles from './AuthMenu.module.css';
 import { trackEvent } from '../../utils/analytics';
-import { isTelegramWebApp, TELEGRAM_TWA_LINK } from '../../utils/telegramWebApp';
+import { isTelegramWebApp, TELEGRAM_TWA_LINK, TELEGRAM_BOT_USERNAME } from '../../utils/telegramWebApp';
 import { getLevelFromXP, calculateTotalPlayerXP, type PlayerLevelInfo } from '../../utils/levels';
 
 // Получение текущего URL без временных параметров авторизации
@@ -256,11 +256,20 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
               >
                 {t('auth.telegram')}
               </Button>
-            ) : (
-              <Text size="xs" c="dimmed" ta="center">
-                {t('auth.telegramNotConfigured')}
-              </Text>
-            )}
+            ) : user?.id ? (
+              <Button
+                component="a"
+                href={`https://t.me/${TELEGRAM_BOT_USERNAME}?start=link_${user.id}`}
+                target="_blank"
+                rel="noopener"
+                variant="light"
+                color="blue"
+                leftSection={<IconBrandTelegram size={18} />}
+                onClick={() => trackEvent('auth_click', { provider: 'telegram_bot' })}
+              >
+                {t('auth.telegram')}
+              </Button>
+            ) : null}
 
             {!isTelegramWebApp() && (
               <Anchor

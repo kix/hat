@@ -611,13 +611,16 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
           </Stack>
         </Card>
 
-        {/* Уведомления в Telegram */}
-        {profile?.user_metadata?.provider === 'telegram' && profile?.user_metadata?.telegram_id && (
-          <TelegramNotificationsCard
-            userId={userId}
-            telegramId={String(profile.user_metadata.telegram_id)}
-          />
-        )}
+        {/* Уведомления и привязка Telegram */}
+        <TelegramNotificationsCard
+          userId={userId}
+          telegramId={profile?.user_metadata?.telegram_id ? String(profile.user_metadata.telegram_id) : null}
+          telegramUsername={profile?.user_metadata?.username as string | undefined}
+          onProfileUpdated={async () => {
+            const { data } = await supabase.auth.getUser();
+            if (data?.user) setProfile(data.user);
+          }}
+        />
 
         {/* Статистика */}
         <Title order={3} size="h4" mb={-10}>
