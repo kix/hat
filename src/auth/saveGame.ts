@@ -35,6 +35,12 @@ export async function saveGameResult(
       if (currentUserName) {
         realUsersMap.set(currentUserName.trim().toLowerCase(), currentUserId);
       }
+      const username = userData?.user?.user_metadata?.username;
+      if (username) {
+        const cleanUser = username.replace(/^@/, '').trim().toLowerCase();
+        realUsersMap.set(`@${cleanUser}`, currentUserId);
+        realUsersMap.set(cleanUser, currentUserId);
+      }
     }
 
     // Собираем набор всех гарантированно реальных UUID пользователей в этой сессии

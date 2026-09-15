@@ -235,7 +235,11 @@ export function TeamCard({ team, teamNumber, canRemove, send, connectedParticipa
               ])
             );
 
-            const isTgVerified = verifiedPlayers[player.id] || (player.id && player.id.includes('-') && player.id.length > 30);
+            const isTgVerified = Boolean(
+              verifiedPlayers[player.id] ||
+              (player.id && player.id.includes('-') && player.id.length > 30) ||
+              (player.name.trim() && (connectedParticipants || []).some((p) => p.name.trim().toLowerCase() === player.name.trim().toLowerCase() && !!p.userId))
+            );
 
             return (
               <Group gap="xs" wrap="nowrap" key={player.id} align="flex-start" style={{ flex: 1 }}>

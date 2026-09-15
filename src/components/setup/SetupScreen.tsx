@@ -7,7 +7,7 @@ import { StartGameButton } from './StartGameButton';
 import { SetupHero } from './SetupHero';
 import { useI18n } from '../../i18n/i18n';
 import type { MultiplayerState } from '../../auth/useMultiplayer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import type { User } from '@supabase/supabase-js';
 
@@ -29,6 +29,25 @@ export function SetupScreen({ context, send, onBack, multiplayer, currentUser }:
   const hasRoom = !!multiplayer?.roomId;
   const isNfcSupported = 'NDEFReader' in window;
   
+  // Auto-fill first player with authenticated user's name/username
+  useEffect(() => {
+    if (!currentUser) return;
+    const firstTeam = context.teams[0];
+    const firstPlayer = firstTeam?.players[0];
+    if (firstTeam && firstPlayer && !firstPlayer.name.trim()) {
+      const defaultName = currentUser.user_metadata?.full_name || (currentUser.user_metadata?.username ? `@${currentUser.user_metadata.username.replace(/^@/, '')}` : '');
+      if (defaultName) {
+        send({
+          type: 'UPDATE_PLAYER_NAME',
+          teamId: firstTeam.id,
+          playerId: firstPlayer.id,
+          name: defaultName,
+          newPlayerId: currentUser.id,
+        });
+      }
+    }
+  }, [currentUser, context.teams, send]);
+
   // Build the join link for scanning
   const joinUrl = hasRoom
     ? `${window.location.origin}${window.location.pathname}?join=${multiplayer.roomId}`
@@ -222,14 +241,32 @@ export function SetupScreen({ context, send, onBack, multiplayer, currentUser }:
           </Title>
           {(() => {
             const connectedParticipants = [...(multiplayer?.participants || [])];
-            if (currentUser && !connectedParticipants.some((p) => p.userId === currentUser.id)) {
-              const fullName = currentUser.user_metadata?.full_name || currentUser.email || '';
-              if (fullName) {
+            if (currentUser) {
+              const fullName = currentUser.user_metadata?.full_name || '';
+              const username = currentUser.user_metadata?.username || '';
+              if (fullName && !connectedParticipants.some((p) => p.name.toLowerCase() === fullName.toLowerCase())) {
                 connectedParticipants.push({
                   userId: currentUser.id,
                   name: fullName,
                   isHost: true,
                 });
+              }
+              if (username) {
+                const cleanUser = username.replace(/^@/, '');
+                if (!connectedParticipants.some((p) => p.name.toLowerCase() === `@${cleanUser.toLowerCase()}`)) {
+                  connectedParticipants.push({
+                    userId: currentUser.id,
+                    name: `@${cleanUser}`,
+                    isHost: true,
+                  });
+                }
+                if (!connectedParticipants.some((p) => p.name.toLowerCase() === cleanUser.toLowerCase())) {
+                  connectedParticipants.push({
+                    userId: currentUser.id,
+                    name: cleanUser,
+                    isHost: true,
+                  });
+                }
               }
             }
             return (
