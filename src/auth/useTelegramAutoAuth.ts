@@ -20,14 +20,6 @@ export function useTelegramAutoAuth(): void {
         const { data: sessionData } = await supabase.auth.getSession();
         const currentUser = sessionData?.session?.user;
 
-        // If user is already linked to this Telegram ID, no need to link again
-        if (
-          currentUser &&
-          String(currentUser.user_metadata?.telegram_id) === String(tgUser.id)
-        ) {
-          return;
-        }
-
         const fullName =
           [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') ||
           tgUser.username ||
@@ -43,11 +35,34 @@ export function useTelegramAutoAuth(): void {
 
         if (!targetUserId) return;
 
+        // If user is already linked to this Telegram ID, ensure username is synced in telegram_users
+        if (
+          currentUser &&
+          String(currentUser.user_metadata?.telegram_id) === String(tgUser.id)
+        ) {
+          if (tgUser.username) {
+            await supabase
+              .from('telegram_users')
+              .upsert({
+                telegram_id: String(tgUser.id),
+                username: tgUser.username.toLowerCase(),
+                first_name: tgUser.first_name || null,
+                last_name: tgUser.last_name || null,
+                full_name: fullName,
+                avatar_url: tgUser.photo_url || '',
+                user_id: currentUser.id,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'telegram_id' });
+          }
+          return;
+        }
+
         const { error: rpcError } = await supabase.rpc('link_telegram_user', {
           p_new_user_id: targetUserId,
           p_telegram_id: String(tgUser.id),
           p_full_name: fullName,
           p_avatar_url: tgUser.photo_url || '',
+          p_username: tgUser.username || '',
         });
 
         if (rpcError) {
