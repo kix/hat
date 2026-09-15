@@ -63,3 +63,11 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Broadcast Release Notes to Telegram
+        run: node scripts/broadcastLatestRelease.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://kioqswvdyarkbqdgtldx.supabase.co' }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_bRU1TfqrXFlKZMlGElGAZQ_935fSHrH' }}
+          APP_BASE_URL: ${{ steps.deployment.outputs.page_url || 'https://kix.github.io/hat/' }}
+

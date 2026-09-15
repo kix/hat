@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "setup:bot": "node scripts/setupTelegramBot.mjs",
-    "broadcast:news": "node scripts/broadcastNews.mjs"
+    "broadcast:news": "node scripts/broadcastNews.mjs",
+    "broadcast:latest": "node scripts/broadcastLatestRelease.mjs"
   },
   "dependencies": {
     "@mantine/core": "^9.4.1",
