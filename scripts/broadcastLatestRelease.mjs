@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -130,17 +129,23 @@ async function main() {
   console.log(`Message length: ${formattedMessage.length} characters`);
 
   console.log('🚀 Broadcasting release notes to Telegram subscribers via Supabase...');
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  const { data, error } = await supabase.rpc('broadcast_release_news', {
-    p_text: formattedMessage,
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/broadcast_release_news`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_text: formattedMessage }),
   });
 
-  if (error) {
-    console.error('❌ Error broadcasting release news:', error);
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('❌ Error broadcasting release news:', res.status, errorText);
     process.exit(1);
   }
 
+  const data = await res.json();
   console.log('✅ Broadcast result:', data);
 }
 
