@@ -22,6 +22,8 @@ dev-dist
 .DS_Store
 *.suo
 *.ntvs*
-*.njsproj
-*.sln
 *.sw?
+.gemini
+.agents
+.claude
+skills-lock.json

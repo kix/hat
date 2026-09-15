@@ -12,6 +12,7 @@ import {
   Loader,
   ThemeIcon,
   Progress,
+  UnstyledButton,
 } from '@mantine/core';
 import {
   IconArrowLeft,
@@ -26,15 +27,20 @@ import {
   IconHeartHandshake,
   IconShieldCheck,
   IconFlame,
+  IconSparkles,
+  IconChevronDown,
+  IconChevronUp,
 } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { TelegramNotificationsCard } from '../notifications/TelegramNotificationsCard';
 import { useI18n } from '../../i18n/i18n';
 import { useTelegramBackButton } from '../../utils/telegramWebApp';
+import { LEVEL_THRESHOLDS, getLevelFromXP, calculateTotalPlayerXP } from '../../utils/levels';
 
 interface ProfileScreenProps {
   userId: string;
   onBack: () => void;
+  onViewLeaderboard?: () => void;
 }
 
 interface GameRecord {
@@ -106,12 +112,13 @@ function WordRecordCard({
   );
 }
 
-export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
+export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScreenProps) {
   const { t, lang } = useI18n();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [participations, setParticipations] = useState<UserParticipation[]>([]);
   const [partnerStats, setPartnerStats] = useState<PartnerStat[]>([]);
+  const [showLadder, setShowLadder] = useState(false);
 
   // Hook Telegram WebApp back button
   useTelegramBackButton(onBack);
@@ -320,6 +327,102 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
     topPartner,
   } = stats;
 
+  const achievementsList = useMemo(
+    () => [
+      {
+        id: 'lightning',
+        title: t('profile.achLightning'),
+        desc: t('profile.achLightningDesc'),
+        icon: <IconBolt size={18} />,
+        color: 'yellow',
+        unlocked: hasLightning,
+      },
+      {
+        id: 'erudite',
+        title: t('profile.achErudite'),
+        desc: t('profile.achEruditeDesc'),
+        icon: <IconBrain size={18} />,
+        color: 'blue',
+        unlocked: hasErudite,
+      },
+      {
+        id: 'ironNerves',
+        title: t('profile.achIronNerves'),
+        desc: t('profile.achIronNervesDesc'),
+        icon: <IconHourglass size={18} />,
+        color: 'red',
+        unlocked: hasIronNerves,
+      },
+      {
+        id: 'champion',
+        title: t('profile.achChampion'),
+        desc: t('profile.achChampionDesc'),
+        icon: <IconTrophy size={18} />,
+        color: 'teal',
+        unlocked: hasChampion,
+        progress: { current: Math.min(wins, 5), total: 5 },
+      },
+      {
+        id: 'telepath',
+        title: t('profile.achTelepath'),
+        desc: t('profile.achTelepathDesc'),
+        icon: <IconTarget size={18} />,
+        color: 'grape',
+        unlocked: hasTelepath,
+        progress: { current: Math.min(maxWordsInRound, 5), total: 5 },
+      },
+      {
+        id: 'veteran',
+        title: t('profile.achVeteran'),
+        desc: t('profile.achVeteranDesc'),
+        icon: <IconAward size={18} />,
+        color: 'orange',
+        unlocked: hasVeteran,
+        progress: { current: Math.min(totalGames, 10), total: 10 },
+      },
+      {
+        id: 'perfectDuo',
+        title: t('profile.achPerfectDuo'),
+        desc: t('profile.achPerfectDuoDesc'),
+        icon: <IconHeartHandshake size={18} />,
+        color: 'indigo',
+        unlocked: hasPerfectDuo,
+        progress: { current: Math.min(maxPartnerGames, 5), total: 5 },
+      },
+      {
+        id: 'cleanGame',
+        title: t('profile.achCleanGame'),
+        desc: t('profile.achCleanGameDesc'),
+        icon: <IconShieldCheck size={18} />,
+        color: 'green',
+        unlocked: hasCleanGame,
+      },
+    ],
+    [
+      hasLightning,
+      hasErudite,
+      hasIronNerves,
+      hasChampion,
+      hasTelepath,
+      hasVeteran,
+      hasPerfectDuo,
+      hasCleanGame,
+      wins,
+      maxWordsInRound,
+      totalGames,
+      maxPartnerGames,
+      t,
+    ],
+  );
+
+  const playerXPData = useMemo(() => {
+    return calculateTotalPlayerXP(participations, userId, achievementsList);
+  }, [participations, userId, achievementsList]);
+
+  const levelInfo = useMemo(() => {
+    return getLevelFromXP(playerXPData.totalXP);
+  }, [playerXPData.totalXP]);
+
   if (loading) {
     return (
       <Container
@@ -342,85 +445,25 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
       })
     : '—';
 
-  const achievementsList = [
-    {
-      id: 'lightning',
-      title: t('profile.achLightning'),
-      desc: t('profile.achLightningDesc'),
-      icon: <IconBolt size={18} />,
-      color: 'yellow',
-      unlocked: hasLightning,
-    },
-    {
-      id: 'erudite',
-      title: t('profile.achErudite'),
-      desc: t('profile.achEruditeDesc'),
-      icon: <IconBrain size={18} />,
-      color: 'blue',
-      unlocked: hasErudite,
-    },
-    {
-      id: 'ironNerves',
-      title: t('profile.achIronNerves'),
-      desc: t('profile.achIronNervesDesc'),
-      icon: <IconHourglass size={18} />,
-      color: 'red',
-      unlocked: hasIronNerves,
-    },
-    {
-      id: 'champion',
-      title: t('profile.achChampion'),
-      desc: t('profile.achChampionDesc'),
-      icon: <IconTrophy size={18} />,
-      color: 'teal',
-      unlocked: hasChampion,
-      progress: { current: Math.min(wins, 5), total: 5 },
-    },
-    {
-      id: 'telepath',
-      title: t('profile.achTelepath'),
-      desc: t('profile.achTelepathDesc'),
-      icon: <IconTarget size={18} />,
-      color: 'grape',
-      unlocked: hasTelepath,
-      progress: { current: Math.min(maxWordsInRound, 5), total: 5 },
-    },
-    {
-      id: 'veteran',
-      title: t('profile.achVeteran'),
-      desc: t('profile.achVeteranDesc'),
-      icon: <IconAward size={18} />,
-      color: 'orange',
-      unlocked: hasVeteran,
-      progress: { current: Math.min(totalGames, 10), total: 10 },
-    },
-    {
-      id: 'perfectDuo',
-      title: t('profile.achPerfectDuo'),
-      desc: t('profile.achPerfectDuoDesc'),
-      icon: <IconHeartHandshake size={18} />,
-      color: 'indigo',
-      unlocked: hasPerfectDuo,
-      progress: { current: Math.min(maxPartnerGames, 5), total: 5 },
-    },
-    {
-      id: 'cleanGame',
-      title: t('profile.achCleanGame'),
-      desc: t('profile.achCleanGameDesc'),
-      icon: <IconShieldCheck size={18} />,
-      color: 'green',
-      unlocked: hasCleanGame,
-    },
-  ];
-
   return (
     <Container size="xs" py="lg">
       <Stack gap="lg">
-        {/* Кнопка назад */}
-        <Group>
+        {/* Кнопка назад и Лидерборд */}
+        <Group justify="space-between" align="center">
           <Button variant="subtle" leftSection={<IconArrowLeft size={16} />} onClick={onBack}>
             {t('common.back')}
           </Button>
+          {onViewLeaderboard && (
+            <Button
+              variant="light"
+              color="yellow"
+              size="xs"
+              leftSection={<IconTrophy size={14} />}
+              onClick={onViewLeaderboard}
+            >
+              {t('leaderboard.title')}
+            </Button>
+          )}
         </Group>
 
         {/* Профиль игрока */}
@@ -430,15 +473,142 @@ export function ProfileScreen({ userId, onBack }: ProfileScreenProps) {
               <IconUser size={36} />
             </ThemeIcon>
             <Stack gap={2} style={{ flex: 1 }}>
-              <Text fw={700} size="xl" truncate="end">
-                {profile?.user_metadata?.full_name || t('default.player')}
-              </Text>
+              <Group gap="xs" wrap="nowrap">
+                <Text fw={700} size="xl" truncate="end">
+                  {profile?.user_metadata?.full_name || t('default.player')}
+                </Text>
+                <Badge color={levelInfo.badgeColor} variant="filled" size="sm">
+                  {levelInfo.emoji} {t('levels.levelShort', { lvl: levelInfo.level })}
+                </Badge>
+              </Group>
               <Group gap="xs" c="dimmed">
                 <IconCalendar size={14} />
                 <Text size="xs">{t('profile.inGameSince', { date: registerDate })}</Text>
               </Group>
             </Stack>
           </Group>
+        </Card>
+
+        {/* Прокачка уровня и XP */}
+        <Card
+          withBorder
+          padding="md"
+          radius="md"
+          style={{
+            background: 'var(--mantine-color-default-hover)',
+            borderLeft: `4px solid var(--mantine-color-${levelInfo.badgeColor}-filled)`,
+          }}
+        >
+          <Stack gap="sm">
+            <Group justify="space-between" align="flex-start">
+              <Group gap="xs">
+                <ThemeIcon size="lg" radius="xl" color={levelInfo.badgeColor} variant="filled">
+                  <IconSparkles size={20} />
+                </ThemeIcon>
+                <Stack gap={0}>
+                  <Group gap="xs">
+                    <Text fw={700} size="md">
+                      {t('levels.level', { lvl: levelInfo.level })}: {t(levelInfo.titleKey)}
+                    </Text>
+                    <Text size="md">{levelInfo.emoji}</Text>
+                  </Group>
+                  <Text size="xs" c="dimmed">
+                    {t('levels.levelProgression')}
+                  </Text>
+                </Stack>
+              </Group>
+              <Badge variant="light" size="lg" color={levelInfo.badgeColor}>
+                {t('levels.xp', { xp: levelInfo.totalXP.toLocaleString() })}
+              </Badge>
+            </Group>
+
+            <Stack gap={4}>
+              <Progress
+                value={levelInfo.progressPercent}
+                size="md"
+                radius="xl"
+                color={levelInfo.badgeColor}
+                animated
+              />
+              <Group justify="space-between">
+                <Text size="xs" c="dimmed">
+                  {t('levels.xpProgress', {
+                    current: levelInfo.xpIntoLevel,
+                    total: levelInfo.xpForNextLevel,
+                  })}
+                </Text>
+                <Text size="xs" fw={600} c="dimmed">
+                  {t('levels.nextLevel')}{' '}
+                  <Text span fw={700} c={`${levelInfo.badgeColor}.8`}>
+                    +{levelInfo.xpForNextLevel - levelInfo.xpIntoLevel} XP
+                  </Text>
+                </Text>
+              </Group>
+            </Stack>
+
+            <SimpleGrid cols={2} spacing="xs" mt={2}>
+              <Card withBorder padding="xs" radius="sm">
+                <Text size="11px" c="dimmed">
+                  {t('levels.gamesXP')}
+                </Text>
+                <Text fw={700} size="sm" c="blue">
+                  +{playerXPData.gamesXP} XP
+                </Text>
+              </Card>
+              <Card withBorder padding="xs" radius="sm">
+                <Text size="11px" c="dimmed">
+                  {t('levels.achievementsXP')}
+                </Text>
+                <Text fw={700} size="sm" c="teal">
+                  +{playerXPData.achievementsXP} XP
+                </Text>
+              </Card>
+            </SimpleGrid>
+
+            {/* Шкала всех уровней (аккордеон/разворачивание) */}
+            <UnstyledButton onClick={() => setShowLadder(!showLadder)} mt={4}>
+              <Group justify="space-between" p="xs" style={{ borderRadius: 6, background: 'var(--mantine-color-default)' }}>
+                <Text size="xs" fw={600} c="dimmed">
+                  {t('levels.ladderTitle')}
+                </Text>
+                {showLadder ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+              </Group>
+            </UnstyledButton>
+
+            {showLadder && (
+              <Stack gap={6} pt={4}>
+                {LEVEL_THRESHOLDS.map((thresh) => {
+                  const isReached = levelInfo.level >= thresh.level;
+                  const isCurrent = levelInfo.level === thresh.level;
+                  return (
+                    <Group
+                      key={thresh.level}
+                      justify="space-between"
+                      p="xs"
+                      style={{
+                        borderRadius: 6,
+                        background: isCurrent ? `var(--mantine-color-${thresh.badgeColor}-light)` : 'var(--mantine-color-default)',
+                        border: isCurrent ? `1px solid var(--mantine-color-${thresh.badgeColor}-filled)` : undefined,
+                        opacity: isReached ? 1 : 0.6,
+                      }}
+                    >
+                      <Group gap="xs">
+                        <Badge size="xs" color={thresh.badgeColor} variant={isReached ? 'filled' : 'outline'}>
+                          {thresh.emoji} {t('levels.levelShort', { lvl: thresh.level })}
+                        </Badge>
+                        <Text size="xs" fw={isCurrent ? 700 : 500}>
+                          {t(thresh.titleKey)}
+                        </Text>
+                      </Group>
+                      <Text size="xs" c="dimmed" fw={600}>
+                        {t('levels.xp', { xp: thresh.minXP.toLocaleString() })}
+                      </Text>
+                    </Group>
+                  );
+                })}
+              </Stack>
+            )}
+          </Stack>
         </Card>
 
         {/* Уведомления в Telegram */}

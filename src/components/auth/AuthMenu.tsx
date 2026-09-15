@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActionIcon, Anchor, Avatar, Button, Popover, Stack, Text, Loader } from '@mantine/core';
+import { ActionIcon, Anchor, Avatar, Badge, Button, Divider, Group, Popover, Stack, Text, Loader } from '@mantine/core';
 import { IconBrandTelegram, IconUserCircle } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { useAuthSession } from '../../auth/useAuthSession';
@@ -8,6 +8,7 @@ import { tr } from '../../i18n/lang';
 import styles from './AuthMenu.module.css';
 import { trackEvent } from '../../utils/analytics';
 import { isTelegramWebApp, TELEGRAM_TWA_LINK } from '../../utils/telegramWebApp';
+import { getLevelFromXP, calculateTotalPlayerXP, type PlayerLevelInfo } from '../../utils/levels';
 
 // Получение текущего URL без временных параметров авторизации
 function getCleanCurrentUrl(): string {
@@ -45,9 +46,10 @@ function decodeJwt(token: string): any {
 
 interface AuthMenuProps {
   onViewProfile?: () => void;
+  onViewLeaderboard?: () => void;
 }
 
-export function AuthMenu({ onViewProfile }: AuthMenuProps) {
+export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
   const { t } = useI18n();
   const session = useAuthSession();
   const user = session?.user;
@@ -56,11 +58,36 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
   const clientSecret = import.meta.env.VITE_TELEGRAM_CLIENT_SECRET;
   const [loading, setLoading] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [userLevel, setUserLevel] = useState<PlayerLevelInfo | null>(null);
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
 
   useEffect(() => {
     setAvatarError(false);
   }, [avatarUrl]);
+
+  useEffect(() => {
+    if (!user?.id || !isRealUser) {
+      setUserLevel(null);
+      return;
+    }
+
+    void (async () => {
+      try {
+        const { data: parts } = await supabase
+          .from('game_participants')
+          .select('*, games:game_id (*)')
+          .eq('user_id', user.id);
+
+        if (parts) {
+          const validParts = parts.filter((p) => p.games);
+          const xpData = calculateTotalPlayerXP(validParts, user.id);
+          setUserLevel(getLevelFromXP(xpData.totalXP));
+        }
+      } catch (e) {
+        console.warn('Could not load user level for menu:', e);
+      }
+    })();
+  }, [user?.id, isRealUser]);
 
   // Обработка OIDC-кода от Telegram в URL
   useEffect(() => {
@@ -175,13 +202,31 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
       </Popover.Target>
       <Popover.Dropdown>
         {isRealUser ? (
-          <Stack gap="xs" miw={200}>
-            <Text size="sm" fw={500} truncate="end">
-              {(user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? t('auth.account')}
-            </Text>
+          <Stack gap="xs" miw={220}>
+            <Group justify="space-between" align="center" wrap="nowrap">
+              <Text size="sm" fw={700} truncate="end" style={{ flex: 1 }}>
+                {(user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? t('auth.account')}
+              </Text>
+              {userLevel && (
+                <Badge size="xs" color={userLevel.badgeColor} variant="filled">
+                  {userLevel.emoji} {t('levels.levelShort', { lvl: userLevel.level })}
+                </Badge>
+              )}
+            </Group>
+            {userLevel && (
+              <Text size="xs" c="dimmed" fw={500}>
+                {t(userLevel.titleKey)} • {t('levels.xp', { xp: userLevel.totalXP.toLocaleString() })}
+              </Text>
+            )}
+            <Divider variant="dashed" />
             {onViewProfile && (
               <Anchor component="button" type="button" onClick={onViewProfile} fw={500}>
                 {t('auth.myProfile')}
+              </Anchor>
+            )}
+            {onViewLeaderboard && (
+              <Anchor component="button" type="button" onClick={onViewLeaderboard} fw={500}>
+                {t('auth.leaderboard')}
               </Anchor>
             )}
             <Anchor component="button" type="button" c="red" onClick={() => void supabase.auth.signOut()}>
@@ -193,6 +238,12 @@ export function AuthMenu({ onViewProfile }: AuthMenuProps) {
             <Text size="sm" fw={500}>
               {t('auth.signInToSave')}
             </Text>
+
+            {onViewLeaderboard && (
+              <Anchor component="button" type="button" onClick={onViewLeaderboard} fw={500}>
+                🏆 {t('auth.leaderboard')}
+              </Anchor>
+            )}
 
             {clientId ? (
               <Button

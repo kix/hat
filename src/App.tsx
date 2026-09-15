@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { useMachine } from '@xstate/react';
 import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider, Anchor, LoadingOverlay, ThemeIcon } from '@mantine/core';
-import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle, IconExternalLink } from '@tabler/icons-react';
+import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle, IconExternalLink, IconTrophy } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
 import packageJson from '../package.json';
 import { useGameSounds } from './sounds/useGameSounds';
@@ -17,6 +17,7 @@ const RoundPlayingScreen = lazy(() => import('./components/roundPlaying/RoundPla
 const GameOverScreen = lazy(() => import('./components/gameOver/GameOverScreen').then(m => ({ default: m.GameOverScreen })));
 const RoundReviewScreen = lazy(() => import('./components/roundReview/RoundReviewScreen').then(m => ({ default: m.RoundReviewScreen })));
 const ProfileScreen = lazy(() => import('./components/profile/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
+const LeaderboardScreen = lazy(() => import('./components/leaderboard/LeaderboardScreen').then(m => ({ default: m.LeaderboardScreen })));
 const SummaryScreen = lazy(() => import('./components/summary/SummaryScreen').then(m => ({ default: m.SummaryScreen })));
 const GameShareScreen = lazy(() => import('./components/summary/GameShareScreen').then(m => ({ default: m.GameShareScreen })));
 const ChangelogModal = lazy(() => import('./components/changelog/ChangelogModal').then(m => ({ default: m.ChangelogModal })));
@@ -45,6 +46,7 @@ function App() {
   const [playerName, setPlayerName] = useState<string>('');
   const [joinRoomCode, setJoinRoomCode] = useState<string>('');
   const [showProfile, setShowProfile] = useState<boolean>(false);
+  const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
   const [showChangelog, setShowChangelog] = useState<boolean>(
     () => new URLSearchParams(window.location.search).has('changelog'),
   );
@@ -309,13 +311,33 @@ function App() {
   }
 
   // =====================================================================
+  // ЭКРАН ТАБЛИЦЫ ЛИДЕРОВ
+  // =====================================================================
+  if (showLeaderboard) {
+    return (
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="leaderboard">
+          <LeaderboardScreen currentUserId={session?.user?.id} onBack={() => setShowLeaderboard(false)} />
+        </ScreenTransition>
+      </Suspense>
+    );
+  }
+
+  // =====================================================================
   // ЭКРАН ПРОФИЛЯ И СТАТИСТИКИ
   // =====================================================================
   if (showProfile && session?.user?.id) {
     return (
       <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
         <ScreenTransition key="profile">
-          <ProfileScreen userId={session.user.id} onBack={() => setShowProfile(false)} />
+          <ProfileScreen
+            userId={session.user.id}
+            onBack={() => setShowProfile(false)}
+            onViewLeaderboard={() => {
+              setShowProfile(false);
+              setShowLeaderboard(true);
+            }}
+          />
         </ScreenTransition>
       </Suspense>
     );
@@ -335,12 +357,26 @@ function App() {
             <Group gap="xs">
               <LanguageToggle />
               <ColorSchemeToggle />
-              <AuthMenu onViewProfile={() => setShowProfile(true)} />
+              <AuthMenu
+                onViewProfile={() => setShowProfile(true)}
+                onViewLeaderboard={() => setShowLeaderboard(true)}
+              />
             </Group>
           </Group>
           <Text size="sm" c="dimmed">
             {t('landing.tagline')}
           </Text>
+
+          {/* Кнопка Лидерборда на главной */}
+          <Button
+            size="md"
+            variant="light"
+            color="yellow"
+            leftSection={<IconTrophy size={20} />}
+            onClick={() => setShowLeaderboard(true)}
+          >
+            {t('landing.leaderboard')}
+          </Button>
 
           <Card withBorder padding="lg" radius="md">
             <Stack gap="md">

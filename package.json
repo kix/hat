@@ -1,14 +1,16 @@
 {
   "name": "claude-hat",
   "private": true,
-  "version": "1.6.37",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "setup:bot": "node scripts/setupTelegramBot.mjs",
+    "broadcast:news": "node scripts/broadcastNews.mjs"
   },
   "dependencies": {
     "@mantine/core": "^9.4.1",

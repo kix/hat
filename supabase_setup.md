@@ -358,3 +358,38 @@ select user_id, enabled, last_status, last_sent_at from public.telegram_notifica
 есть переключатель «Итоги дня в Telegram», который при включении открывает чат
 с ботом. Пользователям, не нажавшим «Start», Telegram вернёт 403, и запись
 просто помечается ошибкой в `last_status` (рассылка остальным продолжается).
+
+---
+
+## 9. 🤖 Настройка Telegram-бота и кнопки запуска приложения
+
+При старте бота (`/start`) бот отправляет приветствие с нативной WebApp-кнопкой **«🎮 Играть в «Шляпу»»** и ссылкой на браузерную версию, а также в чате активируется постоянная кнопка меню (Menu Button).
+
+### Способ 1: Автоматическая настройка через скрипт
+В корне проекта выполните:
+```bash
+TELEGRAM_BOT_TOKEN="ВАШ_ТОКЕН_БОТА" APP_BASE_URL="https://ВАШ-АДРЕС/hat/" npm run setup:bot
+```
+Скрипт автоматически:
+- Установит кнопку меню **«🎮 Играть»** в чате;
+- Зарегистрирует команды `/start` и `/help`;
+- Настроит описание и карточку бота.
+
+### Способ 2: Настройка через SQL в Supabase
+После применения миграции `20260915150000_telegram_start_handler.sql` выполните в SQL Editor:
+```sql
+-- Настройка кнопки меню и команд бота:
+select public.setup_telegram_bot_menu('https://ВАШ-АДРЕС/hat/');
+```
+
+### Настройка Webhook для ответа на /start
+Чтобы бот мгновенно отвечал на команду `/start` в чате:
+1. Разверните Edge Function `supabase functions deploy telegram-bot` или укажите прямой webhook URL:
+   `https://<project-ref>.supabase.co/functions/v1/telegram-bot`
+2. Установите Webhook в Telegram:
+   ```bash
+   curl -X POST "https://api.telegram.org/bot<ВАШ_ТОКЕН>/setWebhook" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://<project-ref>.supabase.co/functions/v1/telegram-bot"}'
+   ```
+
