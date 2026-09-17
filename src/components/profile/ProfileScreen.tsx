@@ -30,6 +30,7 @@ import {
   IconSparkles,
   IconChevronDown,
   IconChevronUp,
+  IconChartBar,
 } from '@tabler/icons-react';
 import { supabase } from '../../auth/supabaseClient';
 import { TelegramNotificationsCard } from '../notifications/TelegramNotificationsCard';
@@ -448,7 +449,7 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
   return (
     <Container size="xs" py="lg">
       <Stack gap="lg">
-        {/* Кнопка назад и Лидерборд */}
+        {/* Кнопка назад и Статистика */}
         <Group justify="space-between" align="center">
           <Button variant="subtle" leftSection={<IconArrowLeft size={16} />} onClick={onBack}>
             {t('common.back')}
@@ -456,9 +457,9 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
           {onViewLeaderboard && (
             <Button
               variant="light"
-              color="yellow"
+              color="blue"
               size="xs"
-              leftSection={<IconTrophy size={14} />}
+              leftSection={<IconChartBar size={14} />}
               onClick={onViewLeaderboard}
             >
               {t('leaderboard.title')}

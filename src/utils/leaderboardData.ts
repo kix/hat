@@ -128,3 +128,100 @@ export async function fetchLeaderboard(limit = 50): Promise<LeaderboardEntry[]> 
     return [];
   }
 }
+
+export interface HardestWordEntry {
+  word: string;
+  avgSec: number;
+  maxSec: number;
+  solvesCount: number;
+  definition?: string;
+}
+
+/**
+ * Loads the hardest words statistics from Supabase RPC or client aggregation fallback.
+ */
+export async function fetchHardestWords(limit = 10): Promise<HardestWordEntry[]> {
+  try {
+    // 1. Try RPC function
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('get_hardest_words', {
+      p_limit: limit,
+    });
+
+    if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+      return rpcData.map((row: any) => ({
+        word: row.word,
+        avgSec: Number(row.avg_sec || 0),
+        maxSec: Number(row.max_sec || 0),
+        solvesCount: Number(row.solves_count || 0),
+        definition: row.definition || undefined,
+      }));
+    }
+
+    // 2. Client fallback: query word_solution_times, games and word_definitions
+    const [solTimesRes, gamesRes, defsRes] = await Promise.all([
+      supabase.from('word_solution_times').select('word, time_ms').limit(1000),
+      supabase.from('games').select('history_data').limit(500),
+      supabase.from('word_definitions').select('word, definition').limit(500),
+    ]);
+
+    const statsMap = new Map<string, {
+      word: string;
+      count: number;
+      totalMs: number;
+      maxMs: number;
+    }>();
+
+    const recordTime = (word: string, ms: number) => {
+      if (!word || typeof ms !== 'number' || ms <= 0) return;
+      const clean = word.trim().toLowerCase();
+      if (!clean) return;
+      if (!statsMap.has(clean)) {
+        statsMap.set(clean, { word: clean, count: 0, totalMs: 0, maxMs: 0 });
+      }
+      const item = statsMap.get(clean)!;
+      item.count += 1;
+      item.totalMs += ms;
+      item.maxMs = Math.max(item.maxMs, ms);
+    };
+
+    if (solTimesRes.data) {
+      solTimesRes.data.forEach((r: any) => recordTime(r.word, r.time_ms));
+    }
+    if (gamesRes.data) {
+      gamesRes.data.forEach((g: any) => {
+        const hist = g.history_data || [];
+        hist.forEach((rec: any) => {
+          if (rec.word && typeof rec.timeMs === 'number' && rec.timeMs > 0) {
+            recordTime(rec.word, rec.timeMs);
+          }
+        });
+      });
+    }
+
+    const defsMap = new Map<string, string>();
+    if (defsRes.data) {
+      defsRes.data.forEach((d: any) => {
+        if (d.word && d.definition) defsMap.set(d.word.trim().toLowerCase(), d.definition);
+      });
+    }
+
+    const list: HardestWordEntry[] = Array.from(statsMap.values()).map((item) => {
+      const avgSec = Number((item.totalMs / item.count / 1000).toFixed(1));
+      const maxSec = Number((item.maxMs / 1000).toFixed(1));
+      return {
+        word: item.word,
+        avgSec,
+        maxSec,
+        solvesCount: item.count,
+        definition: defsMap.get(item.word),
+      };
+    });
+
+    list.sort((a, b) => b.avgSec - a.avgSec);
+    return list.slice(0, limit);
+  } catch (err) {
+    console.error('Failed to load hardest words:', err);
+    return [];
+  }
+}
+

@@ -247,24 +247,15 @@ export function TeamCard({ team, teamNumber, canRemove, send, connectedParticipa
                   aria-label={gameMode === 'pairs' ? (index === 0 ? t('setup.player1') : t('setup.player2')) : t('default.playerN', { n: index + 1 })}
                   placeholder={gameMode === 'pairs' ? (index === 0 ? t('setup.player1') : t('setup.player2')) : t('default.playerN', { n: index + 1 })}
                   description={
-                    isTgVerified ? (
-                      <Group gap={4} wrap="nowrap" c="blue">
-                        <IconBrandTelegram size={12} />
-                        <Text size="xs" c="blue" fw={500}>{t('tgAuth.verifiedBadge')}</Text>
-                      </Group>
-                    ) : (
-                      player.name.trim().length === 0 ? t('teamCard.anon') : (duplicateNameReason ?? undefined)
-                    )
+                    player.name.trim().length === 0 ? t('teamCard.anon') : (duplicateNameReason ?? undefined)
                   }
                   value={player.name}
                   data={suggestions}
                   rightSection={
                     isTgVerified ? (
-                      <Tooltip label={t('tgAuth.verifiedBadge')} withArrow>
-                        <ThemeIcon size={20} radius="xl" color="blue" variant="light">
-                          <IconCheck size={12} />
-                        </ThemeIcon>
-                      </Tooltip>
+                      <ThemeIcon size={20} radius="xl" color="blue" variant="light">
+                        <IconCheck size={12} />
+                      </ThemeIcon>
                     ) : undefined
                   }
                   onChange={(value) => {

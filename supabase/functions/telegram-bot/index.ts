@@ -48,6 +48,9 @@ Deno.serve(async (req: Request) => {
           status: 200,
         });
       }
+      if (error) {
+        console.error('handle_telegram_webhook RPC error:', error);
+      }
     }
 
     // Option 2: Fallback handling directly in Edge Function
@@ -108,6 +111,54 @@ Deno.serve(async (req: Request) => {
               text: isConfirm
                 ? `🎩 <b>Участие в игре «Шляпа» подтверждено!</b>\n\nИмя в игре: <b>${escapeHtml(chosenName)}</b>\nВаш опыт и очки пойдут в профиль!`
                 : '❌ <b>Приглашение в игру отклонено.</b>',
+              parse_mode: 'HTML',
+            }),
+          });
+        }
+      } else if (cbData.startsWith('pl_c:') || cbData.startsWith('pl_r:')) {
+        const isConfirm = cbData.startsWith('pl_c:');
+        const targetUserId = cbData.split(':')[1];
+        const fromUser = callbackQuery.from;
+        const tgName = [fromUser?.first_name, fromUser?.last_name].filter(Boolean).join(' ') || fromUser?.username || 'друг';
+
+        if (isConfirm && targetUserId && supabaseUrl && supabaseServiceKey) {
+          const supabase = createClient(supabaseUrl, supabaseServiceKey);
+          await supabase.rpc('link_telegram_user', {
+            p_new_user_id: targetUserId,
+            p_telegram_id: String(fromUser?.id),
+            p_full_name: tgName,
+            p_avatar_url: '',
+            p_username: fromUser?.username || '',
+          });
+
+          await supabase
+            .from('telegram_users')
+            .update({
+              user_id: targetUserId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('telegram_id', String(fromUser?.id));
+        }
+
+        await fetch(`https://api.telegram.org/bot${telegramBotToken}/answerCallbackQuery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            callback_query_id: cbId,
+            text: isConfirm ? '✅ Профиль Telegram успешно привязан!' : '❌ Привязка отклонена',
+          }),
+        });
+
+        if (cbChatId && msgId) {
+          await fetch(`https://api.telegram.org/bot${telegramBotToken}/editMessageText`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: cbChatId,
+              message_id: msgId,
+              text: isConfirm
+                ? `🎩 <b>Telegram-профиль успешно привязан!</b>\n\nИмя: <b>${escapeHtml(tgName)}</b>\n${fromUser?.username ? `Юзернейм: <b>@${escapeHtml(fromUser.username)}</b>\n` : ''}Теперь статистика и лидерборд синхронизированы с вашим браузером на компьютере.`
+                : '❌ <b>Привязка профиля отклонена.</b>',
               parse_mode: 'HTML',
             }),
           });

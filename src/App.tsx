@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { useMachine } from '@xstate/react';
 import { Container, Stack, Title, Text, Button, TextInput, Card, Group, Divider, Anchor, LoadingOverlay, ThemeIcon } from '@mantine/core';
-import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle, IconExternalLink, IconTrophy } from '@tabler/icons-react';
+import { IconDeviceGamepad2, IconUsers, IconUser, IconBrandTelegram, IconInfoCircle, IconExternalLink, IconChartBar } from '@tabler/icons-react';
 import { hatMachine, type HatContext, type Settings, type HatEvent } from './machine/hatMachine';
 import packageJson from '../package.json';
 import { useGameSounds } from './sounds/useGameSounds';
@@ -27,6 +27,7 @@ import { ColorSchemeToggle } from './components/ColorSchemeToggle';
 import { LanguageToggle } from './components/LanguageToggle';
 import { useI18n } from './i18n/i18n';
 import { useAuthSession } from './auth/useAuthSession';
+import { supabase } from './auth/supabaseClient';
 import { useMultiplayer } from './auth/useMultiplayer';
 import { trackEvent } from './utils/analytics';
 import { loadDictionary, prefetchDictionaries } from './data/dictionaryLoader';
@@ -326,7 +327,13 @@ function App() {
   // =====================================================================
   // ЭКРАН ПРОФИЛЯ И СТАТИСТИКИ
   // =====================================================================
-  if (showProfile && session?.user?.id) {
+  if (showProfile) {
+    if (!session?.user?.id) {
+      void supabase.auth.signInAnonymously();
+      return (
+        <LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />
+      );
+    }
     return (
       <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
         <ScreenTransition key="profile">
@@ -367,12 +374,12 @@ function App() {
             {t('landing.tagline')}
           </Text>
 
-          {/* Кнопка Лидерборда на главной */}
+          {/* Кнопка Статистики на главной */}
           <Button
             size="md"
             variant="light"
-            color="yellow"
-            leftSection={<IconTrophy size={20} />}
+            color="blue"
+            leftSection={<IconChartBar size={20} />}
             onClick={() => setShowLeaderboard(true)}
           >
             {t('landing.leaderboard')}
@@ -647,6 +654,8 @@ function App() {
           }}
           multiplayer={multiplayer}
           currentUser={session?.user}
+          onViewProfile={() => setShowProfile(true)}
+          onViewLeaderboard={() => setShowLeaderboard(true)}
         />
       </ScreenTransition>
     );

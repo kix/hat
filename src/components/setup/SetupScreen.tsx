@@ -17,9 +17,19 @@ interface SetupScreenProps {
   onBack?: () => void;
   multiplayer?: MultiplayerState;
   currentUser?: User | null;
+  onViewProfile?: () => void;
+  onViewLeaderboard?: () => void;
 }
 
-export function SetupScreen({ context, send, onBack, multiplayer, currentUser }: SetupScreenProps) {
+export function SetupScreen({
+  context,
+  send,
+  onBack,
+  multiplayer,
+  currentUser,
+  onViewProfile,
+  onViewLeaderboard,
+}: SetupScreenProps) {
   const { t } = useI18n();
   const [loadingQr, setLoadingQr] = useState(false);
   const [nfcModalOpen, setNfcModalOpen] = useState(false);
@@ -125,7 +135,7 @@ export function SetupScreen({ context, send, onBack, multiplayer, currentUser }:
   return (
     <Container size="xs" py="lg">
       <Stack gap="lg">
-        <SetupHero />
+        <SetupHero onViewProfile={onViewProfile} onViewLeaderboard={onViewLeaderboard} />
 
         {/* QR & NFC Joining Section */}
         {multiplayer && (

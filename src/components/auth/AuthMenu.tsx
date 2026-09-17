@@ -56,6 +56,7 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
   const isRealUser = !!(user && (!user.is_anonymous || user.user_metadata?.provider === 'telegram'));
   const clientId = import.meta.env.VITE_TELEGRAM_CLIENT_ID;
   const clientSecret = import.meta.env.VITE_TELEGRAM_CLIENT_SECRET;
+  const [opened, setOpened] = useState(false);
   const [loading, setLoading] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [userLevel, setUserLevel] = useState<PlayerLevelInfo | null>(null);
@@ -143,6 +144,7 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
             p_telegram_id: telegramId,
             p_full_name: fullName,
             p_avatar_url: decoded.picture || decoded.avatar_url || '',
+            p_username: decoded.preferred_username || decoded.username || '',
           });
 
           if (rpcError) throw rpcError;
@@ -173,7 +175,7 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
   }, [clientId, clientSecret]);
 
   return (
-    <Popover position="bottom-end" withArrow shadow="md">
+    <Popover opened={opened} onChange={setOpened} position="bottom-end" withArrow shadow="md">
       <Popover.Target>
         <ActionIcon
           aria-label={isRealUser ? t('auth.account') : t('auth.signIn')}
@@ -181,6 +183,7 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
           radius="xl"
           size="lg"
           className={styles.trigger}
+          onClick={() => setOpened((o) => !o)}
         >
           {loading ? (
             <Loader size={18} color="blue" />
@@ -220,16 +223,40 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
             )}
             <Divider variant="dashed" />
             {onViewProfile && (
-              <Anchor component="button" type="button" onClick={onViewProfile} fw={500}>
-                {t('auth.myProfile')}
+              <Anchor
+                component="button"
+                type="button"
+                onClick={() => {
+                  setOpened(false);
+                  onViewProfile();
+                }}
+                fw={500}
+              >
+                👤 {t('auth.myProfile')}
               </Anchor>
             )}
             {onViewLeaderboard && (
-              <Anchor component="button" type="button" onClick={onViewLeaderboard} fw={500}>
-                {t('auth.leaderboard')}
+              <Anchor
+                component="button"
+                type="button"
+                onClick={() => {
+                  setOpened(false);
+                  onViewLeaderboard();
+                }}
+                fw={500}
+              >
+                📊 {t('auth.leaderboard')}
               </Anchor>
             )}
-            <Anchor component="button" type="button" c="red" onClick={() => void supabase.auth.signOut()}>
+            <Anchor
+              component="button"
+              type="button"
+              c="red"
+              onClick={() => {
+                setOpened(false);
+                void supabase.auth.signOut();
+              }}
+            >
               {t('auth.signOut')}
             </Anchor>
           </Stack>
@@ -239,9 +266,31 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
               {t('auth.signInToSave')}
             </Text>
 
+            {onViewProfile && (
+              <Anchor
+                component="button"
+                type="button"
+                onClick={() => {
+                  setOpened(false);
+                  onViewProfile();
+                }}
+                fw={500}
+              >
+                👤 {t('auth.myProfile')}
+              </Anchor>
+            )}
+
             {onViewLeaderboard && (
-              <Anchor component="button" type="button" onClick={onViewLeaderboard} fw={500}>
-                🏆 {t('auth.leaderboard')}
+              <Anchor
+                component="button"
+                type="button"
+                onClick={() => {
+                  setOpened(false);
+                  onViewLeaderboard();
+                }}
+                fw={500}
+              >
+                📊 {t('auth.leaderboard')}
               </Anchor>
             )}
 
@@ -250,6 +299,7 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
                 variant="default"
                 leftSection={<IconBrandTelegram size={18} color="#229ED9" />}
                 onClick={() => {
+                  setOpened(false);
                   trackEvent('auth_click', { provider: 'telegram' });
                   signInWithTelegram(clientId);
                 }}
@@ -265,7 +315,10 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
                 variant="light"
                 color="blue"
                 leftSection={<IconBrandTelegram size={18} />}
-                onClick={() => trackEvent('auth_click', { provider: 'telegram_bot' })}
+                onClick={() => {
+                  setOpened(false);
+                  trackEvent('auth_click', { provider: 'telegram_bot' });
+                }}
               >
                 {t('auth.telegram')}
               </Button>
@@ -281,7 +334,10 @@ export function AuthMenu({ onViewProfile, onViewLeaderboard }: AuthMenuProps) {
                 c="dimmed"
                 underline="hover"
                 mt={4}
-                onClick={() => trackEvent('twa_link_click', { location: 'auth_menu' })}
+                onClick={() => {
+                  setOpened(false);
+                  trackEvent('twa_link_click', { location: 'auth_menu' });
+                }}
               >
                 {t('landing.openInTelegram')}
               </Anchor>
