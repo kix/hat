@@ -47,6 +47,7 @@ function App() {
   const [playerName, setPlayerName] = useState<string>('');
   const [joinRoomCode, setJoinRoomCode] = useState<string>('');
   const [showProfile, setShowProfile] = useState<boolean>(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
   const [showChangelog, setShowChangelog] = useState<boolean>(
     () => new URLSearchParams(window.location.search).has('changelog'),
@@ -318,7 +319,15 @@ function App() {
     return (
       <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
         <ScreenTransition key="leaderboard">
-          <LeaderboardScreen currentUserId={session?.user?.id} onBack={() => setShowLeaderboard(false)} />
+          <LeaderboardScreen
+            currentUserId={session?.user?.id}
+            onBack={() => setShowLeaderboard(false)}
+            onSelectUser={(userId) => {
+              setProfileUserId(userId);
+              setShowLeaderboard(false);
+              setShowProfile(true);
+            }}
+          />
         </ScreenTransition>
       </Suspense>
     );
@@ -328,7 +337,8 @@ function App() {
   // ЭКРАН ПРОФИЛЯ И СТАТИСТИКИ
   // =====================================================================
   if (showProfile) {
-    if (!session?.user?.id) {
+    const targetUserId = profileUserId || session?.user?.id;
+    if (!targetUserId) {
       void supabase.auth.signInAnonymously();
       return (
         <LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />
@@ -338,10 +348,14 @@ function App() {
       <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
         <ScreenTransition key="profile">
           <ProfileScreen
-            userId={session.user.id}
-            onBack={() => setShowProfile(false)}
+            userId={targetUserId}
+            onBack={() => {
+              setShowProfile(false);
+              setProfileUserId(null);
+            }}
             onViewLeaderboard={() => {
               setShowProfile(false);
+              setProfileUserId(null);
               setShowLeaderboard(true);
             }}
           />
@@ -365,7 +379,10 @@ function App() {
               <LanguageToggle />
               <ColorSchemeToggle />
               <AuthMenu
-                onViewProfile={() => setShowProfile(true)}
+                onViewProfile={() => {
+                  setProfileUserId(null);
+                  setShowProfile(true);
+                }}
                 onViewLeaderboard={() => setShowLeaderboard(true)}
               />
             </Group>
@@ -411,7 +428,14 @@ function App() {
                   <Text size="sm" c="dimmed">
                     {t('landing.online')}
                   </Text>
-                  <Button variant="subtle" size="xs" onClick={() => setShowProfile(true)}>
+                  <Button
+                    variant="subtle"
+                    size="xs"
+                    onClick={() => {
+                      setProfileUserId(null);
+                      setShowProfile(true);
+                    }}
+                  >
                     {t('landing.statsAchievements')}
                   </Button>
                 </Group>
@@ -654,7 +678,10 @@ function App() {
           }}
           multiplayer={multiplayer}
           currentUser={session?.user}
-          onViewProfile={() => setShowProfile(true)}
+          onViewProfile={() => {
+            setProfileUserId(null);
+            setShowProfile(true);
+          }}
           onViewLeaderboard={() => setShowLeaderboard(true)}
         />
       </ScreenTransition>

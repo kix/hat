@@ -38,12 +38,13 @@ import {
 interface LeaderboardScreenProps {
   currentUserId?: string;
   onBack: () => void;
+  onSelectUser?: (userId: string) => void;
 }
 
 type MainTab = 'players' | 'hardest_words';
 type SortCategory = 'xp' | 'wins' | 'words';
 
-export function LeaderboardScreen({ currentUserId, onBack }: LeaderboardScreenProps) {
+export function LeaderboardScreen({ currentUserId, onBack, onSelectUser }: LeaderboardScreenProps) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<MainTab>('players');
   const [loading, setLoading] = useState(true);
@@ -237,7 +238,12 @@ export function LeaderboardScreen({ currentUserId, onBack }: LeaderboardScreenPr
                   <Group justify="space-around" align="flex-end">
                     {/* 2-е место */}
                     {top3[1] && (
-                      <Stack align="center" gap={4} style={{ flex: 1, minWidth: 0 }}>
+                      <Stack
+                        align="center"
+                        gap={4}
+                        style={{ flex: 1, minWidth: 0, cursor: onSelectUser ? 'pointer' : undefined }}
+                        onClick={() => onSelectUser?.(top3[1].userId)}
+                      >
                         <Text size="xl">🥈</Text>
                         <Avatar src={top3[1].avatarUrl || undefined} size={48} radius="xl">
                           {top3[1].playerName[0]?.toUpperCase() ?? <IconUser size={20} />}
@@ -258,7 +264,13 @@ export function LeaderboardScreen({ currentUserId, onBack }: LeaderboardScreenPr
 
                     {/* 1-е место */}
                     {top3[0] && (
-                      <Stack align="center" gap={4} style={{ flex: 1.2, minWidth: 0 }} mt={-10}>
+                      <Stack
+                        align="center"
+                        gap={4}
+                        style={{ flex: 1.2, minWidth: 0, cursor: onSelectUser ? 'pointer' : undefined }}
+                        mt={-10}
+                        onClick={() => onSelectUser?.(top3[0].userId)}
+                      >
                         <ThemeIcon color="yellow" size="lg" radius="xl" variant="filled">
                           <IconCrown size={18} />
                         </ThemeIcon>
@@ -286,7 +298,12 @@ export function LeaderboardScreen({ currentUserId, onBack }: LeaderboardScreenPr
 
                     {/* 3-е место */}
                     {top3[2] && (
-                      <Stack align="center" gap={4} style={{ flex: 1, minWidth: 0 }}>
+                      <Stack
+                        align="center"
+                        gap={4}
+                        style={{ flex: 1, minWidth: 0, cursor: onSelectUser ? 'pointer' : undefined }}
+                        onClick={() => onSelectUser?.(top3[2].userId)}
+                      >
                         <Text size="xl">🥉</Text>
                         <Avatar src={top3[2].avatarUrl || undefined} size={48} radius="xl">
                           {top3[2].playerName[0]?.toUpperCase() ?? <IconUser size={20} />}
@@ -321,7 +338,9 @@ export function LeaderboardScreen({ currentUserId, onBack }: LeaderboardScreenPr
                       withBorder
                       padding="xs"
                       radius="md"
+                      onClick={() => onSelectUser?.(entry.userId)}
                       style={{
+                        cursor: onSelectUser ? 'pointer' : undefined,
                         background: isCurrent ? 'var(--mantine-color-blue-light)' : undefined,
                         border: isCurrent ? '1.5px solid var(--mantine-color-blue-filled)' : undefined,
                       }}
@@ -375,7 +394,9 @@ export function LeaderboardScreen({ currentUserId, onBack }: LeaderboardScreenPr
                   withBorder
                   padding="xs"
                   radius="md"
+                  onClick={() => onSelectUser?.(currentUserRank.entry.userId)}
                   style={{
+                    cursor: onSelectUser ? 'pointer' : undefined,
                     background: 'var(--mantine-color-blue-light)',
                     border: '2px solid var(--mantine-color-blue-filled)',
                     position: 'sticky',

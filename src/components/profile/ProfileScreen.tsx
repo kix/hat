@@ -13,6 +13,7 @@ import {
   ThemeIcon,
   Progress,
   UnstyledButton,
+  Avatar,
 } from '@mantine/core';
 import {
   IconArrowLeft,
@@ -117,6 +118,7 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
   const { t, lang } = useI18n();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  const [tgUserInfo, setTgUserInfo] = useState<any>(null);
   const [participations, setParticipations] = useState<UserParticipation[]>([]);
   const [partnerStats, setPartnerStats] = useState<PartnerStat[]>([]);
   const [showLadder, setShowLadder] = useState(false);
@@ -129,13 +131,24 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
       try {
         setLoading(true);
 
-        // 1. Получаем профиль пользователя
+        // 1. Получаем текущую сессию auth
         const { data: userData } = await supabase.auth.getUser();
         if (userData?.user) {
           setProfile(userData.user);
         }
 
-        // 2. Получаем все игры пользователя из game_participants
+        // 2. Получаем данные пользователя из telegram_users по userId
+        const { data: tgUsers } = await supabase
+          .from('telegram_users')
+          .select('*')
+          .eq('user_id', userId)
+          .order('updated_at', { ascending: false })
+          .limit(1);
+
+        const tgUser = tgUsers?.[0] || null;
+        setTgUserInfo(tgUser);
+
+        // 3. Получаем все игры пользователя из game_participants
         const { data: parts, error: partsErr } = await supabase
           .from('game_participants')
           .select('*, games:game_id (*)')
@@ -147,7 +160,7 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
         const validParticipations = (parts || []).filter((p) => p.games) as UserParticipation[];
         setParticipations(validParticipations);
 
-        // 3. Вычисляем синергию с напарниками
+        // 4. Вычисляем синергию с напарниками
         if (validParticipations.length > 0) {
           const gameIds = validParticipations.map((p) => p.game_id);
 
@@ -439,11 +452,33 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
     );
   }
 
-  const registerDate = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'ru-RU', {
-        year: 'numeric',
-        month: 'long',
-      })
+  const isOwnProfile = profile?.id === userId;
+  const displayName =
+    tgUserInfo?.full_name ||
+    (isOwnProfile ? (profile?.user_metadata?.full_name as string) : undefined) ||
+    participations[0]?.player_name ||
+    t('default.player');
+
+  const avatarUrl =
+    tgUserInfo?.avatar_url ||
+    (isOwnProfile ? (profile?.user_metadata?.avatar_url as string) : undefined) ||
+    '';
+
+  const registerDate = participations.length > 0
+    ? new Date(participations[participations.length - 1].games.created_at).toLocaleDateString(
+        lang === 'en' ? 'en-US' : 'ru-RU',
+        { month: 'long', year: 'numeric' },
+      )
+    : tgUserInfo?.created_at
+    ? new Date(tgUserInfo.created_at).toLocaleDateString(
+        lang === 'en' ? 'en-US' : 'ru-RU',
+        { month: 'long', year: 'numeric' },
+      )
+    : profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString(
+        lang === 'en' ? 'en-US' : 'ru-RU',
+        { month: 'long', year: 'numeric' },
+      )
     : '—';
 
   return (
@@ -470,18 +505,23 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
         {/* Профиль игрока */}
         <Card withBorder padding="lg" radius="md">
           <Group gap="md">
-            <ThemeIcon size={64} radius="xl" color="blue" variant="light">
-              <IconUser size={36} />
-            </ThemeIcon>
+            <Avatar src={avatarUrl || undefined} size={64} radius="xl" color="blue">
+              {displayName[0]?.toUpperCase() ?? <IconUser size={36} />}
+            </Avatar>
             <Stack gap={2} style={{ flex: 1 }}>
               <Group gap="xs" wrap="nowrap">
                 <Text fw={700} size="xl" truncate="end">
-                  {profile?.user_metadata?.full_name || t('default.player')}
+                  {displayName}
                 </Text>
                 <Badge color={levelInfo.badgeColor} variant="filled" size="sm">
                   {levelInfo.emoji} {t('levels.levelShort', { lvl: levelInfo.level })}
                 </Badge>
               </Group>
+              {tgUserInfo?.username && (
+                <Text size="xs" c="blue" fw={600}>
+                  @{tgUserInfo.username}
+                </Text>
+              )}
               <Group gap="xs" c="dimmed">
                 <IconCalendar size={14} />
                 <Text size="xs">{t('profile.inGameSince', { date: registerDate })}</Text>
@@ -612,16 +652,24 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
           </Stack>
         </Card>
 
-        {/* Уведомления и привязка Telegram */}
-        <TelegramNotificationsCard
-          userId={userId}
-          telegramId={profile?.user_metadata?.telegram_id ? String(profile.user_metadata.telegram_id) : null}
-          telegramUsername={profile?.user_metadata?.username as string | undefined}
-          onProfileUpdated={async () => {
-            const { data } = await supabase.auth.getUser();
-            if (data?.user) setProfile(data.user);
-          }}
-        />
+        {/* Уведомления и привязка Telegram (только для своего профиля) */}
+        {isOwnProfile && (
+          <TelegramNotificationsCard
+            userId={userId}
+            telegramId={
+              tgUserInfo?.telegram_id ||
+              (profile?.user_metadata?.telegram_id ? String(profile.user_metadata.telegram_id) : null)
+            }
+            telegramUsername={
+              tgUserInfo?.username ||
+              (profile?.user_metadata?.username as string | undefined)
+            }
+            onProfileUpdated={async () => {
+              const { data } = await supabase.auth.getUser();
+              if (data?.user) setProfile(data.user);
+            }}
+          />
+        )}
 
         {/* Статистика */}
         <Title order={3} size="h4" mb={-10}>
