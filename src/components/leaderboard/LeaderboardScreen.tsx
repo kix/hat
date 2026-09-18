@@ -461,17 +461,17 @@ export function LeaderboardScreen({ currentUserId, onBack, onSelectUser }: Leade
                   return (
                     <Card key={item.word} withBorder padding="sm" radius="md">
                       <Stack gap="xs">
-                        <Group justify="space-between" align="center" wrap="nowrap">
-                          <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+                        <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+                          <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
                             <Badge size="md" color={badge.color} variant="light" miw={36} ta="center">
                               {badge.label}
                             </Badge>
-                            <Text fw={800} size="md" tt="capitalize" truncate="end">
+                            <Text fw={800} size="md" tt="capitalize" style={{ wordBreak: 'break-word' }}>
                               {item.word}
                             </Text>
                           </Group>
 
-                          <Group gap="xs" wrap="nowrap">
+                          <Group gap="xs" wrap="wrap">
                             <Badge
                               size="sm"
                               variant="light"

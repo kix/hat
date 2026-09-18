@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-09-18
+
+### Fixed
+
+- **Отображение слов в топе сложных слов на мобильных устройствах:**
+  - Исправлена верстка карточек на вкладке «Топ сложных слов» экрана «Статистика»: включен адаптивный перенос элементов и убрана избыточная обрезка текста, благодаря чему слова теперь полностью видны и читаемы на смартфонах.
+
 ## [1.9.0] - 2026-09-18
 
 ### Added
