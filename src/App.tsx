@@ -33,10 +33,8 @@ import { trackEvent } from './utils/analytics';
 import { loadDictionary, prefetchDictionaries } from './data/dictionaryLoader';
 import { initTelegramWebApp, getTelegramUser, isTelegramWebApp, TELEGRAM_TWA_LINK } from './utils/telegramWebApp';
 import { useTelegramAutoAuth } from './auth/useTelegramAutoAuth';
-import { useDropScream } from './sounds/useDropScream';
 
 function App() {
-  useDropScream();
   const sounds = useGameSounds();
   const { t, lang } = useI18n();
   const session = useAuthSession();
