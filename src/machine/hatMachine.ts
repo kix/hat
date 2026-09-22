@@ -9,6 +9,8 @@ import { getDuplicateNameReason } from '../utils/setupValidity';
 import { isLocalDevEnvironment } from '../utils/isLocalDevEnvironment';
 import { tr } from '../i18n/lang';
 
+import type { ThematicPackId } from '../data/thematicPacks';
+
 export type { DifficultyLevel } from '../data/dictionary';
 
 export const MAX_TEAMS = 6;
@@ -16,6 +18,7 @@ export const MIN_TEAMS = 2;
 
 export type RolesMode = 'alternate' | 'fixed';
 export type WordResult = 'guessed' | 'skipped' | 'foul' | 'timeout';
+export type WordPack = 'standard' | 'frequent' | 'custom' | ThematicPackId;
 
 export interface Player {
   id: string;
@@ -52,7 +55,7 @@ export interface Settings {
   rolesMode: RolesMode;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
-  wordPack: 'standard' | 'frequent' | 'custom';
+  wordPack: WordPack;
   customWords: string[];
   gameMode?: 'teams' | 'pairs';
   enableReview: boolean;
@@ -87,7 +90,7 @@ export type HatEvent =
   | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
   | { type: 'SET_ENABLE_REVIEW'; enableReview: boolean }
-  | { type: 'SET_WORD_PACK'; wordPack: 'standard' | 'frequent' | 'custom' }
+  | { type: 'SET_WORD_PACK'; wordPack: WordPack }
   | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
   | { type: 'SET_GAME_MODE'; gameMode: 'teams' | 'pairs' }
   | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }

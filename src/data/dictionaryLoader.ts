@@ -1,4 +1,7 @@
 import type { DictionaryEntry } from './dictionary';
+import { getThematicPackEntries, type ThematicPackId } from './thematicPacks';
+
+export type WordPackType = 'standard' | 'frequent' | 'custom' | ThematicPackId;
 
 // In-memory cache for loaded dictionary modules
 let cachedRuFrequent: DictionaryEntry[] | null = null;
@@ -35,8 +38,20 @@ export async function loadEn(): Promise<DictionaryEntry[]> {
  */
 export async function loadDictionary(
   lang: 'ru' | 'en',
-  wordPack: 'standard' | 'frequent' | 'custom' = 'frequent'
+  wordPack: WordPackType = 'frequent'
 ): Promise<DictionaryEntry[]> {
+  if (
+    wordPack === 'movies' ||
+    wordPack === 'food' ||
+    wordPack === 'geography' ||
+    wordPack === 'gaming' ||
+    wordPack === 'animals' ||
+    wordPack === 'celebrities' ||
+    wordPack === 'tech'
+  ) {
+    return getThematicPackEntries(wordPack, lang);
+  }
+
   if (lang === 'en') {
     return loadEn();
   }

@@ -1,7 +1,10 @@
-import { Button, Container, Stack, Title, Text, Card, Group, SimpleGrid } from '@mantine/core';
+import { useState } from 'react';
+import { Button, Container, Stack, Title, Text, Card, Group, SimpleGrid, ActionIcon, Tooltip } from '@mantine/core';
+import { IconBook } from '@tabler/icons-react';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { useI18n } from '../../i18n/i18n';
 import { ExitGameButton } from '../shared/ExitGameButton';
+import { WordDefinitionModal } from '../shared/WordDefinitionModal';
 
 interface RoundReviewScreenProps {
   context: HatContext;
@@ -17,6 +20,7 @@ export function RoundReviewScreen({
   isHost = false,
 }: RoundReviewScreenProps) {
   const { t } = useI18n();
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   const lastRecord = context.history[context.history.length - 1];
   const targetTeamId = lastRecord?.teamId;
@@ -60,9 +64,22 @@ export function RoundReviewScreen({
               {roundWords.map((record) => (
                 <Card key={record.word} withBorder padding="sm" radius="md">
                   <Stack gap="xs">
-                    <Text fw={700} size="md" ta="center">
-                      {record.word}
-                    </Text>
+                    <Group justify="center" align="center" gap="xs">
+                      <Text fw={700} size="md" ta="center">
+                        {record.word}
+                      </Text>
+                      <Tooltip label={t('defModal.viewDefinition')} withArrow>
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          color="blue"
+                          onClick={() => setSelectedWord(record.word)}
+                          aria-label={t('defModal.viewDefinition')}
+                        >
+                          <IconBook size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
                     <SimpleGrid cols={2} spacing="xs">
                       <Button
                         size="sm"
@@ -121,6 +138,12 @@ export function RoundReviewScreen({
           </Group>
         </Stack>
       </Container>
+
+      <WordDefinitionModal
+        word={selectedWord}
+        opened={!!selectedWord}
+        onClose={() => setSelectedWord(null)}
+      />
     </div>
   );
 }

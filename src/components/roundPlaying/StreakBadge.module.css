@@ -1,0 +1,44 @@
+.streakBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #ff6b4a 0%, #ff8e53 50%, #ffa94d 100%);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
+  animation: pulse 1.5s infinite ease-in-out;
+  transform-origin: center;
+}
+
+.fireIcon {
+  font-size: 1.1rem;
+  animation: flicker 0.8s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 6px 18px rgba(255, 107, 74, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
+  }
+}
+
+@keyframes flicker {
+  0% {
+    transform: rotate(-4deg) scale(0.95);
+  }
+  100% {
+    transform: rotate(6deg) scale(1.1);
+  }
+}

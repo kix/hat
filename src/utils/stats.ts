@@ -229,3 +229,78 @@ export function getSlowestGuess(teams: Team[], history: History): SingleGuess | 
     timeMs: worstRecord.timeMs
   };
 }
+
+/**
+ * Returns the current active streak of consecutive correct guesses in the current round.
+ */
+export function getCurrentRoundStreak(teams: Team[], history: History, currentTeamIndex: number): number {
+  const team = teams[currentTeamIndex];
+  if (!team) return 0;
+  const roundRecords = history.filter(
+    (record) => record.teamId === team.id && record.roundIndex === team.roundsPlayed
+  );
+  if (roundRecords.length === 0) return 0;
+
+  let streak = 0;
+  for (let i = roundRecords.length - 1; i >= 0; i--) {
+    if (roundRecords[i].result === 'guessed') {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+export interface StreakMaster {
+  playerName: string;
+  teamName: string;
+  maxStreak: number;
+}
+
+/**
+ * Finds the player and team with the highest streak of consecutive correct guesses in a single turn.
+ */
+export function getStreakMaster(teams: Team[], history: History): StreakMaster | null {
+  const streakMap = new Map<string, { describerId: string; teamId: string; streak: number; max: number }>();
+
+  history.forEach((record) => {
+    const key = `${record.teamId}_${record.roundIndex}`;
+    const current = streakMap.get(key) || {
+      describerId: record.describerId,
+      teamId: record.teamId,
+      streak: 0,
+      max: 0,
+    };
+
+    if (record.result === 'guessed') {
+      current.streak++;
+      if (current.streak > current.max) {
+        current.max = current.streak;
+      }
+    } else {
+      current.streak = 0;
+    }
+    streakMap.set(key, current);
+  });
+
+  let best: { describerId: string; teamId: string; maxStreak: number } | null = null;
+  streakMap.forEach((entry) => {
+    if (entry.max >= 3 && (!best || entry.max > best.maxStreak)) {
+      best = { describerId: entry.describerId, teamId: entry.teamId, maxStreak: entry.max };
+    }
+  });
+
+  if (!best) return null;
+  const bestEntry = best as { describerId: string; teamId: string; maxStreak: number };
+
+  const team = teams.find((t) => t.id === bestEntry.teamId);
+  const player = team?.players.find((p) => p.id === bestEntry.describerId);
+
+  return {
+    playerName: player?.name || 'Игрок',
+    teamName: team?.name || 'Команда',
+    maxStreak: bestEntry.maxStreak,
+  };
+}
+

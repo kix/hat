@@ -1,4 +1,6 @@
-import { Badge, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
+import { useState } from 'react';
+import { Badge, Card, Group, SimpleGrid, Stack, Text, ActionIcon, Tooltip } from '@mantine/core';
+import { IconBook } from '@tabler/icons-react';
 import type { HatContext, History, Settings, Team } from '../../machine/hatMachine';
 import {
   getBestPlayer,
@@ -9,6 +11,7 @@ import {
   getSlowestGuess,
   getStolenWords,
   getRuleBreakers,
+  getStreakMaster,
 } from '../../utils/stats';
 import { getTeamScore } from '../../utils/scoring';
 import { useI18n } from '../../i18n/i18n';
@@ -16,6 +19,7 @@ import { ResultBanner } from './ResultBanner';
 import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
 import { PreviousRoundWords } from '../shared/PreviousRoundWords';
+import { WordDefinitionModal } from '../shared/WordDefinitionModal';
 
 interface GameSummaryViewProps {
   teams: Team[];
@@ -63,7 +67,9 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
   const slowestGuess = getSlowestGuess(teams, history);
   const stolenWords = getStolenWords(teams, history);
   const ruleBreakers = getRuleBreakers(teams, history);
+  const streakMaster = getStreakMaster(teams, history);
   const isPairs = settings.gameMode === 'pairs';
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   const getFoulLabel = (count: number) => {
     const isEn = t('summaryView.reasonFoul') === 'foul';
@@ -187,9 +193,32 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
           </StatCard>
         )}
 
+        {streakMaster && (
+          <StatCard title={t('summaryView.streakMasterTitle')}>
+            <Group justify="space-between" align="center">
+              <Text fw={700} size="lg">🔥 {streakMaster.playerName}</Text>
+              <Badge color="orange" variant="filled" size="sm">
+                {streakMaster.maxStreak} {t('summaryView.wordsInRow')}
+              </Badge>
+            </Group>
+            <Text size="sm" c="dimmed">
+              {isPairs
+                ? t('summaryView.streakMasterSubPairs', { n: streakMaster.maxStreak })
+                : t('summaryView.streakMasterSub', { team: streakMaster.teamName, n: streakMaster.maxStreak })}
+            </Text>
+          </StatCard>
+        )}
+
         {fastestGuess && (
           <StatCard title={t('summaryView.fastestGuessTitle')}>
-            <Text fw={600}>{fastestGuess.playerName}</Text>
+            <Group justify="space-between" align="center">
+              <Text fw={600}>{fastestGuess.playerName}</Text>
+              <Tooltip label={t('defModal.viewDefinition')} withArrow>
+                <ActionIcon size="xs" variant="subtle" color="blue" onClick={() => setSelectedWord(fastestGuess.word)}>
+                  <IconBook size={14} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
             <Text size="sm" c="dimmed">
               {isPairs
                 ? t('summaryView.fastestGuessSubPairs', {
@@ -207,7 +236,14 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
 
         {slowestGuess && (
           <StatCard title={t('summaryView.slowestGuessTitle')}>
-            <Text fw={600}>{slowestGuess.playerName}</Text>
+            <Group justify="space-between" align="center">
+              <Text fw={600}>{slowestGuess.playerName}</Text>
+              <Tooltip label={t('defModal.viewDefinition')} withArrow>
+                <ActionIcon size="xs" variant="subtle" color="blue" onClick={() => setSelectedWord(slowestGuess.word)}>
+                  <IconBook size={14} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
             <Text size="sm" c="dimmed">
               {isPairs
                 ? t('summaryView.slowestGuessSubPairs', {
@@ -223,10 +259,16 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
           </StatCard>
         )}
 
-
         {hardestWord && (
           <StatCard title={t('summaryView.hardestWord')}>
-            <Text fw={600}>{hardestWord.word}</Text>
+            <Group justify="space-between" align="center">
+              <Text fw={600}>{hardestWord.word}</Text>
+              <Tooltip label={t('defModal.viewDefinition')} withArrow>
+                <ActionIcon size="xs" variant="subtle" color="blue" onClick={() => setSelectedWord(hardestWord.word)}>
+                  <IconBook size={14} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
             <Text size="sm" c="dimmed">
               {t('summaryView.secs', { n: (hardestWord.timeMs / 1000).toFixed(1) })}
             </Text>
@@ -235,7 +277,14 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
 
         {easiestWord && (
           <StatCard title={t('summaryView.easiestWord')}>
-            <Text fw={600}>{easiestWord.word}</Text>
+            <Group justify="space-between" align="center">
+              <Text fw={600}>{easiestWord.word}</Text>
+              <Tooltip label={t('defModal.viewDefinition')} withArrow>
+                <ActionIcon size="xs" variant="subtle" color="blue" onClick={() => setSelectedWord(easiestWord.word)}>
+                  <IconBook size={14} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
             <Text size="sm" c="dimmed">
               {t('summaryView.secs', { n: (easiestWord.timeMs / 1000).toFixed(1) })}
             </Text>
@@ -300,6 +349,12 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
       )}
 
       <HintedWordsCard context={context} />
+
+      <WordDefinitionModal
+        word={selectedWord}
+        opened={!!selectedWord}
+        onClose={() => setSelectedWord(null)}
+      />
     </Stack>
   );
 }

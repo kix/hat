@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Group, Stack, Text, Card } from '@mantine/core';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
-import { getCurrentRoundGuessedCount } from '../../utils/stats';
+import { getCurrentRoundGuessedCount, getCurrentRoundStreak } from '../../utils/stats';
 import { logWeirdWord } from '../../auth/logWeirdWord';
 import { deleteWordFromDictionary } from '../../utils/deleteWord';
 import { markWordRareInDictionary } from '../../utils/setWordFrequency';
@@ -11,6 +11,7 @@ import { getCurrentRoles } from '../../utils/roles';
 import { RoundTimer } from './RoundTimer';
 import { HatCountBadge } from './HatCountBadge';
 import { RoundGuessedCount } from './RoundGuessedCount';
+import { StreakBadge } from './StreakBadge';
 import { SwipeableWordCard } from './SwipeableWordCard';
 import { ActionButtons } from './ActionButtons';
 import { DeleteWordButton } from './DeleteWordButton';
@@ -106,6 +107,7 @@ export function RoundPlayingScreen({
   };
 
   const isTimeUp = context.timeRemainingSec <= 0;
+  const currentStreak = getCurrentRoundStreak(context.teams, context.history, context.currentTeamIndex);
 
   const flashBoxShadow =
     flashType === 'guessed'
@@ -134,6 +136,12 @@ export function RoundPlayingScreen({
         <RoundTimer timeRemainingSec={context.timeRemainingSec} roundDurationSec={context.settings.roundDurationSec} />
         <RoundGuessedCount count={getCurrentRoundGuessedCount(context.teams, context.history, context.currentTeamIndex)} />
       </Group>
+
+      {currentStreak >= 3 && (
+        <Group justify="center" mt={-6} mb="xs">
+          <StreakBadge streak={currentStreak} />
+        </Group>
+      )}
 
       {/* Отображение игрового процесса с разделением по ролям */}
       {isDescriber ? (

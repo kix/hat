@@ -39,6 +39,21 @@ describe('dictionaryLoader', { timeout: 20000 }, () => {
     expect(en.length).toBeGreaterThan(0);
   });
 
+  it('loads thematic word packs correctly for both languages', async () => {
+    const moviesRu = await loadDictionary('ru', 'movies');
+    const moviesEn = await loadDictionary('en', 'movies');
+    const foodRu = await loadDictionary('ru', 'food');
+    const gamingEn = await loadDictionary('en', 'gaming');
+
+    expect(moviesRu.length).toBeGreaterThan(20);
+    expect(moviesEn.length).toBeGreaterThan(20);
+    expect(foodRu.length).toBeGreaterThan(20);
+    expect(gamingEn.length).toBeGreaterThan(20);
+
+    expect(moviesRu.some((e) => e.word.includes('поттер') || e.word.includes('титаник'))).toBe(true);
+    expect(moviesEn.some((e) => e.word.includes('potter') || e.word.includes('titanic'))).toBe(true);
+  });
+
   it('executes prefetch functions without errors', () => {
     expect(() => prefetchDictionaries()).not.toThrow();
     expect(() => prefetchEn()).not.toThrow();

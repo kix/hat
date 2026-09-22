@@ -1,8 +1,9 @@
-import { Group, SegmentedControl, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
+import { Group, SegmentedControl, Select, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { DictionaryEntry } from '../../data/dictionary';
 import { prefetchRuStandard } from '../../data/dictionaryLoader';
-import type { HatEvent, Settings } from '../../machine/hatMachine';
+import { THEMATIC_PACK_METAS } from '../../data/thematicPacks';
+import type { HatEvent, Settings, WordPack } from '../../machine/hatMachine';
 import { useI18n } from '../../i18n/i18n';
 
 interface RoundSettingsFormProps {
@@ -26,6 +27,27 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
   // Laptops/desktops (mouse-primary, fine pointer) have no vibration motor —
   // no point showing a setting that can't do anything there.
   const isTouchDevice = useMediaQuery('(pointer: coarse)', undefined, { getInitialValueInEffect: false });
+
+  const wordPackSelectData = [
+    {
+      group: t('roundSettings.groupStandard'),
+      items: [
+        { value: 'frequent', label: `🔥 ${t('roundSettings.packFrequent')}` },
+        { value: 'standard', label: `📚 ${t('roundSettings.packAll')}` },
+      ],
+    },
+    {
+      group: t('roundSettings.groupThematic'),
+      items: THEMATIC_PACK_METAS.map((m) => ({
+        value: m.id,
+        label: `${m.emoji} ${t(m.titleKey)}`,
+      })),
+    },
+    {
+      group: t('roundSettings.groupCustom'),
+      items: [{ value: 'custom', label: `✏️ ${t('roundSettings.packCustom')}` }],
+    },
+  ];
 
   return (
     <Stack gap="md">
@@ -97,20 +119,14 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
       )}
 
       <div onMouseEnter={prefetchRuStandard} onTouchStart={prefetchRuStandard}>
-        <Text size="sm" fw={500} mb={4}>
-          {t('roundSettings.wordPack')}
-        </Text>
-        <SegmentedControl
-          fullWidth
-          value={settings.wordPack || 'standard'}
-          onChange={(value) =>
-            send({ type: 'SET_WORD_PACK', wordPack: value as 'standard' | 'frequent' | 'custom' })
-          }
-          data={[
-            { value: 'standard', label: t('roundSettings.packAll') },
-            { value: 'frequent', label: t('roundSettings.packFrequent') },
-            { value: 'custom', label: t('roundSettings.packCustom') },
-          ]}
+        <Select
+          label={t('roundSettings.wordPack')}
+          value={settings.wordPack || 'frequent'}
+          onChange={(value) => {
+            if (value) send({ type: 'SET_WORD_PACK', wordPack: value as WordPack });
+          }}
+          data={wordPackSelectData}
+          allowDeselect={false}
         />
       </div>
 
