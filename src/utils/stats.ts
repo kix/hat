@@ -5,6 +5,94 @@ export function sortTeamsByScore(teams: Team[], history: History): Team[] {
   return [...teams].sort((a, b) => getTeamScore(history, b.id) - getTeamScore(history, a.id));
 }
 
+export interface IndividualPlayerScore {
+  player: Player;
+  score: number;
+  guessed: number;
+  explained: number;
+  fouls: number;
+  skips: number;
+}
+
+export function getIndividualLeaderboard(players: Player[], history: History): IndividualPlayerScore[] {
+  return players
+    .map((player) => {
+      let guessed = 0;
+      let explained = 0;
+      let fouls = 0;
+      let skips = 0;
+
+      history.forEach((record) => {
+        if (record.guesserId === player.id && record.result === 'guessed') {
+          guessed++;
+        }
+        if (record.describerId === player.id) {
+          if (record.result === 'guessed') explained++;
+          else if (record.result === 'foul') fouls++;
+          else if (record.result === 'skipped') skips++;
+        }
+      });
+
+      const score = (guessed + explained) - (fouls + skips);
+      return { player, score, guessed, explained, fouls, skips };
+    })
+    .sort((a, b) => b.score - a.score || b.guessed - a.guessed || b.explained - a.explained);
+}
+
+export interface BestTandem {
+  player1: Player;
+  player2: Player;
+  wordsGuessed: number;
+  totalScore: number;
+}
+
+export function getBestTandem(players: Player[], history: History): BestTandem | null {
+  if (players.length < 2) return null;
+  const tandemMap = new Map<string, { p1: Player; p2: Player; wordsGuessed: number; totalScore: number }>();
+
+  for (let i = 0; i < players.length; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      const p1 = players[i];
+      const p2 = players[j];
+      const key = `${p1.id}_${p2.id}`;
+      tandemMap.set(key, { p1, p2, wordsGuessed: 0, totalScore: 0 });
+    }
+  }
+
+  history.forEach((record) => {
+    const p1Id = record.describerId;
+    const p2Id = record.guesserId;
+    const entry = tandemMap.get(`${p1Id}_${p2Id}`) || tandemMap.get(`${p2Id}_${p1Id}`);
+    if (entry) {
+      if (record.result === 'guessed') {
+        entry.wordsGuessed++;
+        entry.totalScore += 2;
+      } else if (record.result === 'foul' || record.result === 'skipped') {
+        entry.totalScore -= 1;
+      }
+    }
+  });
+
+  let best: BestTandem | null = null;
+  tandemMap.forEach((entry) => {
+    if (
+      entry.wordsGuessed > 0 &&
+      (!best ||
+        entry.wordsGuessed > best.wordsGuessed ||
+        (entry.wordsGuessed === best.wordsGuessed && entry.totalScore > best.totalScore))
+    ) {
+      best = {
+        player1: entry.p1,
+        player2: entry.p2,
+        wordsGuessed: entry.wordsGuessed,
+        totalScore: entry.totalScore,
+      };
+    }
+  });
+
+  return best;
+}
+
 export interface BestPlayer {
   team: Team;
   player: Player;

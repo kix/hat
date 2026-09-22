@@ -15,6 +15,8 @@ export type { DifficultyLevel } from '../data/dictionary';
 
 export const MAX_TEAMS = 6;
 export const MIN_TEAMS = 2;
+export const MIN_INDIVIDUAL_PLAYERS = 3;
+export const MAX_INDIVIDUAL_PLAYERS = 12;
 
 export type RolesMode = 'alternate' | 'fixed';
 export type WordResult = 'guessed' | 'skipped' | 'foul' | 'timeout';
@@ -57,12 +59,13 @@ export interface Settings {
   vibrationEnabled: boolean;
   wordPack: WordPack;
   customWords: string[];
-  gameMode?: 'teams' | 'pairs';
+  gameMode?: 'teams' | 'pairs' | 'individual';
   enableReview: boolean;
 }
 
 export interface HatContext {
   teams: Team[];
+  individualPlayers?: Player[];
   settings: Settings;
   // The word dictionary is loaded asynchronously (see App.tsx) and reported
   // in via DICTIONARY_LOADED — null until then. Starting a game requires it.
@@ -82,6 +85,10 @@ export type HatEvent =
   | { type: 'UPDATE_TEAM_NAME'; teamId: string; name: string }
   | { type: 'REGENERATE_TEAM_NAME'; teamId: string }
   | { type: 'UPDATE_PLAYER_NAME'; teamId: string; playerId: string; name: string; newPlayerId?: string }
+  | { type: 'ADD_INDIVIDUAL_PLAYER' }
+  | { type: 'REMOVE_INDIVIDUAL_PLAYER'; playerId: string }
+  | { type: 'UPDATE_INDIVIDUAL_PLAYER_NAME'; playerId: string; name: string; newPlayerId?: string }
+  | { type: 'SHUFFLE_INDIVIDUAL_PLAYERS' }
   | { type: 'SET_ROUND_DURATION'; roundDurationSec: 30 | 60 | 120 }
   | { type: 'SET_ALLOW_SKIP'; allowSkip: boolean }
   | { type: 'SET_WORD_COUNT'; wordCount: number }
@@ -93,7 +100,7 @@ export type HatEvent =
   | { type: 'SET_WORD_PACK'; wordPack: WordPack }
   | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
   | { type: 'ADD_CUSTOM_WORDS'; words: string[] }
-  | { type: 'SET_GAME_MODE'; gameMode: 'teams' | 'pairs' }
+  | { type: 'SET_GAME_MODE'; gameMode: 'teams' | 'pairs' | 'individual' }
   | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }
   | { type: 'START_GAME' }
   | { type: 'START_ROUND' }
@@ -109,6 +116,24 @@ export type HatEvent =
   | { type: 'OPEN_REVIEW' }
   | { type: 'UPDATE_WORD_RESULT'; word: string; result: WordResult }
   | { type: 'CONFIRM_REVIEW' };
+
+export function generateIndividualSchedule(players: Player[]): Team[] {
+  const n = players.length;
+  const schedule: Team[] = [];
+  for (let offset = 1; offset < n; offset++) {
+    for (let i = 0; i < n; i++) {
+      const describer = players[i];
+      const guesser = players[(i + offset) % n];
+      schedule.push({
+        id: `indiv_${describer.id}_${guesser.id}`,
+        name: `${describer.name} & ${guesser.name}`,
+        players: [describer, guesser],
+        roundsPlayed: 0,
+      });
+    }
+  }
+  return schedule;
+}
 
 function createTeam(dictionaryEntries: DictionaryEntry[] | null): Team {
   return {
@@ -139,6 +164,11 @@ export function createInitialContext(): HatContext {
     // Two teams are always present so the game can start right away — this
     // is also MIN_TEAMS, so REMOVE_TEAM refuses to drop below it.
     teams: [createTeam(null), createTeam(null)],
+    individualPlayers: [
+      { id: generateId(), name: '' },
+      { id: generateId(), name: '' },
+      { id: generateId(), name: '' },
+    ],
     settings: {
       roundDurationSec: 60,
       allowSkip: false,
@@ -320,16 +350,45 @@ export const hatMachine = setup({
     setup: {
       on: {
         ADD_TEAM: {
-          guard: ({ context }) => context.settings.gameMode !== 'pairs' && context.teams.length < MAX_TEAMS,
+          guard: ({ context }) => context.settings.gameMode !== 'pairs' && context.settings.gameMode !== 'individual' && context.teams.length < MAX_TEAMS,
           actions: assign(({ context }) => ({
             teams: [...context.teams, createTeam(context.dictionary)],
           })),
         },
         REMOVE_TEAM: {
-          guard: ({ context }) => context.settings.gameMode !== 'pairs' && context.teams.length > MIN_TEAMS,
+          guard: ({ context }) => context.settings.gameMode !== 'pairs' && context.settings.gameMode !== 'individual' && context.teams.length > MIN_TEAMS,
           actions: assign(({ context, event }) => ({
             teams: context.teams.filter((team) => team.id !== event.teamId),
           })),
+        },
+        ADD_INDIVIDUAL_PLAYER: {
+          guard: ({ context }) => (context.individualPlayers?.length ?? 0) < MAX_INDIVIDUAL_PLAYERS,
+          actions: assign(({ context }) => ({
+            individualPlayers: [...(context.individualPlayers ?? []), { id: generateId(), name: '' }],
+          })),
+        },
+        REMOVE_INDIVIDUAL_PLAYER: {
+          guard: ({ context }) => (context.individualPlayers?.length ?? 0) > MIN_INDIVIDUAL_PLAYERS,
+          actions: assign(({ context, event }) => ({
+            individualPlayers: (context.individualPlayers ?? []).filter((p) => p.id !== event.playerId),
+          })),
+        },
+        UPDATE_INDIVIDUAL_PLAYER_NAME: {
+          actions: assign(({ context, event }) => ({
+            individualPlayers: (context.individualPlayers ?? []).map((p) =>
+              p.id === event.playerId ? { id: event.newPlayerId ?? p.id, name: event.name } : p,
+            ),
+          })),
+        },
+        SHUFFLE_INDIVIDUAL_PLAYERS: {
+          actions: assign(({ context }) => {
+            const arr = [...(context.individualPlayers ?? [])];
+            for (let i = arr.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return { individualPlayers: arr };
+          }),
         },
         UPDATE_TEAM_NAME: {
           actions: assign(({ context, event }) => ({
@@ -440,7 +499,7 @@ export const hatMachine = setup({
             let teams = context.teams;
             if (event.gameMode === 'pairs') {
               teams = [context.teams[0] || createTeam(context.dictionary)];
-            } else {
+            } else if (event.gameMode === 'teams') {
               if (teams.length < 2) {
                 teams = [teams[0] || createTeam(context.dictionary), createTeam(context.dictionary)];
               }
@@ -452,10 +511,19 @@ export const hatMachine = setup({
           }),
         },
         START_GAME: {
-          guard: ({ context }) =>
-            (context.settings.gameMode === 'pairs' ? context.teams.length === 1 : context.teams.length >= 2) &&
-            context.dictionary !== null &&
-            context.teams.every((team) => !getDuplicateNameReason(team)),
+          guard: ({ context }) => {
+            if (context.dictionary === null) return false;
+            if (context.settings.gameMode === 'individual') {
+              const players = context.individualPlayers ?? [];
+              if (players.length < MIN_INDIVIDUAL_PLAYERS) return false;
+              const nonBlank = players.map((p) => p.name.trim().toLowerCase()).filter((n) => n.length > 0);
+              return new Set(nonBlank).size === nonBlank.length;
+            }
+            if (context.settings.gameMode === 'pairs') {
+              return context.teams.length === 1 && context.teams.every((team) => !getDuplicateNameReason(team));
+            }
+            return context.teams.length >= 2 && context.teams.every((team) => !getDuplicateNameReason(team));
+          },
           actions: [
             // Fires before the assign below, so it sees the names as the
             // user actually typed them — not yet backfilled with "Игрок N"
@@ -475,10 +543,18 @@ export const hatMachine = setup({
                 }));
               }
               const hat = pickRandom(pool, context.settings.wordCount, context.settings.difficultyLevel);
-              const teams = context.teams.map(fillBlankPlayerNames);
-              if (context.settings.gameMode === 'pairs' && teams[0]) {
-                const [p1, p2] = teams[0].players;
-                teams[0].name = `${p1.name} & ${p2.name}`;
+              let teams: Team[];
+              if (context.settings.gameMode === 'individual') {
+                const filledPlayers = (context.individualPlayers ?? []).map((player, index) =>
+                  player.name.trim().length > 0 ? player : { ...player, name: tr('default.playerN', { n: index + 1 }) },
+                );
+                teams = generateIndividualSchedule(filledPlayers);
+              } else {
+                teams = context.teams.map(fillBlankPlayerNames);
+                if (context.settings.gameMode === 'pairs' && teams[0]) {
+                  const [p1, p2] = teams[0].players;
+                  teams[0].name = `${p1.name} & ${p2.name}`;
+                }
               }
               return {
                 hat,

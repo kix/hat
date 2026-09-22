@@ -110,9 +110,15 @@ function App() {
             if (settingsRef.current?.soundEnabled) sounds.playGameOver();
           },
           rememberPlayerNames: ({ context }: { context: HatContext }) => {
-            for (const team of context.teams) {
-              for (const player of team.players) {
+            if (context.settings.gameMode === 'individual' && context.individualPlayers) {
+              for (const player of context.individualPlayers) {
                 rememberPlayerName(player.name);
+              }
+            } else {
+              for (const team of context.teams) {
+                for (const player of team.players) {
+                  rememberPlayerName(player.name);
+                }
               }
             }
           },

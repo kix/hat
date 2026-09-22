@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createActor } from 'xstate';
-import { hatMachine, MAX_TEAMS, MIN_TEAMS, type Team, type WordRecord } from './hatMachine';
+import { hatMachine, MAX_TEAMS, MIN_TEAMS, generateIndividualSchedule, type Team, type WordRecord } from './hatMachine';
 import { dictionaryRuFrequent } from '../data/dictionaryRuFrequent';
 import { dictionaryRuStandard } from '../data/dictionaryRuStandard';
 const dictionary = [...dictionaryRuFrequent, ...dictionaryRuStandard];
@@ -1078,6 +1078,76 @@ describe('pairs mode', () => {
       expect(actor.getSnapshot().value).toBe('gameOver');
 
       vi.useRealTimers();
+    });
+  });
+
+  describe('individual round-robin mode', () => {
+    it('generates a full N*(N-1) round-robin schedule', () => {
+      const players = [
+        { id: 'p1', name: 'Аня' },
+        { id: 'p2', name: 'Боря' },
+        { id: 'p3', name: 'Вика' },
+      ];
+      const schedule = generateIndividualSchedule(players);
+      expect(schedule.length).toBe(6); // 3 * 2 = 6 turns
+      // All pairings: (Аня, Боря), (Боря, Вика), (Вика, Аня), (Аня, Вика), (Боря, Аня), (Вика, Боря)
+      expect(schedule[0].players.map((p) => p.name)).toEqual(['Аня', 'Боря']);
+      expect(schedule[1].players.map((p) => p.name)).toEqual(['Боря', 'Вика']);
+      expect(schedule[2].players.map((p) => p.name)).toEqual(['Вика', 'Аня']);
+      expect(schedule[3].players.map((p) => p.name)).toEqual(['Аня', 'Вика']);
+      expect(schedule[4].players.map((p) => p.name)).toEqual(['Боря', 'Аня']);
+      expect(schedule[5].players.map((p) => p.name)).toEqual(['Вика', 'Боря']);
+    });
+
+    it('handles adding, removing, and renaming individual players', () => {
+      const actor = startActor();
+      actor.send({ type: 'SET_GAME_MODE', gameMode: 'individual' });
+      expect(actor.getSnapshot().context.individualPlayers?.length).toBe(3);
+
+      actor.send({ type: 'ADD_INDIVIDUAL_PLAYER' });
+      expect(actor.getSnapshot().context.individualPlayers?.length).toBe(4);
+
+      const p4 = actor.getSnapshot().context.individualPlayers![3];
+      actor.send({ type: 'UPDATE_INDIVIDUAL_PLAYER_NAME', playerId: p4.id, name: 'Даша' });
+      expect(actor.getSnapshot().context.individualPlayers![3].name).toBe('Даша');
+
+      actor.send({ type: 'REMOVE_INDIVIDUAL_PLAYER', playerId: p4.id });
+      expect(actor.getSnapshot().context.individualPlayers?.length).toBe(3);
+
+      // Guard refuses to drop below MIN_INDIVIDUAL_PLAYERS (3)
+      const p1 = actor.getSnapshot().context.individualPlayers![0];
+      actor.send({ type: 'REMOVE_INDIVIDUAL_PLAYER', playerId: p1.id });
+      expect(actor.getSnapshot().context.individualPlayers?.length).toBe(3);
+    });
+
+    it('refuses to start game with duplicate player names in individual mode', () => {
+      const actor = startActor();
+      actor.send({ type: 'SET_GAME_MODE', gameMode: 'individual' });
+      const [p1, p2] = actor.getSnapshot().context.individualPlayers!;
+      actor.send({ type: 'UPDATE_INDIVIDUAL_PLAYER_NAME', playerId: p1.id, name: 'Саша' });
+      actor.send({ type: 'UPDATE_INDIVIDUAL_PLAYER_NAME', playerId: p2.id, name: 'саша' });
+
+      actor.send({ type: 'START_GAME' });
+      expect(actor.getSnapshot().value).toBe('setup');
+    });
+
+    it('starts game and rotates through the schedule in individual mode', () => {
+      const actor = startActor();
+      actor.send({ type: 'SET_GAME_MODE', gameMode: 'individual' });
+      const [p1, p2, p3] = actor.getSnapshot().context.individualPlayers!;
+      actor.send({ type: 'UPDATE_INDIVIDUAL_PLAYER_NAME', playerId: p1.id, name: 'Аня' });
+      actor.send({ type: 'UPDATE_INDIVIDUAL_PLAYER_NAME', playerId: p2.id, name: 'Боря' });
+      actor.send({ type: 'UPDATE_INDIVIDUAL_PLAYER_NAME', playerId: p3.id, name: 'Вика' });
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 10 });
+
+      actor.send({ type: 'START_GAME' });
+      expect(actor.getSnapshot().value).toBe('roundIntro');
+      expect(actor.getSnapshot().context.teams.length).toBe(6);
+
+      // First turn: Аня explains to Боря
+      const currentTeam = actor.getSnapshot().context.teams[actor.getSnapshot().context.currentTeamIndex];
+      expect(currentTeam.players[0].name).toBe('Аня');
+      expect(currentTeam.players[1].name).toBe('Боря');
     });
   });
 });

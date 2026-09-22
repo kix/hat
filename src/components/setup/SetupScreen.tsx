@@ -2,6 +2,7 @@ import { Container, Divider, Stack, Title, Button, Card, Text, Group, Badge, Mod
 import { IconQrcode, IconCopy, IconCheck, IconUsers, IconTrash, IconWifi, IconAlertTriangle } from '@tabler/icons-react';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { TeamList } from './TeamList';
+import { IndividualPlayerList } from './IndividualPlayerList';
 import { RoundSettingsForm } from './RoundSettingsForm';
 import { StartGameButton } from './StartGameButton';
 import { SetupHero } from './SetupHero';
@@ -42,6 +43,23 @@ export function SetupScreen({
   // Auto-fill first player with authenticated user's name/username
   useEffect(() => {
     if (!currentUser) return;
+    if (context.settings.gameMode === 'individual') {
+      const firstPlayer = context.individualPlayers?.[0];
+      if (firstPlayer && !firstPlayer.name.trim()) {
+        const defaultName =
+          currentUser.user_metadata?.full_name ||
+          (currentUser.user_metadata?.username ? `@${currentUser.user_metadata.username.replace(/^@/, '')}` : '');
+        if (defaultName) {
+          send({
+            type: 'UPDATE_INDIVIDUAL_PLAYER_NAME',
+            playerId: firstPlayer.id,
+            name: defaultName,
+            newPlayerId: currentUser.id,
+          });
+        }
+      }
+      return;
+    }
     const firstTeam = context.teams[0];
     const firstPlayer = firstTeam?.players[0];
     if (firstTeam && firstPlayer && !firstPlayer.name.trim()) {
@@ -56,7 +74,7 @@ export function SetupScreen({
         });
       }
     }
-  }, [currentUser, context.teams, send]);
+  }, [currentUser, context.teams, context.individualPlayers, context.settings.gameMode, send]);
 
   // Build the join link for scanning
   const joinUrl = hasRoom
@@ -235,10 +253,11 @@ export function SetupScreen({
           <SegmentedControl
             fullWidth
             value={context.settings.gameMode || 'teams'}
-            onChange={(value) => send({ type: 'SET_GAME_MODE', gameMode: value as 'teams' | 'pairs' })}
+            onChange={(value) => send({ type: 'SET_GAME_MODE', gameMode: value as 'teams' | 'pairs' | 'individual' })}
             data={[
               { value: 'teams', label: t('setup.gameModeTeams') },
               { value: 'pairs', label: t('setup.gameModePairs') },
+              { value: 'individual', label: t('setup.gameModeIndividual') },
             ]}
           />
         </div>
@@ -247,7 +266,9 @@ export function SetupScreen({
 
         <div>
           <Title order={3} mb="sm">
-            {context.settings.gameMode === 'pairs' ? t('setup.players') : t('setup.teams')}
+            {context.settings.gameMode === 'pairs' || context.settings.gameMode === 'individual'
+              ? t('setup.players')
+              : t('setup.teams')}
           </Title>
           {(() => {
             const connectedParticipants = [...(multiplayer?.participants || [])];
@@ -278,6 +299,15 @@ export function SetupScreen({
                   });
                 }
               }
+            }
+            if (context.settings.gameMode === 'individual') {
+              return (
+                <IndividualPlayerList
+                  players={context.individualPlayers ?? []}
+                  send={send}
+                  connectedParticipants={connectedParticipants}
+                />
+              );
             }
             return (
               <TeamList

@@ -1,5 +1,5 @@
 import type { History, Settings, Team } from '../../machine/hatMachine';
-import { getFastestGuess, getSlowestGuess, getStolenWords, sortTeamsByScore } from '../stats';
+import { getFastestGuess, getSlowestGuess, getStolenWords, sortTeamsByScore, getIndividualLeaderboard } from '../stats';
 import { getTeamScore } from '../scoring';
 
 export interface RenderCardOptions {
@@ -143,9 +143,14 @@ export function renderResultCard(canvas: HTMLCanvasElement, options: RenderCardO
   ctx.fillText(isEn ? '🏆  GAME RESULTS' : '🏆  ИТОГИ ИГРЫ', width / 2, pillY + 28);
 
   // Metadata line (Date & Game Mode & Words)
+  const isIndividual = settings.gameMode === 'individual';
   const metaY = pillY + 75;
   const dateStr = options.date || new Date().toLocaleDateString(isEn ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long' });
-  const modeStr = isPairs ? (isEn ? 'Pairs' : 'Пары') : (isEn ? 'Teams' : 'Команды');
+  const modeStr = isPairs
+    ? (isEn ? 'Pairs' : 'Пары')
+    : isIndividual
+    ? (isEn ? 'Individual' : 'Личный зачёт')
+    : (isEn ? 'Teams' : 'Команды');
   const wordsStr = isEn ? `${totalGuessed} words` : `${totalGuessed} слов`;
   
   ctx.font = `600 20px ${FONT_FAMILY}`;
@@ -161,14 +166,54 @@ export function renderResultCard(canvas: HTMLCanvasElement, options: RenderCardO
   const standWidth = 280;
   const marginX = 40;
 
-  // 1st place (Center), 2nd place (Left), 3rd place (Right)
-  const team1 = sortedTeams[0];
-  const team2 = sortedTeams[1];
-  const team3 = sortedTeams[2];
+  const individualLeaderboard = isIndividual
+    ? getIndividualLeaderboard(
+        Array.from(new Map(teams.flatMap((t) => t.players).map((p) => [p.id, p])).values()),
+        history,
+      )
+    : [];
 
-  const score1 = team1 ? getTeamScore(history, team1.id) : 0;
-  const score2 = team2 ? getTeamScore(history, team2.id) : 0;
-  const score3 = team3 ? getTeamScore(history, team3.id) : 0;
+  const team1 = isIndividual ? undefined : sortedTeams[0];
+  const team2 = isIndividual ? undefined : sortedTeams[1];
+  const team3 = isIndividual ? undefined : sortedTeams[2];
+
+  const name1 = isIndividual ? individualLeaderboard[0]?.player.name : team1?.name;
+  const name2 = isIndividual ? individualLeaderboard[1]?.player.name : team2?.name;
+  const name3 = isIndividual ? individualLeaderboard[2]?.player.name : team3?.name;
+
+  const sub1 = isIndividual
+    ? (isEn
+        ? `${individualLeaderboard[0]?.guessed ?? 0}g · ${individualLeaderboard[0]?.explained ?? 0}e`
+        : `уг: ${individualLeaderboard[0]?.guessed ?? 0} · об: ${individualLeaderboard[0]?.explained ?? 0}`)
+    : team1?.players.map((p) => p.name).join(' & ');
+
+  const sub2 = isIndividual
+    ? (isEn
+        ? `${individualLeaderboard[1]?.guessed ?? 0}g · ${individualLeaderboard[1]?.explained ?? 0}e`
+        : `уг: ${individualLeaderboard[1]?.guessed ?? 0} · об: ${individualLeaderboard[1]?.explained ?? 0}`)
+    : team2?.players.map((p) => p.name).join(' & ');
+
+  const sub3 = isIndividual
+    ? (isEn
+        ? `${individualLeaderboard[2]?.guessed ?? 0}g · ${individualLeaderboard[2]?.explained ?? 0}e`
+        : `уг: ${individualLeaderboard[2]?.guessed ?? 0} · об: ${individualLeaderboard[2]?.explained ?? 0}`)
+    : team3?.players.map((p) => p.name).join(' & ');
+
+  const score1 = isIndividual
+    ? individualLeaderboard[0]?.score ?? 0
+    : team1
+    ? getTeamScore(history, team1.id)
+    : 0;
+  const score2 = isIndividual
+    ? individualLeaderboard[1]?.score ?? 0
+    : team2
+    ? getTeamScore(history, team2.id)
+    : 0;
+  const score3 = isIndividual
+    ? individualLeaderboard[2]?.score ?? 0
+    : team3
+    ? getTeamScore(history, team3.id)
+    : 0;
 
   const h1 = isStories ? 320 : 230;
   const h2 = isStories ? 230 : 160;
@@ -180,12 +225,13 @@ export function renderResultCard(canvas: HTMLCanvasElement, options: RenderCardO
 
   const drawPodiumStand = (
     rank: 1 | 2 | 3,
-    team: Team | undefined,
+    title: string | undefined,
+    subtitle: string | undefined,
     score: number,
     x: number,
     h: number,
   ) => {
-    if (!team) return;
+    if (!title) return;
 
     const y = podiumBaseY - h;
     const cardY = y - (isStories ? 165 : 135);
@@ -238,7 +284,7 @@ export function renderResultCard(canvas: HTMLCanvasElement, options: RenderCardO
     ctx.fillStyle = numberColor;
     ctx.fillText(`${rank}`, x, y + (isStories ? 85 : 65));
 
-    // Floating Team Card above pedestal
+    // Floating Team/Player Card above pedestal
     const cardH = isStories ? 150 : 125;
     roundRect(
       ctx,
@@ -262,18 +308,19 @@ export function renderResultCard(canvas: HTMLCanvasElement, options: RenderCardO
     ctx.font = `28px ${FONT_FAMILY}`;
     ctx.fillText(medalEmoji, x, cardY + 34);
 
-    // Team name
-    const nameFontSize = fitText(ctx, team.name, standWidth - 30, isStories ? 22 : 19, 14, 'bold');
+    // Main name
+    const nameFontSize = fitText(ctx, title, standWidth - 30, isStories ? 22 : 19, 14, 'bold');
     ctx.font = `bold ${nameFontSize}px ${FONT_FAMILY}`;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(team.name, x, cardY + (isStories ? 68 : 62));
+    ctx.fillText(title, x, cardY + (isStories ? 68 : 62));
 
-    // Player names
-    const playerNames = team.players.map((p) => p.name).join(' & ');
-    const playerFontSize = fitText(ctx, playerNames, standWidth - 30, isStories ? 16 : 14, 11, 'normal');
-    ctx.font = `normal ${playerFontSize}px ${FONT_FAMILY}`;
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillText(playerNames, x, cardY + (isStories ? 94 : 86));
+    // Subtitle
+    if (subtitle) {
+      const playerFontSize = fitText(ctx, subtitle, standWidth - 30, isStories ? 16 : 14, 11, 'normal');
+      ctx.font = `normal ${playerFontSize}px ${FONT_FAMILY}`;
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(subtitle, x, cardY + (isStories ? 94 : 86));
+    }
 
     // Score Pill
     const ptsLabel = isEn ? 'pts' : 'очков';
@@ -297,62 +344,100 @@ export function renderResultCard(canvas: HTMLCanvasElement, options: RenderCardO
   };
 
   // Render Podium in visual order: 2nd, 1st, 3rd
-  if (teams.length >= 3) {
-    drawPodiumStand(2, team2, score2, xLeft, h2);
-    drawPodiumStand(1, team1, score1, xCenter, h1);
-    drawPodiumStand(3, team3, score3, xRight, h3);
-  } else if (teams.length === 2) {
+  const totalEntries = isIndividual ? individualLeaderboard.length : teams.length;
+  if (totalEntries >= 3) {
+    drawPodiumStand(2, name2, sub2, score2, xLeft, h2);
+    drawPodiumStand(1, name1, sub1, score1, xCenter, h1);
+    drawPodiumStand(3, name3, sub3, score3, xRight, h3);
+  } else if (totalEntries === 2) {
     const spacing = 180;
-    drawPodiumStand(1, team1, score1, xCenter - spacing, h1);
-    drawPodiumStand(2, team2, score2, xCenter + spacing, h2);
-  } else if (teams.length === 1) {
-    drawPodiumStand(1, team1, score1, xCenter, h1);
+    drawPodiumStand(1, name1, sub1, score1, xCenter - spacing, h1);
+    drawPodiumStand(2, name2, sub2, score2, xCenter + spacing, h2);
+  } else if (totalEntries === 1) {
+    drawPodiumStand(1, name1, sub1, score1, xCenter, h1);
   }
 
-  // 4. Remaining Teams List (if 4+ teams)
+  // 4. Remaining Teams/Players List (if 4+ entries)
   let nominationsTopY = podiumBaseY + (isStories ? 40 : 25);
-  if (teams.length > 3) {
-    const restTeams = sortedTeams.slice(3, 5); // display 4th and 5th
+  if (totalEntries > 3) {
     const restRowW = 860;
     const restRowH = 46;
     const restStartX = (width - restRowW) / 2;
 
-    restTeams.forEach((t, idx) => {
-      const rank = idx + 4;
-      const tScore = getTeamScore(history, t.id);
-      const rowY = podiumBaseY + 15 + idx * 52;
-      roundRect(
-        ctx,
-        restStartX,
-        rowY,
-        restRowW,
-        restRowH,
-        12,
-        'rgba(255, 255, 255, 0.04)',
-        'rgba(255, 255, 255, 0.08)',
-        1,
-      );
+    if (isIndividual) {
+      const restIndiv = individualLeaderboard.slice(3, 5);
+      restIndiv.forEach((item, idx) => {
+        const rank = idx + 4;
+        const rowY = podiumBaseY + 15 + idx * 52;
+        roundRect(
+          ctx,
+          restStartX,
+          rowY,
+          restRowW,
+          restRowH,
+          12,
+          'rgba(255, 255, 255, 0.04)',
+          'rgba(255, 255, 255, 0.08)',
+          1,
+        );
 
-      ctx.textAlign = 'left';
-      ctx.font = `bold 18px ${FONT_FAMILY}`;
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText(`${rank}.`, restStartX + 20, rowY + 29);
+        ctx.textAlign = 'left';
+        ctx.font = `bold 18px ${FONT_FAMILY}`;
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`${rank}.`, restStartX + 20, rowY + 29);
 
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillText(t.name, restStartX + 55, rowY + 29);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillText(item.player.name, restStartX + 55, rowY + 29);
 
-      const pNames = t.players.map((p) => p.name).join(', ');
-      ctx.font = `normal 15px ${FONT_FAMILY}`;
-      ctx.fillStyle = '#64748b';
-      ctx.fillText(`(${pNames})`, restStartX + 220, rowY + 29);
+        const subInfo = isEn ? `${item.guessed}g · ${item.explained}e` : `уг: ${item.guessed} · об: ${item.explained}`;
+        ctx.font = `normal 15px ${FONT_FAMILY}`;
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(`(${subInfo})`, restStartX + 220, rowY + 29);
 
-      ctx.textAlign = 'right';
-      ctx.font = `bold 17px ${FONT_FAMILY}`;
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillText(`${tScore} ${isEn ? 'pts' : 'очков'}`, restStartX + restRowW - 20, rowY + 29);
-    });
+        ctx.textAlign = 'right';
+        ctx.font = `bold 17px ${FONT_FAMILY}`;
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText(`${item.score} ${isEn ? 'pts' : 'очков'}`, restStartX + restRowW - 20, rowY + 29);
+      });
+      nominationsTopY = podiumBaseY + 20 + restIndiv.length * 52 + (isStories ? 35 : 20);
+    } else {
+      const restTeams = sortedTeams.slice(3, 5); // display 4th and 5th
+      restTeams.forEach((t, idx) => {
+        const rank = idx + 4;
+        const tScore = getTeamScore(history, t.id);
+        const rowY = podiumBaseY + 15 + idx * 52;
+        roundRect(
+          ctx,
+          restStartX,
+          rowY,
+          restRowW,
+          restRowH,
+          12,
+          'rgba(255, 255, 255, 0.04)',
+          'rgba(255, 255, 255, 0.08)',
+          1,
+        );
 
-    nominationsTopY = podiumBaseY + 25 + restTeams.length * 54;
+        ctx.textAlign = 'left';
+        ctx.font = `bold 18px ${FONT_FAMILY}`;
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`${rank}.`, restStartX + 20, rowY + 29);
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillText(t.name, restStartX + 55, rowY + 29);
+
+        const pNames = t.players.map((p) => p.name).join(', ');
+        ctx.font = `normal 15px ${FONT_FAMILY}`;
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(`(${pNames})`, restStartX + 220, rowY + 29);
+
+        ctx.textAlign = 'right';
+        ctx.font = `bold 17px ${FONT_FAMILY}`;
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText(`${tScore} ${isEn ? 'pts' : 'очков'}`, restStartX + restRowW - 20, rowY + 29);
+      });
+      nominationsTopY = podiumBaseY + 20 + restTeams.length * 52 + (isStories ? 35 : 20);
+    }
   }
 
   // 5. MVP Nominations & Highlights Section

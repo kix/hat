@@ -12,6 +12,8 @@ import {
   getStolenWords,
   getRuleBreakers,
   getStreakMaster,
+  getIndividualLeaderboard,
+  getBestTandem,
 } from '../../utils/stats';
 import { getTeamScore } from '../../utils/scoring';
 import { useI18n } from '../../i18n/i18n';
@@ -71,7 +73,20 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
   const ruleBreakers = getRuleBreakers(teams, history);
   const streakMaster = getStreakMaster(teams, history);
   const isPairs = settings.gameMode === 'pairs';
+  const isIndividual = settings.gameMode === 'individual';
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+
+  const uniquePlayers = useMemo(() => {
+    return Array.from(new Map(teams.flatMap((t) => t.players).map((p) => [p.id, p])).values());
+  }, [teams]);
+
+  const individualLeaderboard = useMemo(() => {
+    return getIndividualLeaderboard(uniquePlayers, history);
+  }, [uniquePlayers, history]);
+
+  const bestTandem = useMemo(() => {
+    return getBestTandem(uniquePlayers, history);
+  }, [uniquePlayers, history]);
 
   const getFoulLabel = (count: number) => {
     const isEn = t('summaryView.reasonFoul') === 'foul';
@@ -123,8 +138,8 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
       {/* Праздничный баннер разблокированных достижений */}
       <AchievementUnlockedBanner achievements={newAchievements} />
 
-      {/* Рейтинг команд */}
-      {!isPairs && (
+      {/* Рейтинг команд (для командного режима) */}
+      {!isPairs && !isIndividual && (
         <Card withBorder padding="md">
           <Stack gap="xs">
             <Text fw={600} size="sm" c="dimmed">
@@ -147,54 +162,122 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
         </Card>
       )}
 
-
-      {/* Рейтинг игроков */}
-      <Card withBorder padding="md">
-        <Stack gap="xs">
-          <Text fw={600} size="sm" c="dimmed">
-            {t('summaryView.playerRanking')}
-          </Text>
+      {/* Личный зачёт (для индивидуального режима) */}
+      {isIndividual && (
+        <Card withBorder padding="md">
           <Stack gap="xs">
-            {playersWithScores.map((item, idx) => {
-              const isYou = !!highlightPlayerId && item.player.id === highlightPlayerId;
-              return (
-                <Group key={item.player.id} justify="space-between" wrap="nowrap">
-                  <Group gap="xs" style={{ minWidth: 0, flexShrink: 1 }}>
-                    <Text fw={500} style={{ minWidth: 24, textAlign: 'center' }}>
-                      {getRankIcon(idx)}
-                    </Text>
-                    <Stack gap={0} style={{ minWidth: 0 }}>
-                      <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                        <Text fw={idx === 0 ? 600 : 500} truncate>
-                          {item.player.name}
-                        </Text>
-                        {isYou && (
-                          <Badge size="xs" color="blue" variant="light" style={{ flexShrink: 0 }}>
-                            {t('summaryView.you')}
-                          </Badge>
-                        )}
-                      </Group>
-                      {!isPairs && (
+            <Text fw={600} size="sm" c="dimmed">
+              {t('summaryView.individualRanking')}
+            </Text>
+            <Stack gap="xs">
+              {individualLeaderboard.map((item, idx) => {
+                const isYou = !!highlightPlayerId && item.player.id === highlightPlayerId;
+                const foulsAndSkips = item.fouls + item.skips;
+                return (
+                  <Group key={item.player.id} justify="space-between" wrap="nowrap">
+                    <Group gap="xs" style={{ minWidth: 0, flexShrink: 1 }}>
+                      <Text fw={500} style={{ minWidth: 24, textAlign: 'center' }}>
+                        {getRankIcon(idx)}
+                      </Text>
+                      <Stack gap={0} style={{ minWidth: 0 }}>
+                        <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+                          <Text fw={idx === 0 ? 700 : 500} truncate>
+                            {item.player.name}
+                          </Text>
+                          {isYou && (
+                            <Badge size="xs" color="blue" variant="light" style={{ flexShrink: 0 }}>
+                              {t('summaryView.you')}
+                            </Badge>
+                          )}
+                        </Group>
                         <Text size="xs" c="dimmed" truncate>
-                          {item.team.name}
+                          {t('summaryView.individualBreakdown', {
+                            g: item.guessed,
+                            e: item.explained,
+                            f: foulsAndSkips,
+                          })}
                         </Text>
-                      )}
-
-                    </Stack>
+                      </Stack>
+                    </Group>
+                    <Text fw={700} size="sm" style={{ flexShrink: 0 }} ta="right">
+                      {t('common.points', { n: item.score })}
+                    </Text>
                   </Group>
-                  <Text size="xs" style={{ flexShrink: 0 }} ta="right">
-                    {t('summaryView.guessedExplained', { g: item.guessed, e: item.explained })}
-                  </Text>
-                </Group>
-              );
-            })}
+                );
+              })}
+            </Stack>
           </Stack>
-        </Stack>
-      </Card>
+        </Card>
+      )}
+
+      {/* Рейтинг игроков (для командного и парного режимов) */}
+      {!isIndividual && (
+        <Card withBorder padding="md">
+          <Stack gap="xs">
+            <Text fw={600} size="sm" c="dimmed">
+              {t('summaryView.playerRanking')}
+            </Text>
+            <Stack gap="xs">
+              {playersWithScores.map((item, idx) => {
+                const isYou = !!highlightPlayerId && item.player.id === highlightPlayerId;
+                return (
+                  <Group key={item.player.id} justify="space-between" wrap="nowrap">
+                    <Group gap="xs" style={{ minWidth: 0, flexShrink: 1 }}>
+                      <Text fw={500} style={{ minWidth: 24, textAlign: 'center' }}>
+                        {getRankIcon(idx)}
+                      </Text>
+                      <Stack gap={0} style={{ minWidth: 0 }}>
+                        <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+                          <Text fw={idx === 0 ? 600 : 500} truncate>
+                            {item.player.name}
+                          </Text>
+                          {isYou && (
+                            <Badge size="xs" color="blue" variant="light" style={{ flexShrink: 0 }}>
+                              {t('summaryView.you')}
+                            </Badge>
+                          )}
+                        </Group>
+                        {!isPairs && (
+                          <Text size="xs" c="dimmed" truncate>
+                            {item.team.name}
+                          </Text>
+                        )}
+                      </Stack>
+                    </Group>
+                    <Text size="xs" style={{ flexShrink: 0 }} ta="right">
+                      {t('summaryView.guessedExplained', { g: item.guessed, e: item.explained })}
+                    </Text>
+                  </Group>
+                );
+              })}
+            </Stack>
+          </Stack>
+        </Card>
+      )}
 
       <PreviousRoundWords context={context} />
 
       <SimpleGrid cols={1} spacing="sm">
+        {isIndividual && bestTandem && (
+          <StatCard title={t('summaryView.bestTandem')}>
+            <Group justify="space-between" align="center">
+              <Text fw={700} size="lg">
+                ✨ {bestTandem.player1.name} & {bestTandem.player2.name}
+              </Text>
+              <Badge color="orange" variant="light" size="sm">
+                +{bestTandem.wordsGuessed}
+              </Badge>
+            </Group>
+            <Text size="sm" c="dimmed">
+              {t('summaryView.bestTandemSub', {
+                p1: bestTandem.player1.name,
+                p2: bestTandem.player2.name,
+                n: bestTandem.wordsGuessed,
+              })}
+            </Text>
+          </StatCard>
+        )}
+
         {bestPlayer && (
           <StatCard title={t('summaryView.bestPlayer')}>
             <Group justify="space-between" align="center">
@@ -202,7 +285,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               <Badge color="yellow" variant="filled" size="sm">MVP</Badge>
             </Group>
             <Text size="sm" c="dimmed">
-              {isPairs
+              {isPairs || isIndividual
                 ? t('summaryView.bestPlayerSubPairs', { n: bestPlayer.guessedCount })
                 : t('summaryView.bestPlayerSub', { team: bestPlayer.team.name, n: bestPlayer.guessedCount })}
             </Text>
@@ -218,7 +301,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               </Badge>
             </Group>
             <Text size="sm" c="dimmed">
-              {isPairs
+              {isPairs || isIndividual
                 ? t('summaryView.streakMasterSubPairs', { n: streakMaster.maxStreak })
                 : t('summaryView.streakMasterSub', { team: streakMaster.teamName, n: streakMaster.maxStreak })}
             </Text>
@@ -236,7 +319,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               </Tooltip>
             </Group>
             <Text size="sm" c="dimmed">
-              {isPairs
+              {isPairs || isIndividual
                 ? t('summaryView.fastestGuessSubPairs', {
                     word: fastestGuess.word,
                     sec: (fastestGuess.timeMs / 1000).toFixed(2),
@@ -261,7 +344,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               </Tooltip>
             </Group>
             <Text size="sm" c="dimmed">
-              {isPairs
+              {isPairs || isIndividual
                 ? t('summaryView.slowestGuessSubPairs', {
                     word: slowestGuess.word,
                     sec: (slowestGuess.timeMs / 1000).toFixed(1),
@@ -323,13 +406,13 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
                 return (
                   <Stack key={idx} gap={2}>
                     <Text size="sm" fw={600}>
-                      {stolen.thiefPlayerName} ({stolen.thiefTeamName})
+                      {stolen.thiefPlayerName} {isPairs || isIndividual ? '' : `(${stolen.thiefTeamName})`}
                     </Text>
                     <Text size="xs" c="dimmed">
                       {t('summaryView.stolenWordsSub', {
                         word: stolen.word,
                         victim: stolen.victimPlayerName,
-                        victimTeam: stolen.victimTeamName,
+                        victimTeam: isIndividual ? '' : stolen.victimTeamName,
                         reason,
                       })}
                     </Text>
@@ -351,7 +434,7 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
               {ruleBreakers.map((breaker, idx) => (
                 <Group key={idx} justify="space-between">
                   <Text size="sm" fw={500}>
-                    {breaker.playerName} {isPairs ? '' : `(${breaker.teamName})`}
+                    {breaker.playerName} {isPairs || isIndividual ? '' : `(${breaker.teamName})`}
                   </Text>
 
                   <Text size="sm" c="red.6" fw={600}>

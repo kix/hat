@@ -25,6 +25,24 @@ export function getDuplicateNameReason(team: Team): string | null {
 export function getSetupValidity(context: HatContext): SetupValidity {
   const reasons: string[] = [];
 
+  if (context.settings.gameMode === 'individual') {
+    const players = context.individualPlayers ?? [];
+    if (players.length < 3) {
+      reasons.push(tr('validity.needThreePlayers'));
+    }
+    const names = players.map((p) => p.name.trim().toLowerCase()).filter((n) => n.length > 0);
+    const seen = new Set<string>();
+    for (const name of names) {
+      if (seen.has(name)) {
+        const originalPlayer = players.find((p) => p.name.trim().toLowerCase() === name);
+        reasons.push(tr('validity.duplicatePlayerName', { name: originalPlayer?.name.trim() || name }));
+        break;
+      }
+      seen.add(name);
+    }
+    return { canStart: reasons.length === 0, reasons };
+  }
+
   if (context.settings.gameMode === 'pairs') {
     if (context.teams.length < 1) {
       reasons.push(tr('validity.needOneTeam'));
