@@ -193,6 +193,10 @@ export function calculateTotalPlayerXP(
     veteran: 250,
     perfectDuo: 150,
     cleanGame: 150,
+    streakMaster: 150,
+    partyAnimal: 100,
+    customHat: 100,
+    worldTraveler: 100,
   };
 
   let achievementsXP = 0;

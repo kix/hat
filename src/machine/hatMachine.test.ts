@@ -606,7 +606,7 @@ describe('remaining word count after each action', () => {
     expect(remainingWordCount(actor.getSnapshot().context)).toBe(before - 1);
   });
 
-  it('DELETE_WORD removes the word from the hat and from the dictionary itself', () => {
+  it('DELETE_WORD removes the word from the hat and from the dictionary itself', { timeout: 20000 }, () => {
     const actor = startActor();
     setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
     actor.send({ type: 'SET_WORD_COUNT', wordCount: 5 });

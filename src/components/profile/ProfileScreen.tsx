@@ -14,19 +14,14 @@ import {
   Progress,
   UnstyledButton,
   Avatar,
+  SegmentedControl,
 } from '@mantine/core';
 import {
   IconArrowLeft,
   IconBolt,
-  IconBrain,
-  IconHourglass,
   IconTrophy,
   IconUser,
   IconCalendar,
-  IconTarget,
-  IconAward,
-  IconHeartHandshake,
-  IconShieldCheck,
   IconFlame,
   IconSparkles,
   IconChevronDown,
@@ -38,6 +33,7 @@ import { TelegramNotificationsCard } from '../notifications/TelegramNotification
 import { useI18n } from '../../i18n/i18n';
 import { useTelegramBackButton } from '../../utils/telegramWebApp';
 import { LEVEL_THRESHOLDS, getLevelFromXP, calculateTotalPlayerXP } from '../../utils/levels';
+import { ACHIEVEMENT_DEFINITIONS, getLocalUnlockedAchievements } from '../../utils/achievements';
 
 interface ProfileScreenProps {
   userId: string;
@@ -55,6 +51,7 @@ interface GameRecord {
     allowSkip: boolean;
     wordCount: number;
     difficultyLevel: number;
+    wordPack?: string;
   };
 }
 
@@ -226,10 +223,23 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
     const topPartner = partnerStats[0] || null;
     const maxPartnerGames = topPartner?.count || 0;
 
+    let hasPartyAnimal = false;
+    let hasCustomHat = false;
+    let hasWorldTraveler = false;
+    let hasStreakMaster = false;
+
     participations.forEach((part) => {
       const history = part.games?.history_data || [];
+      const pack = part.games?.settings?.wordPack;
+      if (pack === 'party18') hasPartyAnimal = true;
+      if (pack === 'custom') hasCustomHat = true;
+      if (pack && ['movies', 'food', 'geography', 'gaming', 'animals', 'celebrities', 'tech'].includes(pack)) {
+        hasWorldTraveler = true;
+      }
+
       const settings = part.games?.settings;
-      const roundDurationMs = (settings?.roundDurationSec || 60) * 1000;
+      const roundDurationSec = settings?.roundDurationSec || 60;
+      const roundDurationMs = roundDurationSec * 1000;
 
       let hardestWordInGame: any = null;
       let maxTimeMs = 0;
@@ -240,10 +250,25 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
         }
       });
 
+      // Streaks
+      const roundStreaks = new Map<string, { current: number; max: number }>();
+      history.forEach((rec) => {
+        const key = `${rec.teamId}_${rec.roundIndex ?? rec.roundNumber ?? 0}`;
+        const entry = roundStreaks.get(key) || { current: 0, max: 0 };
+        if (rec.result === 'guessed') {
+          entry.current++;
+          if (entry.current > entry.max) entry.max = entry.current;
+        } else {
+          entry.current = 0;
+        }
+        roundStreaks.set(key, entry);
+      });
+      roundStreaks.forEach((val) => {
+        if (val.max >= 4) hasStreakMaster = true;
+      });
+
       if (part.is_winner) {
-        const userTeamRecords = history.filter(
-          (r) => r.guesserId === userId || r.describerId === userId,
-        );
+        const userTeamRecords = history.filter((r) => r.teamId === part.team_name);
         const fouls = userTeamRecords.filter((r) => r.result === 'foul').length;
         if (userTeamRecords.length > 0 && fouls === 0) {
           hasCleanGame = true;
@@ -278,10 +303,10 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
         }
 
         if (isUserGuesser) {
-          if (record.timeMs < 1500) {
+          if (record.timeMs < 3000) {
             hasLightning = true;
           }
-          if (roundDurationMs - record.timeMs <= 1500) {
+          if (roundDurationMs - record.timeMs <= 2000) {
             hasIronNerves = true;
           }
         }
@@ -316,6 +341,10 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
       hasVeteran,
       hasPerfectDuo,
       hasCleanGame,
+      hasStreakMaster,
+      hasPartyAnimal,
+      hasCustomHat,
+      hasWorldTraveler,
       maxWordsInRound,
       maxPartnerGames,
       topPartner,
@@ -336,98 +365,101 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
     hasVeteran,
     hasPerfectDuo,
     hasCleanGame,
+    hasStreakMaster,
+    hasPartyAnimal,
+    hasCustomHat,
+    hasWorldTraveler,
     maxWordsInRound,
     maxPartnerGames,
     topPartner,
   } = stats;
 
-  const achievementsList = useMemo(
-    () => [
-      {
-        id: 'lightning',
-        title: t('profile.achLightning'),
-        desc: t('profile.achLightningDesc'),
-        icon: <IconBolt size={18} />,
-        color: 'yellow',
-        unlocked: hasLightning,
-      },
-      {
-        id: 'erudite',
-        title: t('profile.achErudite'),
-        desc: t('profile.achEruditeDesc'),
-        icon: <IconBrain size={18} />,
-        color: 'blue',
-        unlocked: hasErudite,
-      },
-      {
-        id: 'ironNerves',
-        title: t('profile.achIronNerves'),
-        desc: t('profile.achIronNervesDesc'),
-        icon: <IconHourglass size={18} />,
-        color: 'red',
-        unlocked: hasIronNerves,
-      },
-      {
-        id: 'champion',
-        title: t('profile.achChampion'),
-        desc: t('profile.achChampionDesc'),
-        icon: <IconTrophy size={18} />,
-        color: 'teal',
-        unlocked: hasChampion,
-        progress: { current: Math.min(wins, 5), total: 5 },
-      },
-      {
-        id: 'telepath',
-        title: t('profile.achTelepath'),
-        desc: t('profile.achTelepathDesc'),
-        icon: <IconTarget size={18} />,
-        color: 'grape',
-        unlocked: hasTelepath,
-        progress: { current: Math.min(maxWordsInRound, 5), total: 5 },
-      },
-      {
-        id: 'veteran',
-        title: t('profile.achVeteran'),
-        desc: t('profile.achVeteranDesc'),
-        icon: <IconAward size={18} />,
-        color: 'orange',
-        unlocked: hasVeteran,
-        progress: { current: Math.min(totalGames, 10), total: 10 },
-      },
-      {
-        id: 'perfectDuo',
-        title: t('profile.achPerfectDuo'),
-        desc: t('profile.achPerfectDuoDesc'),
-        icon: <IconHeartHandshake size={18} />,
-        color: 'indigo',
-        unlocked: hasPerfectDuo,
-        progress: { current: Math.min(maxPartnerGames, 5), total: 5 },
-      },
-      {
-        id: 'cleanGame',
-        title: t('profile.achCleanGame'),
-        desc: t('profile.achCleanGameDesc'),
-        icon: <IconShieldCheck size={18} />,
-        color: 'green',
-        unlocked: hasCleanGame,
-      },
-    ],
-    [
-      hasLightning,
-      hasErudite,
-      hasIronNerves,
-      hasChampion,
-      hasTelepath,
-      hasVeteran,
-      hasPerfectDuo,
-      hasCleanGame,
-      wins,
-      maxWordsInRound,
-      totalGames,
-      maxPartnerGames,
-      t,
-    ],
-  );
+  const [achievementFilter, setAchievementFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
+
+  const localUnlocked = useMemo(() => getLocalUnlockedAchievements(), []);
+
+  const achievementsList = useMemo(() => {
+    return ACHIEVEMENT_DEFINITIONS.map((def) => {
+      let isUnlocked = Boolean(localUnlocked[def.id]);
+      let progress: { current: number; total: number } | undefined = undefined;
+
+      switch (def.id) {
+        case 'lightning':
+          isUnlocked = isUnlocked || hasLightning;
+          break;
+        case 'erudite':
+          isUnlocked = isUnlocked || hasErudite;
+          break;
+        case 'ironNerves':
+          isUnlocked = isUnlocked || hasIronNerves;
+          break;
+        case 'streakMaster':
+          isUnlocked = isUnlocked || hasStreakMaster;
+          break;
+        case 'telepath':
+          isUnlocked = isUnlocked || hasTelepath;
+          progress = { current: Math.min(maxWordsInRound, 5), total: 5 };
+          break;
+        case 'cleanGame':
+          isUnlocked = isUnlocked || hasCleanGame;
+          break;
+        case 'champion':
+          isUnlocked = isUnlocked || hasChampion;
+          progress = { current: Math.min(wins, 5), total: 5 };
+          break;
+        case 'veteran':
+          isUnlocked = isUnlocked || hasVeteran;
+          progress = { current: Math.min(totalGames, 10), total: 10 };
+          break;
+        case 'perfectDuo':
+          isUnlocked = isUnlocked || hasPerfectDuo;
+          progress = { current: Math.min(maxPartnerGames, 5), total: 5 };
+          break;
+        case 'partyAnimal':
+          isUnlocked = isUnlocked || hasPartyAnimal;
+          break;
+        case 'customHat':
+          isUnlocked = isUnlocked || hasCustomHat;
+          break;
+        case 'worldTraveler':
+          isUnlocked = isUnlocked || hasWorldTraveler;
+          break;
+      }
+
+      return {
+        ...def,
+        title: t(def.titleKey),
+        desc: t(def.descKey),
+        unlocked: isUnlocked,
+        progress,
+      };
+    });
+  }, [
+    localUnlocked,
+    hasLightning,
+    hasErudite,
+    hasIronNerves,
+    hasStreakMaster,
+    hasTelepath,
+    hasCleanGame,
+    hasChampion,
+    hasVeteran,
+    hasPerfectDuo,
+    hasPartyAnimal,
+    hasCustomHat,
+    hasWorldTraveler,
+    maxWordsInRound,
+    wins,
+    totalGames,
+    maxPartnerGames,
+    t,
+  ]);
+
+  const filteredAchievements = useMemo(() => {
+    if (achievementFilter === 'unlocked') return achievementsList.filter((a) => a.unlocked);
+    if (achievementFilter === 'locked') return achievementsList.filter((a) => !a.unlocked);
+    return achievementsList;
+  }, [achievementsList, achievementFilter]);
 
   const playerXPData = useMemo(() => {
     return calculateTotalPlayerXP(participations, userId, achievementsList);
@@ -757,30 +789,64 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
         )}
 
         {/* Ачивки / Достижения */}
-        <Title order={3} size="h4" mb={-10}>
-          {t('profile.achievements')}
-        </Title>
+        <Group justify="space-between" align="center" mb={-6}>
+          <Title order={3} size="h4">
+            {t('profile.achievements')}
+          </Title>
+          <Badge color="yellow" variant="light" size="sm">
+            {t('profile.achievementsProgress', {
+              unlocked: achievementsList.filter((a) => a.unlocked).length,
+              total: achievementsList.length,
+            })}
+          </Badge>
+        </Group>
+
+        <SegmentedControl
+          size="xs"
+          fullWidth
+          value={achievementFilter}
+          onChange={(val) => setAchievementFilter(val as any)}
+          data={[
+            { label: t('profile.filterAll'), value: 'all' },
+            {
+              label: `${t('profile.filterUnlocked')} (${achievementsList.filter((a) => a.unlocked).length})`,
+              value: 'unlocked',
+            },
+            {
+              label: `${t('profile.filterLocked')} (${achievementsList.filter((a) => !a.unlocked).length})`,
+              value: 'locked',
+            },
+          ]}
+        />
+
         <Stack gap="xs">
-          {achievementsList.map((ach) => (
+          {filteredAchievements.map((ach) => (
             <Card
               key={ach.id}
               withBorder
               padding="sm"
               radius="md"
-              opacity={ach.unlocked ? 1 : 0.6}
+              opacity={ach.unlocked ? 1 : 0.65}
               style={{
-                borderLeft: ach.unlocked ? `4px solid var(--mantine-color-${ach.color}-filled)` : '1px solid var(--mantine-color-border)',
+                borderLeft: ach.unlocked
+                  ? `4px solid var(--mantine-color-${ach.color}-filled)`
+                  : '1px solid var(--mantine-color-border)',
               }}
             >
               <Group justify="space-between" wrap="nowrap" align="flex-start">
                 <Group gap="sm" wrap="nowrap" align="flex-start" style={{ flex: 1, minWidth: 0 }}>
-                  <ThemeIcon color={ach.color} size="lg" variant={ach.unlocked ? 'filled' : 'light'} mt={2}>
-                    {ach.icon}
-                  </ThemeIcon>
+                  <Text size="28px" style={{ lineHeight: 1, marginTop: 2 }}>
+                    {ach.emoji}
+                  </Text>
                   <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-                    <Text fw={600} size="sm">
-                      {ach.title}
-                    </Text>
+                    <Group gap="xs" align="center">
+                      <Text fw={700} size="sm">
+                        {ach.title}
+                      </Text>
+                      <Badge size="xs" color="yellow" variant="light">
+                        +{ach.xpReward} XP
+                      </Badge>
+                    </Group>
                     <Text size="xs" c="dimmed">
                       {ach.desc}
                     </Text>
@@ -802,7 +868,11 @@ export function ProfileScreen({ userId, onBack, onViewLeaderboard }: ProfileScre
                     )}
                   </Stack>
                 </Group>
-                <Badge color={ach.unlocked ? ach.color : 'gray'} variant={ach.unlocked ? 'light' : 'outline'}>
+                <Badge
+                  color={ach.unlocked ? ach.color : 'gray'}
+                  variant={ach.unlocked ? 'light' : 'outline'}
+                  size="sm"
+                >
                   {ach.unlocked ? t('profile.unlocked') : t('profile.locked')}
                 </Badge>
               </Group>

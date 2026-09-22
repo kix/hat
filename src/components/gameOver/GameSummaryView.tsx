@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Badge, Card, Group, SimpleGrid, Stack, Text, ActionIcon, Tooltip } from '@mantine/core';
 import { IconBook } from '@tabler/icons-react';
 import type { HatContext, History, Settings, Team } from '../../machine/hatMachine';
@@ -20,6 +20,8 @@ import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
 import { PreviousRoundWords } from '../shared/PreviousRoundWords';
 import { WordDefinitionModal } from '../shared/WordDefinitionModal';
+import { AchievementUnlockedBanner } from '../achievements/AchievementUnlockedBanner';
+import { getAndSaveNewlyUnlockedAchievements } from '../../utils/achievements';
 
 interface GameSummaryViewProps {
   teams: Team[];
@@ -103,9 +105,23 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
     )
     .sort((a, b) => b.guessed - a.guessed || b.explained - a.explained);
 
+  const winningTeam = sortedTeams[0];
+  const newAchievements = useMemo(() => {
+    return getAndSaveNewlyUnlockedAchievements({
+      history,
+      settings,
+      teams,
+      isWinner: true,
+      winningTeamId: winningTeam?.id,
+    });
+  }, [history, settings, teams, winningTeam]);
+
   return (
     <Stack gap="lg">
       <ResultBanner context={context} />
+
+      {/* Праздничный баннер разблокированных достижений */}
+      <AchievementUnlockedBanner achievements={newAchievements} />
 
       {/* Рейтинг команд */}
       {!isPairs && (
