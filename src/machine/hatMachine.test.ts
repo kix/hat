@@ -209,6 +209,32 @@ describe('setup', () => {
     const regenerated = actor.getSnapshot().context.teams.find((t) => t.id === team.id)!;
     expect(regenerated.name.endsWith('Особоеслово')).toBe(true);
   });
+
+  it('handles ADD_CUSTOM_WORDS by deduplicating and switching pack to custom', () => {
+    const actor = startActor();
+    expect(actor.getSnapshot().context.settings.wordPack).toBe('standard');
+    expect(actor.getSnapshot().context.settings.customWords).toEqual([]);
+
+    actor.send({
+      type: 'ADD_CUSTOM_WORDS',
+      words: ['Кот', 'Собака', 'кот', '  ', 'Слон'],
+    });
+
+    const context1 = actor.getSnapshot().context;
+    expect(context1.settings.wordPack).toBe('custom');
+    expect(context1.settings.customWords).toEqual(['Кот', 'Собака', 'Слон']);
+    expect(context1.settings.wordCount).toBe(3);
+
+    // Adding more words from another guest
+    actor.send({
+      type: 'ADD_CUSTOM_WORDS',
+      words: [' Жираф ', 'слон', 'Бегемот'],
+    });
+
+    const context2 = actor.getSnapshot().context;
+    expect(context2.settings.customWords).toEqual(['Кот', 'Собака', 'Слон', 'Жираф', 'Бегемот']);
+    expect(context2.settings.wordCount).toBe(5);
+  });
 });
 
 describe('sound and vibration settings', () => {

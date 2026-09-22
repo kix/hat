@@ -40,15 +40,7 @@ export async function loadDictionary(
   lang: 'ru' | 'en',
   wordPack: WordPackType = 'frequent'
 ): Promise<DictionaryEntry[]> {
-  if (
-    wordPack === 'movies' ||
-    wordPack === 'food' ||
-    wordPack === 'geography' ||
-    wordPack === 'gaming' ||
-    wordPack === 'animals' ||
-    wordPack === 'celebrities' ||
-    wordPack === 'tech'
-  ) {
+  if (wordPack !== 'standard' && wordPack !== 'frequent' && wordPack !== 'custom') {
     return getThematicPackEntries(wordPack, lang);
   }
 

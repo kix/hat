@@ -7,7 +7,8 @@ export type ThematicPackId =
   | 'gaming'
   | 'animals'
   | 'celebrities'
-  | 'tech';
+  | 'tech'
+  | 'party18';
 
 export interface ThematicPackMeta {
   id: ThematicPackId;
@@ -58,6 +59,12 @@ export const THEMATIC_PACK_METAS: ThematicPackMeta[] = [
     emoji: '💻',
     titleKey: 'pack.tech.title',
     descKey: 'pack.tech.desc',
+  },
+  {
+    id: 'party18',
+    emoji: '🔞',
+    titleKey: 'pack.party18.title',
+    descKey: 'pack.party18.desc',
   },
 ];
 
@@ -165,6 +172,22 @@ export const thematicPacksRu: Record<ThematicPackId, DictionaryEntry[]> = {
     'чат-бот', 'микросхема', 'сенсорный экран', 'программист', 'баг', 'код', 'коммит',
     'репозиторий', 'стартап', 'интерфейс', 'пиксель', 'оптоволокно', 'батарея', 'зарядка',
   ]),
+
+  party18: createEntries([
+    'похмелье', 'стриптиз', 'бармен', 'шот', 'девичник', 'мальчишник', 'флирт', 'тату',
+    'караоке', 'пивной понг', 'бутылочка', 'правда или действие', 'афтепати', 'алкотестер',
+    'бодун', 'засос', 'кальян', 'ночной клуб', 'кубики пресса', 'секс-символ', 'латекс',
+    'наручники', 'ролевые игры', 'вип-зона', 'френдзона', 'тиндер', 'свидание вслепую',
+    'пикап', 'стринги', 'бикини', 'декольте', 'топлес', 'боди-арт', 'камасутра',
+    'афродизиак', 'страсть', 'соблазнение', 'поцелуй', 'любовный треугольник', 'измена',
+    'пилон', 'лунатизм', 'голышом', 'шампанское', 'текила', 'абсент', 'самбука',
+    'коктейль', 'барная стойка', 'вышибала', 'фейсконтроль', 'дресс-код', 'таксист',
+    'ночной дожор', 'караоке-батл', 'рейв', 'диджей', 'тусовщик', 'пенная вечеринка',
+    'пляжная вечеринка', 'краш', 'губы', 'татуировка', 'пирсинг', 'лудоман', 'казино',
+    'рулетка', 'джекпот', 'покер фейс', 'блэкджек', 'стриптизерша', 'жиголо', 'ловелас',
+    'роковая женщина', 'красотка', 'мачо', 'плейбой', 'медовый месяц', 'брачная ночь',
+    'утро после вечеринки', 'пьяный звонок бывшему', 'случайная связь',
+  ]),
 };
 
 export const thematicPacksEn: Record<ThematicPackId, DictionaryEntry[]> = {
@@ -253,6 +276,22 @@ export const thematicPacksEn: Record<ThematicPackId, DictionaryEntry[]> = {
     'internet of things', 'wi-fi', 'bluetooth', 'web browser', 'search engine',
     'mobile app', 'chatbot', 'microchip', 'touchscreen', 'software developer',
     'code', 'bug', 'commit', 'git repository', 'startup', 'user interface', 'pixel', 'fiber optic',
+  ]),
+
+  party18: createEntries([
+    'hangover', 'striptease', 'bartender', 'shot', 'bachelorette party', 'bachelor party',
+    'flirt', 'tattoo', 'karaoke', 'beer pong', 'spin the bottle', 'truth or dare',
+    'afterparty', 'breathalyzer', 'hickey', 'hookah', 'nightclub', 'six pack abs',
+    'sex symbol', 'latex', 'handcuffs', 'role play', 'vip lounge', 'friend zone',
+    'tinder', 'blind date', 'pickup line', 'thong', 'bikini', 'cleavage', 'topless',
+    'body art', 'kamasutra', 'aphrodisiac', 'passion', 'seduction', 'french kiss',
+    'love triangle', 'strip club', 'skinny dipping', 'champagne', 'tequila', 'absinthe',
+    'cocktail', 'bar counter', 'bouncer', 'face control', 'dress code', 'uber ride',
+    'midnight snack', 'karaoke battle', 'rave', 'dj', 'party animal', 'foam party',
+    'pool party', 'crush', 'red lipstick', 'piercing', 'casino', 'roulette', 'jackpot',
+    'poker face', 'blackjack', 'stripper', 'gigolo', 'heartbreaker', 'femme fatale',
+    'macho', 'playboy', 'honeymoon', 'wedding night', 'morning after', 'drunk call',
+    'one night stand',
   ]),
 };
 

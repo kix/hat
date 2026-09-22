@@ -169,10 +169,10 @@ function App() {
 
   // Синхронизация состояния хоста в Supabase Realtime + БД
   useEffect(() => {
-    if (mode === 'multiplayer' && multiplayer.isHost && multiplayer.roomId && localState) {
+    if (multiplayer.isHost && multiplayer.roomId && localState) {
       void multiplayer.updateRoomState(localState.value as string, localState.context);
     }
-  }, [localState, multiplayer.isHost, multiplayer.roomId, mode]);
+  }, [localState, multiplayer.isHost, multiplayer.roomId, multiplayer.updateRoomState, mode]);
 
   // Общие методы управления действиями (роутинг send)
   const send = mode === 'multiplayer' ? multiplayer.sendAction : localSend;
@@ -637,6 +637,8 @@ function App() {
             playerName={playerName}
             participants={multiplayer.participants}
             onLeave={handleLeaveRoom}
+            send={send}
+            totalCustomWords={currentContext.settings.customWords?.length ?? 0}
           />
         </ScreenTransition>
       </Suspense>

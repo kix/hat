@@ -92,6 +92,7 @@ export type HatEvent =
   | { type: 'SET_ENABLE_REVIEW'; enableReview: boolean }
   | { type: 'SET_WORD_PACK'; wordPack: WordPack }
   | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
+  | { type: 'ADD_CUSTOM_WORDS'; words: string[] }
   | { type: 'SET_GAME_MODE'; gameMode: 'teams' | 'pairs' }
   | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }
   | { type: 'START_GAME' }
@@ -409,6 +410,30 @@ export const hatMachine = setup({
           actions: assign(({ context, event }) => ({
             settings: { ...context.settings, customWords: event.customWords },
           })),
+        },
+        ADD_CUSTOM_WORDS: {
+          actions: assign(({ context, event }) => {
+            const existingNormalized = new Set(
+              context.settings.customWords.map((w) => w.trim().toLowerCase())
+            );
+            const newWords: string[] = [];
+            for (const raw of event.words) {
+              const trimmed = raw.trim();
+              if (trimmed.length > 0 && !existingNormalized.has(trimmed.toLowerCase())) {
+                existingNormalized.add(trimmed.toLowerCase());
+                newWords.push(trimmed);
+              }
+            }
+            const combinedCustomWords = [...context.settings.customWords, ...newWords];
+            return {
+              settings: {
+                ...context.settings,
+                wordPack: 'custom',
+                customWords: combinedCustomWords,
+                wordCount: combinedCustomWords.length > 0 ? combinedCustomWords.length : context.settings.wordCount,
+              },
+            };
+          }),
         },
         SET_GAME_MODE: {
           actions: assign(({ context, event }) => {

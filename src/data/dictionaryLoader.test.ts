@@ -44,14 +44,20 @@ describe('dictionaryLoader', { timeout: 20000 }, () => {
     const moviesEn = await loadDictionary('en', 'movies');
     const foodRu = await loadDictionary('ru', 'food');
     const gamingEn = await loadDictionary('en', 'gaming');
+    const party18Ru = await loadDictionary('ru', 'party18');
+    const party18En = await loadDictionary('en', 'party18');
 
     expect(moviesRu.length).toBeGreaterThan(20);
     expect(moviesEn.length).toBeGreaterThan(20);
     expect(foodRu.length).toBeGreaterThan(20);
     expect(gamingEn.length).toBeGreaterThan(20);
+    expect(party18Ru.length).toBeGreaterThan(20);
+    expect(party18En.length).toBeGreaterThan(20);
 
     expect(moviesRu.some((e) => e.word.includes('поттер') || e.word.includes('титаник'))).toBe(true);
     expect(moviesEn.some((e) => e.word.includes('potter') || e.word.includes('titanic'))).toBe(true);
+    expect(party18Ru.some((e) => e.word.includes('похмелье') || e.word.includes('стриптиз'))).toBe(true);
+    expect(party18En.some((e) => e.word.includes('hangover') || e.word.includes('striptease'))).toBe(true);
   });
 
   it('executes prefetch functions without errors', () => {
