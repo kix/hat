@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1] - 2026-09-23
+
+### Fixed & Improved
+
+- **📱 Улучшенный выбор словарей на смартфонах (Touch-friendly Word Pack Selector):**
+  - Стандартный выпадающий список Mantine `<Select>` заменён на удобную интерактивную карточку с модальным окном выбора (`WordPackModal`).
+  - Устранены проблемы на мобильных устройствах (перекрытие виртуальной клавиатурой, случайные скроллы, обрезание списка слов).
+  - Сгруппированные карточки словарей (Базовые, Тематические и Свой список) с крупными элементами для комфортного нажатия пальцем, индикатором текущего выбора и моментальным закрытием по тапу.
+
 ## [1.15.0] - 2026-09-23
 
 ### Added

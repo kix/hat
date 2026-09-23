@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Button, Group, SegmentedControl, Select, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
+import { useState, useMemo } from 'react';
+import { Button, Card, Group, SegmentedControl, Slider, Stack, Switch, Text, Textarea, UnstyledButton } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
-import { IconSparkles } from '@tabler/icons-react';
+import { IconSparkles, IconChevronRight } from '@tabler/icons-react';
 import type { DictionaryEntry } from '../../data/dictionary';
-import { prefetchRuStandard } from '../../data/dictionaryLoader';
 import { THEMATIC_PACK_METAS } from '../../data/thematicPacks';
-import type { HatEvent, Settings, WordPack } from '../../machine/hatMachine';
+import type { HatEvent, Settings } from '../../machine/hatMachine';
 import { AiPackGeneratorModal } from '../aiPack/AiPackGeneratorModal';
+import { WordPackModal } from './WordPackModal';
 import { useI18n } from '../../i18n/i18n';
 
 interface RoundSettingsFormProps {
@@ -18,6 +18,8 @@ interface RoundSettingsFormProps {
 export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsFormProps) {
   const { t } = useI18n();
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [packModalOpen, setPackModalOpen] = useState(false);
+
   // Вычисляем размер доступного пула слов в зависимости от выбранного пака
   const poolSize =
     settings.wordPack === 'custom'
@@ -32,26 +34,22 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
   // no point showing a setting that can't do anything there.
   const isTouchDevice = useMediaQuery('(pointer: coarse)', undefined, { getInitialValueInEffect: false });
 
-  const wordPackSelectData = [
-    {
-      group: t('roundSettings.groupStandard'),
-      items: [
-        { value: 'frequent', label: `🔥 ${t('roundSettings.packFrequent')}` },
-        { value: 'standard', label: `📚 ${t('roundSettings.packAll')}` },
-      ],
-    },
-    {
-      group: t('roundSettings.groupThematic'),
-      items: THEMATIC_PACK_METAS.map((m) => ({
-        value: m.id,
-        label: `${m.emoji} ${t(m.titleKey)}`,
-      })),
-    },
-    {
-      group: t('roundSettings.groupCustom'),
-      items: [{ value: 'custom', label: `✏️ ${t('roundSettings.packCustom')}` }],
-    },
-  ];
+  const currentPackMeta = useMemo(() => {
+    if (settings.wordPack === 'custom') {
+      return { emoji: '✏️', title: t('roundSettings.packCustom') };
+    }
+    if (settings.wordPack === 'standard') {
+      return { emoji: '📚', title: t('roundSettings.packAll') };
+    }
+    if (settings.wordPack === 'frequent' || !settings.wordPack) {
+      return { emoji: '🔥', title: t('roundSettings.packFrequent') };
+    }
+    const thematic = THEMATIC_PACK_METAS.find((m) => m.id === settings.wordPack);
+    if (thematic) {
+      return { emoji: thematic.emoji, title: t(thematic.titleKey) };
+    }
+    return { emoji: '🔥', title: t('roundSettings.packFrequent') };
+  }, [settings.wordPack, t]);
 
   return (
     <Stack gap="md">
@@ -144,16 +142,42 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
         />
       )}
 
-      <div onMouseEnter={prefetchRuStandard} onTouchStart={prefetchRuStandard}>
-        <Select
-          label={t('roundSettings.wordPack')}
-          value={settings.wordPack || 'frequent'}
-          onChange={(value) => {
-            if (value) send({ type: 'SET_WORD_PACK', wordPack: value as WordPack });
-          }}
-          data={wordPackSelectData}
-          allowDeselect={false}
-        />
+      <div>
+        <Text size="sm" fw={500} mb={6}>
+          {t('roundSettings.wordPack')}
+        </Text>
+        <UnstyledButton
+          onClick={() => setPackModalOpen(true)}
+          style={{ width: '100%' }}
+        >
+          <Card
+            withBorder
+            p="sm"
+            radius="md"
+            bg="var(--mantine-color-default-hover)"
+            style={{
+              cursor: 'pointer',
+              border: '1px solid var(--mantine-color-default-border)',
+            }}
+          >
+            <Group justify="space-between" wrap="nowrap">
+              <Group gap="sm" wrap="nowrap">
+                <Text size="1.4rem">{currentPackMeta.emoji}</Text>
+                <div>
+                  <Text size="sm" fw={600}>
+                    {currentPackMeta.title}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    {poolSize === null
+                      ? t('roundSettings.dictLoading')
+                      : t('roundSettings.poolAvailable', { n: poolSize })}
+                  </Text>
+                </div>
+              </Group>
+              <IconChevronRight size={18} color="var(--mantine-color-dimmed)" />
+            </Group>
+          </Card>
+        </UnstyledButton>
       </div>
 
       {settings.wordPack === 'custom' ? (
@@ -245,6 +269,13 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
         opened={aiModalOpen}
         onClose={() => setAiModalOpen(false)}
         onApplyWords={(words) => send({ type: 'ADD_CUSTOM_WORDS', words })}
+      />
+
+      <WordPackModal
+        opened={packModalOpen}
+        onClose={() => setPackModalOpen(false)}
+        selectedPack={settings.wordPack || 'frequent'}
+        onSelectPack={(pack) => send({ type: 'SET_WORD_PACK', wordPack: pack })}
       />
     </Stack>
   );
