@@ -22,6 +22,8 @@ const LeaderboardScreen = lazy(() => import('./components/leaderboard/Leaderboar
 const SummaryScreen = lazy(() => import('./components/summary/SummaryScreen').then(m => ({ default: m.SummaryScreen })));
 const GameShareScreen = lazy(() => import('./components/summary/GameShareScreen').then(m => ({ default: m.GameShareScreen })));
 const ChangelogModal = lazy(() => import('./components/changelog/ChangelogModal').then(m => ({ default: m.ChangelogModal })));
+const TvSpectatorScreen = lazy(() => import('./components/tv/TvSpectatorScreen').then(m => ({ default: m.TvSpectatorScreen })));
+const TournamentScreen = lazy(() => import('./components/tournament/TournamentScreen').then(m => ({ default: m.TournamentScreen })));
 
 import { AuthMenu, signInWithTelegram } from './components/auth/AuthMenu';
 import { ColorSchemeToggle } from './components/ColorSchemeToggle';
@@ -34,6 +36,8 @@ import { trackEvent } from './utils/analytics';
 import { loadDictionary, prefetchDictionaries } from './data/dictionaryLoader';
 import { initTelegramWebApp, getTelegramUser, isTelegramWebApp, TELEGRAM_TWA_LINK } from './utils/telegramWebApp';
 import { useTelegramAutoAuth } from './auth/useTelegramAutoAuth';
+import { getTeamScore } from './utils/scoring';
+import { loadTournament, recordMatchResult } from './components/tournament/tournamentStore';
 
 function App() {
   const sounds = useGameSounds();
@@ -59,6 +63,16 @@ function App() {
   const [shareGameId, setShareGameId] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get('game'),
   );
+  // TV mode: ?tv=CODE or triggered via UI
+  const [tvRoomCode, setTvRoomCode] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('tv'),
+  );
+  const [showTvMode, setShowTvMode] = useState<boolean>(
+    () => new URLSearchParams(window.location.search).has('tv'),
+  );
+  // Tournament mode:
+  const [showTournament, setShowTournament] = useState<boolean>(false);
+  const [activeTournamentMatchId, setActiveTournamentMatchId] = useState<string | null>(null);
 
   const closeChangelog = useCallback(() => {
     setShowChangelog(false);
@@ -237,6 +251,21 @@ function App() {
     }
     prevStatusRef.current = currentStatus;
   }, [currentStatus, mode, currentContext]);
+
+  // Запись результата турнирного матча при завершении игры
+  useEffect(() => {
+    if (activeTournamentMatchId && currentStatus === 'gameOver') {
+      const tourney = loadTournament();
+      if (tourney) {
+        const teamA = localState.context.teams[0];
+        const teamB = localState.context.teams[1];
+        const scoreA = getTeamScore(localState.context.history, teamA?.id || '');
+        const scoreB = getTeamScore(localState.context.history, teamB?.id || '');
+        recordMatchResult(tourney, activeTournamentMatchId, scoreA, scoreB);
+        setActiveTournamentMatchId(null);
+      }
+    }
+  }, [activeTournamentMatchId, currentStatus, localState.context]);
   // Автоматический выход из комнаты при старте локальной игры хостом
   useEffect(() => {
     if (mode === 'local' && currentStatus !== 'setup' && multiplayer.roomId) {
@@ -671,6 +700,66 @@ function App() {
   }
 
   // =====================================================================
+  // РЕЖИМ ТВ / БОЛЬШОЙ ЭКРАН (TV Spectator Mode)
+  // =====================================================================
+  if (showTvMode) {
+    return (
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <TvSpectatorScreen
+          roomCode={tvRoomCode || multiplayer.roomId || ''}
+          localContext={localState?.context}
+          localState={localState?.value as string}
+          onExit={() => {
+            setShowTvMode(false);
+            setTvRoomCode(null);
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('tv')) {
+              url.searchParams.delete('tv');
+              window.history.replaceState({}, '', url.toString());
+            }
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  // =====================================================================
+  // ТУРНИРНАЯ СЕТКА (Tournament Bracket Mode)
+  // =====================================================================
+  if (showTournament && currentStatus === 'setup') {
+    return (
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <TournamentScreen
+          onBack={() => setShowTournament(false)}
+          dictionary={localState.context.dictionary}
+          onStartMatchGame={(teamA, teamB, matchId) => {
+            setActiveTournamentMatchId(matchId);
+            setShowTournament(false);
+            localSend({
+              type: 'SET_GAME_MODE',
+              gameMode: 'teams',
+            });
+            const t0 = localState.context.teams[0];
+            const t1 = localState.context.teams[1];
+            if (t0) {
+              localSend({ type: 'UPDATE_TEAM_NAME', teamId: t0.id, name: teamA.name });
+              localSend({ type: 'UPDATE_PLAYER_NAME', teamId: t0.id, playerId: t0.players[0].id, name: teamA.players[0] });
+              localSend({ type: 'UPDATE_PLAYER_NAME', teamId: t0.id, playerId: t0.players[1].id, name: teamA.players[1] });
+            }
+            if (t1) {
+              localSend({ type: 'UPDATE_TEAM_NAME', teamId: t1.id, name: teamB.name });
+              localSend({ type: 'UPDATE_PLAYER_NAME', teamId: t1.id, playerId: t1.players[0].id, name: teamB.players[0] });
+              localSend({ type: 'UPDATE_PLAYER_NAME', teamId: t1.id, playerId: t1.players[1].id, name: teamB.players[1] });
+            }
+            setMode('local');
+            localSend({ type: 'START_GAME' });
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  // =====================================================================
   // СТАНДАРТНЫЕ ИГРОВЫЕ ЭКРАНЫ (ЛОКАЛЬНЫЙ ИЛИ СЕТЕВОЙ РЕЖИМ)
   // =====================================================================
   if (currentStatus === 'setup') {
@@ -690,6 +779,8 @@ function App() {
             setShowProfile(true);
           }}
           onViewLeaderboard={() => setShowLeaderboard(true)}
+          onOpenTv={() => setShowTvMode(true)}
+          onOpenTournament={() => setShowTournament(true)}
         />
       </ScreenTransition>
     );

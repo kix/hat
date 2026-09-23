@@ -1,5 +1,5 @@
 import { Container, Divider, Stack, Title, Button, Card, Text, Group, Badge, Modal, Loader, ThemeIcon, SegmentedControl } from '@mantine/core';
-import { IconQrcode, IconCopy, IconCheck, IconUsers, IconTrash, IconWifi, IconAlertTriangle } from '@tabler/icons-react';
+import { IconQrcode, IconCopy, IconCheck, IconUsers, IconTrash, IconWifi, IconAlertTriangle, IconDeviceTv, IconTrophy } from '@tabler/icons-react';
 import type { HatContext, HatEvent } from '../../machine/hatMachine';
 import { TeamList } from './TeamList';
 import { IndividualPlayerList } from './IndividualPlayerList';
@@ -20,6 +20,8 @@ interface SetupScreenProps {
   currentUser?: User | null;
   onViewProfile?: () => void;
   onViewLeaderboard?: () => void;
+  onOpenTv?: () => void;
+  onOpenTournament?: () => void;
 }
 
 export function SetupScreen({
@@ -30,6 +32,8 @@ export function SetupScreen({
   currentUser,
   onViewProfile,
   onViewLeaderboard,
+  onOpenTv,
+  onOpenTournament,
 }: SetupScreenProps) {
   const { t } = useI18n();
   const [loadingQr, setLoadingQr] = useState(false);
@@ -261,6 +265,31 @@ export function SetupScreen({
             ]}
           />
         </div>
+
+        <Group grow gap="xs">
+          {onOpenTournament && (
+            <Button
+              variant="light"
+              color="yellow"
+              size="sm"
+              leftSection={<IconTrophy size={18} />}
+              onClick={onOpenTournament}
+            >
+              {t('tournament.openTournament')}
+            </Button>
+          )}
+          {onOpenTv && (
+            <Button
+              variant="light"
+              color="indigo"
+              size="sm"
+              leftSection={<IconDeviceTv size={18} />}
+              onClick={onOpenTv}
+            >
+              {t('tv.openTv')}
+            </Button>
+          )}
+        </Group>
 
         <Divider />
 

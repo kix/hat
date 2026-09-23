@@ -1,9 +1,12 @@
-import { Group, SegmentedControl, Select, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
+import { useState } from 'react';
+import { Button, Group, SegmentedControl, Select, Slider, Stack, Switch, Text, Textarea } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import { IconSparkles } from '@tabler/icons-react';
 import type { DictionaryEntry } from '../../data/dictionary';
 import { prefetchRuStandard } from '../../data/dictionaryLoader';
 import { THEMATIC_PACK_METAS } from '../../data/thematicPacks';
 import type { HatEvent, Settings, WordPack } from '../../machine/hatMachine';
+import { AiPackGeneratorModal } from '../aiPack/AiPackGeneratorModal';
 import { useI18n } from '../../i18n/i18n';
 
 interface RoundSettingsFormProps {
@@ -14,6 +17,7 @@ interface RoundSettingsFormProps {
 
 export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsFormProps) {
   const { t } = useI18n();
+  const [aiModalOpen, setAiModalOpen] = useState(false);
   // Вычисляем размер доступного пула слов в зависимости от выбранного пака
   const poolSize =
     settings.wordPack === 'custom'
@@ -153,9 +157,22 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
       </div>
 
       {settings.wordPack === 'custom' ? (
-        <div>
+        <Stack gap="xs">
+          <Group justify="space-between" align="center">
+            <Text size="sm" fw={500}>
+              {t('roundSettings.customLabel')}
+            </Text>
+            <Button
+              variant="light"
+              color="grape"
+              size="xs"
+              leftSection={<IconSparkles size={14} />}
+              onClick={() => setAiModalOpen(true)}
+            >
+              {t('aiPack.btn')}
+            </Button>
+          </Group>
           <Textarea
-            label={t('roundSettings.customLabel')}
             placeholder={t('roundSettings.customPlaceholder')}
             minRows={3}
             autosize
@@ -169,10 +186,10 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
               send({ type: 'SET_CUSTOM_WORDS', customWords: words });
             }}
           />
-          <Text size="xs" c="dimmed" mt={4}>
+          <Text size="xs" c="dimmed">
             {t('roundSettings.wordsEntered', { n: settings.customWords.length })}
           </Text>
-        </div>
+        </Stack>
       ) : (
         <>
           <div>
@@ -223,6 +240,12 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
           </div>
         </>
       )}
+
+      <AiPackGeneratorModal
+        opened={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        onApplyWords={(words) => send({ type: 'ADD_CUSTOM_WORDS', words })}
+      />
     </Stack>
   );
 }
