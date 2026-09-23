@@ -15,13 +15,14 @@ import {
   getIndividualLeaderboard,
   getBestTandem,
 } from '../../utils/stats';
-import { getTeamScore } from '../../utils/scoring';
+import { getTeamScore, getTeamStageScore, getPlayerIndividualStageScore } from '../../utils/scoring';
 import { useI18n } from '../../i18n/i18n';
 import { ResultBanner } from './ResultBanner';
 import { StatCard } from './StatCard';
 import { HintedWordsCard } from './HintedWordsCard';
 import { PreviousRoundWords } from '../shared/PreviousRoundWords';
 import { WordDefinitionModal } from '../shared/WordDefinitionModal';
+import { StageBadge } from '../shared/StageBadge';
 import { AchievementUnlockedBanner } from '../achievements/AchievementUnlockedBanner';
 import { getAndSaveNewlyUnlockedAchievements } from '../../utils/achievements';
 
@@ -57,6 +58,8 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
     settings,
     dictionary: null,
     hat: [],
+    wordsPool: [],
+    currentStageIndex: 1,
     currentWord: null,
     wordShownAt: null,
     timeRemainingSec: 0,
@@ -206,6 +209,51 @@ export function GameSummaryView({ teams, history, settings, highlightPlayerId }:
                 );
               })}
             </Stack>
+          </Stack>
+        </Card>
+      )}
+
+      {/* Разбивка очков по этапам (для Classic 3) */}
+      {settings.gameFormat === 'classic3' && (
+        <Card withBorder padding="md">
+          <Stack gap="sm">
+            <Text fw={600} size="sm" c="dimmed">
+              {t('summaryView.stageBreakdown')}
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
+              {[1, 2, 3].map((stageNum) => (
+                <Card key={stageNum} withBorder padding="xs" radius="sm">
+                  <Stack gap={4}>
+                    <Group justify="center" mb={2}>
+                      <StageBadge stageIndex={stageNum} size="sm" />
+                    </Group>
+                    {isIndividual ? (
+                      individualLeaderboard.map((item) => (
+                        <Group key={item.player.id} justify="space-between" wrap="nowrap">
+                          <Text size="xs" truncate>
+                            {item.player.name}
+                          </Text>
+                          <Text size="xs" fw={600}>
+                            {getPlayerIndividualStageScore(history, item.player.id, stageNum)}
+                          </Text>
+                        </Group>
+                      ))
+                    ) : (
+                      sortedTeams.map((team) => (
+                        <Group key={team.id} justify="space-between" wrap="nowrap">
+                          <Text size="xs" truncate>
+                            {team.name}
+                          </Text>
+                          <Text size="xs" fw={600}>
+                            {getTeamStageScore(history, team.id, stageNum)}
+                          </Text>
+                        </Group>
+                      ))
+                    )}
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
           </Stack>
         </Card>
       )}

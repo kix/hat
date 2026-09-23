@@ -16,6 +16,7 @@ const RoundIntroScreen = lazy(() => import('./components/roundIntro/RoundIntroSc
 const RoundPlayingScreen = lazy(() => import('./components/roundPlaying/RoundPlayingScreen').then(m => ({ default: m.RoundPlayingScreen })));
 const GameOverScreen = lazy(() => import('./components/gameOver/GameOverScreen').then(m => ({ default: m.GameOverScreen })));
 const RoundReviewScreen = lazy(() => import('./components/roundReview/RoundReviewScreen').then(m => ({ default: m.RoundReviewScreen })));
+const StageTransitionScreen = lazy(() => import('./components/stage/StageTransitionScreen').then(m => ({ default: m.StageTransitionScreen })));
 const ProfileScreen = lazy(() => import('./components/profile/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
 const LeaderboardScreen = lazy(() => import('./components/leaderboard/LeaderboardScreen').then(m => ({ default: m.LeaderboardScreen })));
 const SummaryScreen = lazy(() => import('./components/summary/SummaryScreen').then(m => ({ default: m.SummaryScreen })));
@@ -727,6 +728,15 @@ function App() {
             isMultiplayer={mode === 'multiplayer'}
             isHost={mode === 'multiplayer' ? multiplayer.isHost : true}
           />
+        </ScreenTransition>
+      </Suspense>
+    );
+  }
+  if (currentStatus === 'stageTransition') {
+    return (
+      <Suspense fallback={<LoadingOverlay visible zIndex={1000} overlayProps={{ radius: 'sm', blur: 1 }} />}>
+        <ScreenTransition key="stageTransition">
+          <StageTransitionScreen context={currentContext} send={send} />
         </ScreenTransition>
       </Suspense>
     );

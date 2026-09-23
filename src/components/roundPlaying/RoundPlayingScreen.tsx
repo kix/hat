@@ -19,6 +19,7 @@ import { MarkWordRareButton } from './MarkWordRareButton';
 import { HideWordButton } from './HideWordButton';
 import { isLocalDevEnvironment } from '../../utils/isLocalDevEnvironment';
 import { ExitGameButton } from '../shared/ExitGameButton';
+import { StageBadge } from '../shared/StageBadge';
 import { useI18n } from '../../i18n/i18n';
 
 interface RoundPlayingScreenProps {
@@ -130,7 +131,13 @@ export function RoundPlayingScreen({
     >
       {/* Только хост или локальный игрок может досрочно выйти из игры */}
       {(!isMultiplayer || isHost) && <ExitGameButton send={send} />}
-      
+
+      {context.settings.gameFormat === 'classic3' && (
+        <Group justify="center" pt="xs">
+          <StageBadge stageIndex={context.currentStageIndex ?? 1} size="md" />
+        </Group>
+      )}
+
       <Group justify="center" align="center" gap="lg" py="md">
         <HatCountBadge hatLength={context.hat.length} />
         <RoundTimer timeRemainingSec={context.timeRemainingSec} roundDurationSec={context.settings.roundDurationSec} />

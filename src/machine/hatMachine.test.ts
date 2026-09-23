@@ -6,7 +6,7 @@ import { dictionaryRuStandard } from '../data/dictionaryRuStandard';
 const dictionary = [...dictionaryRuFrequent, ...dictionaryRuStandard];
 import { generateTeamName } from '../utils/teamName';
 import { getCurrentRoles } from '../utils/roles';
-import { getTeamScore, scoreDeltaForResult } from '../utils/scoring';
+import { getTeamScore, scoreDeltaForResult, getTeamStageScore, getPlayerIndividualStageScore } from '../utils/scoring';
 import {
   getBestPlayer,
   getCurrentRoundGuessedCount,
@@ -1148,6 +1148,122 @@ describe('pairs mode', () => {
       const currentTeam = actor.getSnapshot().context.teams[actor.getSnapshot().context.currentTeamIndex];
       expect(currentTeam.players[0].name).toBe('Аня');
       expect(currentTeam.players[1].name).toBe('Боря');
+    });
+  });
+
+  describe('classic 3-stage hat mode', () => {
+    it('sets game format to classic3', () => {
+      const actor = startActor();
+      expect(actor.getSnapshot().context.settings.gameFormat).toBe('single');
+      actor.send({ type: 'SET_GAME_FORMAT', gameFormat: 'classic3' });
+      expect(actor.getSnapshot().context.settings.gameFormat).toBe('classic3');
+    });
+
+    it('preserves wordsPool on START_GAME and tracks stageIndex in word records', () => {
+      const actor = startActor();
+      actor.send({ type: 'SET_GAME_FORMAT', gameFormat: 'classic3' });
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 3 });
+      setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+      actor.send({ type: 'START_GAME' });
+
+      expect(actor.getSnapshot().context.currentStageIndex).toBe(1);
+      expect(actor.getSnapshot().context.wordsPool.length).toBe(3);
+      expect(actor.getSnapshot().context.hat.length).toBe(3);
+
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_GUESSED' });
+
+      const history = actor.getSnapshot().context.history;
+      expect(history[0].stageIndex).toBe(1);
+    });
+
+    it('transitions to stageTransition when hat empties in Stage 1 and Stage 2', () => {
+      const actor = startActor();
+      actor.send({ type: 'SET_GAME_FORMAT', gameFormat: 'classic3' });
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 2 });
+      actor.send({ type: 'SET_ENABLE_REVIEW', enableReview: false });
+      setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+      actor.send({ type: 'START_GAME' });
+
+      // Stage 1
+      expect(actor.getSnapshot().context.currentStageIndex).toBe(1);
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_GUESSED' }); // 1 left in hat
+      actor.send({ type: 'WORD_GUESSED' }); // 0 left -> roundEnd -> stageTransition
+      expect(actor.getSnapshot().value).toBe('stageTransition');
+
+      // Proceed to Stage 2
+      actor.send({ type: 'PROCEED_TO_NEXT_STAGE' });
+      expect(actor.getSnapshot().value).toBe('roundIntro');
+      expect(actor.getSnapshot().context.currentStageIndex).toBe(2);
+      expect(actor.getSnapshot().context.hat.length).toBe(2); // all words returned
+
+      // Stage 2
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_GUESSED' });
+      actor.send({ type: 'WORD_GUESSED' });
+      expect(actor.getSnapshot().value).toBe('stageTransition');
+
+      // Proceed to Stage 3
+      actor.send({ type: 'PROCEED_TO_NEXT_STAGE' });
+      expect(actor.getSnapshot().value).toBe('roundIntro');
+      expect(actor.getSnapshot().context.currentStageIndex).toBe(3);
+      expect(actor.getSnapshot().context.hat.length).toBe(2);
+
+      // Stage 3
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_GUESSED' });
+      actor.send({ type: 'WORD_GUESSED' });
+      expect(actor.getSnapshot().value).toBe('gameOver');
+    });
+
+    it('calculates stage-specific scores correctly', () => {
+      const actor = startActor();
+      actor.send({ type: 'SET_GAME_FORMAT', gameFormat: 'classic3' });
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 2 });
+      actor.send({ type: 'SET_ENABLE_REVIEW', enableReview: false });
+      const teams = setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+      const teamA = teams[0].id;
+      actor.send({ type: 'START_GAME' });
+
+      // Stage 1: 2 words guessed by Team A
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_GUESSED' });
+      actor.send({ type: 'WORD_GUESSED' });
+      expect(actor.getSnapshot().value).toBe('stageTransition');
+
+      // Stage 2: Team A gets 1 foul, 1 guessed
+      actor.send({ type: 'PROCEED_TO_NEXT_STAGE' });
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_FOUL' });
+      actor.send({ type: 'WORD_GUESSED' });
+
+      const history = actor.getSnapshot().context.history;
+      expect(getTeamStageScore(history, teamA, 1)).toBe(2);
+      expect(getTeamStageScore(history, teamA, 2)).toBe(0); // 1 - 1 = 0
+      expect(getTeamScore(history, teamA)).toBe(2); // total = 2 + 0 = 2
+
+      // Individual player stage score
+      expect(getPlayerIndividualStageScore(history, 'any-id', 1)).toBe(0);
+    });
+
+    it('handles review before stageTransition when enableReview is true', () => {
+      const actor = startActor();
+      actor.send({ type: 'SET_GAME_FORMAT', gameFormat: 'classic3' });
+      actor.send({ type: 'SET_WORD_COUNT', wordCount: 1 });
+      actor.send({ type: 'SET_ENABLE_REVIEW', enableReview: true });
+      setupTeams(actor, ['Аня', 'Боря'], ['Вика', 'Гриша']);
+      actor.send({ type: 'START_GAME' });
+
+      actor.send({ type: 'START_ROUND' });
+      actor.send({ type: 'WORD_GUESSED' });
+
+      // Should enter roundReview first
+      expect(actor.getSnapshot().value).toBe('roundReview');
+
+      // When confirmed, should proceed to stageTransition (since stage 1 < 3)
+      actor.send({ type: 'CONFIRM_REVIEW' });
+      expect(actor.getSnapshot().value).toBe('stageTransition');
     });
   });
 });

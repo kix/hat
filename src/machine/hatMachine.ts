@@ -43,6 +43,7 @@ export interface WordRecord {
   readonly result: WordResult;
   readonly timeMs: number;
   readonly roundIndex: number;
+  readonly stageIndex?: number;
 }
 
 export type History = WordRecord[];
@@ -60,6 +61,7 @@ export interface Settings {
   wordPack: WordPack;
   customWords: string[];
   gameMode?: 'teams' | 'pairs' | 'individual';
+  gameFormat?: 'single' | 'classic3';
   enableReview: boolean;
 }
 
@@ -71,6 +73,8 @@ export interface HatContext {
   // in via DICTIONARY_LOADED — null until then. Starting a game requires it.
   dictionary: DictionaryEntry[] | null;
   hat: DictionaryEntry[];
+  wordsPool: DictionaryEntry[];
+  currentStageIndex: number;
   currentWord: DictionaryEntry | null;
   wordShownAt: number | null;
   timeRemainingSec: number;
@@ -101,9 +105,11 @@ export type HatEvent =
   | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
   | { type: 'ADD_CUSTOM_WORDS'; words: string[] }
   | { type: 'SET_GAME_MODE'; gameMode: 'teams' | 'pairs' | 'individual' }
+  | { type: 'SET_GAME_FORMAT'; gameFormat: 'single' | 'classic3' }
   | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }
   | { type: 'START_GAME' }
   | { type: 'START_ROUND' }
+  | { type: 'PROCEED_TO_NEXT_STAGE' }
   | { type: 'WORD_GUESSED' }
   | { type: 'WORD_SKIPPED' }
   | { type: 'WORD_FOUL' }
@@ -181,9 +187,12 @@ export function createInitialContext(): HatContext {
       wordPack: 'frequent',
       customWords: [],
       gameMode: 'teams',
+      gameFormat: 'single',
     },
     dictionary: null,
     hat: [],
+    wordsPool: [],
+    currentStageIndex: 1,
     currentWord: null,
     wordShownAt: null,
     timeRemainingSec: 0,
@@ -204,6 +213,7 @@ function buildWordRecord(context: HatContext, currentWord: DictionaryEntry, resu
     result,
     timeMs: Date.now() - (context.wordShownAt ?? Date.now()),
     roundIndex: team.roundsPlayed,
+    stageIndex: context.currentStageIndex ?? 1,
   };
 }
 
@@ -268,6 +278,8 @@ function isHatEmpty(context: HatContext): boolean {
 function resetToSetup(context: HatContext): Partial<HatContext> {
   return {
     hat: [],
+    wordsPool: [],
+    currentStageIndex: 1,
     history: [],
     currentWord: null,
     wordShownAt: null,
@@ -510,6 +522,11 @@ export const hatMachine = setup({
             };
           }),
         },
+        SET_GAME_FORMAT: {
+          actions: assign(({ context, event }) => ({
+            settings: { ...context.settings, gameFormat: event.gameFormat },
+          })),
+        },
         START_GAME: {
           guard: ({ context }) => {
             if (context.dictionary === null) return false;
@@ -558,6 +575,8 @@ export const hatMachine = setup({
               }
               return {
                 hat,
+                wordsPool: hat,
+                currentStageIndex: 1,
                 settings: { ...context.settings, wordCount: hat.length },
                 currentTeamIndex: 0,
                 history: [],
@@ -689,6 +708,14 @@ export const hatMachine = setup({
         };
       }),
       always: [
+        {
+          guard: ({ context }) =>
+            !context.settings.enableReview &&
+            isHatEmpty(context) &&
+            context.settings.gameFormat === 'classic3' &&
+            context.currentStageIndex < 3,
+          target: 'stageTransition',
+        },
         { guard: ({ context }) => !context.settings.enableReview && isHatEmpty(context), target: 'gameOver' },
         { guard: ({ context }) => !context.settings.enableReview, target: 'roundIntro' },
         { target: 'roundReview' },
@@ -739,9 +766,42 @@ export const hatMachine = setup({
           }),
         },
         CONFIRM_REVIEW: [
+          {
+            guard: ({ context }) =>
+              isHatEmpty(context) &&
+              context.settings.gameFormat === 'classic3' &&
+              context.currentStageIndex < 3,
+            target: 'stageTransition',
+          },
           { guard: ({ context }) => isHatEmpty(context), target: 'gameOver' },
           { target: 'roundIntro' },
         ],
+        EXIT_GAME: {
+          target: 'setup',
+          actions: assign(({ context }) => resetToSetup(context)),
+        },
+      },
+    },
+
+    stageTransition: {
+      on: {
+        PROCEED_TO_NEXT_STAGE: {
+          actions: assign(({ context }) => {
+            const nextStage = (context.currentStageIndex ?? 1) + 1;
+            const hat = pickRandom(context.wordsPool, context.wordsPool.length, context.settings.difficultyLevel);
+            return {
+              currentStageIndex: nextStage,
+              hat,
+              currentWord: null,
+              wordShownAt: null,
+              currentTeamIndex: 0,
+            };
+          }),
+          target: 'roundIntro',
+        },
+        OPEN_REVIEW: {
+          target: 'roundReview',
+        },
         EXIT_GAME: {
           target: 'setup',
           actions: assign(({ context }) => resetToSetup(context)),

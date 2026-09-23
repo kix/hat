@@ -34,3 +34,14 @@ export function getPlayerIndividualScore(history: History, playerId: string): nu
   }
   return score;
 }
+
+export function getTeamStageScore(history: History, teamId: string, stageIndex: number): number {
+  return history
+    .filter((record) => record.teamId === teamId && (record.stageIndex ?? 1) === stageIndex)
+    .reduce((sum, record) => sum + scoreDeltaForResult(record.result), 0);
+}
+
+export function getPlayerIndividualStageScore(history: History, playerId: string, stageIndex: number): number {
+  const stageHistory = history.filter((record) => (record.stageIndex ?? 1) === stageIndex);
+  return getPlayerIndividualScore(stageHistory, playerId);
+}

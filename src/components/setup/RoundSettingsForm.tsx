@@ -71,6 +71,28 @@ export function RoundSettingsForm({ settings, dictionary, send }: RoundSettingsF
 
       <div>
         <Text size="sm" fw={500} mb={4}>
+          {t('roundSettings.gameFormat')}
+        </Text>
+        <SegmentedControl
+          fullWidth
+          value={settings.gameFormat || 'single'}
+          onChange={(value) =>
+            send({ type: 'SET_GAME_FORMAT', gameFormat: value as 'single' | 'classic3' })
+          }
+          data={[
+            { value: 'single', label: t('roundSettings.formatSingle') },
+            { value: 'classic3', label: t('roundSettings.formatClassic3') },
+          ]}
+        />
+        {settings.gameFormat === 'classic3' && (
+          <Text size="xs" c="dimmed" mt={4}>
+            {t('roundSettings.formatClassic3Desc')}
+          </Text>
+        )}
+      </div>
+
+      <div>
+        <Text size="sm" fw={500} mb={4}>
           {t('roundSettings.roles')}
         </Text>
         <SegmentedControl
