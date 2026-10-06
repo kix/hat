@@ -29,6 +29,8 @@ import { AuthMenu, signInWithTelegram } from './components/auth/AuthMenu';
 import { ColorSchemeToggle } from './components/ColorSchemeToggle';
 import { LanguageToggle } from './components/LanguageToggle';
 import { LiquidGlassToggle } from './components/liquidGlass/LiquidGlassToggle';
+import { useDesignTheme } from './theme/LiquidGlassContext';
+import { Interactive3DHat } from './components/3d/Interactive3DHat';
 import { useI18n } from './i18n/i18n';
 import { useAuthSession } from './auth/useAuthSession';
 import { supabase } from './auth/supabaseClient';
@@ -43,6 +45,7 @@ import { loadTournament, recordMatchResult } from './components/tournament/tourn
 function App() {
   const sounds = useGameSounds();
   const { t, lang } = useI18n();
+  const { is3D } = useDesignTheme();
   const session = useAuthSession();
   const isRealUser = !!(session?.user && (!session.user.is_anonymous || session.user.user_metadata?.provider === 'telegram'));
   
@@ -426,6 +429,12 @@ function App() {
           <Text size="sm" c="dimmed">
             {t('landing.tagline')}
           </Text>
+
+          {is3D && (
+            <div style={{ margin: '-10px auto 5px' }}>
+              <Interactive3DHat size={220} onHatClick={() => sounds.playGuessed()} />
+            </div>
+          )}
 
           {/* Кнопка Статистики на главной */}
           <Button

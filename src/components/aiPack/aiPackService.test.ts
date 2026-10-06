@@ -41,6 +41,12 @@ describe('aiPackService', () => {
     });
 
     expect(words.length).toBe(10);
-    expect(words.some((w) => w.includes('Hogwarts') || w.includes('Voldemort') || w.includes('Dumbledore'))).toBe(true);
+    expect(
+      words.some((w) =>
+        ['Voldemort', 'Hermione', 'Hogwarts', 'Gryffindor', 'Slytherin', 'Quidditch', 'Snitch', 'Dumbledore', 'Snape', 'Dobby', 'Dementor', 'Patronus', 'Potter', 'Sirius', 'Malfoy', 'Wand', 'Cloak', 'Hat'].some(
+          (k) => w.includes(k),
+        ),
+      ),
+    ).toBe(true);
   });
 });

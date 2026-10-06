@@ -1,0 +1,76 @@
+/* =====================================================================
+   3D SPATIAL EDITION DESIGN SYSTEM
+   WebGL Hat, 3D Perspective Transforms & Interactive Tactile Surfaces
+   ===================================================================== */
+
+[data-theme="3d"] {
+  --theme-3d-perspective: 1200px;
+  --card-3d-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 2px 0 0 rgba(255, 255, 255, 0.25);
+  --card-3d-shadow-light: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05), inset 0 2px 0 0 rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="3d"] body {
+  perspective: var(--theme-3d-perspective);
+  transform-style: preserve-3d;
+}
+
+/* 3D Isometric Card Lift */
+[data-theme="3d"] .mantine-Card-root,
+[data-theme="3d"] .mantine-Paper-root {
+  transform-style: preserve-3d;
+  box-shadow: var(--card-3d-shadow);
+  border-radius: 22px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+[data-theme="3d"][data-mantine-color-scheme="light"] .mantine-Card-root,
+[data-theme="3d"][data-mantine-color-scheme="light"] .mantine-Paper-root {
+  box-shadow: var(--card-3d-shadow-light);
+}
+
+[data-theme="3d"] .mantine-Card-root:hover {
+  transform: translateY(-4px) rotateX(2deg) rotateY(-1deg);
+  box-shadow: 0 28px 50px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(174, 62, 201, 0.4), inset 0 2px 0 0 rgba(255, 255, 255, 0.4);
+}
+
+/* 3D Tactile Buttons */
+[data-theme="3d"] .mantine-Button-root {
+  border-radius: 16px;
+  box-shadow: 0 6px 0 0 rgba(0, 0, 0, 0.25), 0 12px 24px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+
+[data-theme="3d"] .mantine-Button-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 0 rgba(0, 0, 0, 0.25), 0 16px 30px rgba(174, 62, 201, 0.35);
+}
+
+[data-theme="3d"] .mantine-Button-root:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.25), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 3D Word Card Gameplay Enhancement */
+[data-theme="3d"] .liquid-glass-word-card {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.4) !important;
+  border-radius: 30px !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 3D Hat Container in Setup */
+.spatial-hat-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: -10px auto 10px;
+  cursor: grab;
+}
+
+.spatial-hat-hero:active {
+  cursor: grabbing;
+}

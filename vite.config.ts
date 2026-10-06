@@ -163,6 +163,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         glass: fileURLToPath(new URL('./glass/index.html', import.meta.url)),
+        threeD: fileURLToPath(new URL('./3d/index.html', import.meta.url)),
       },
       output: {
         manualChunks(id) {
@@ -177,6 +178,9 @@ export default defineConfig({
           }
           if (id.includes('node_modules/@tabler/icons-react')) {
             return 'tabler-icons';
+          }
+          if (id.includes('node_modules/three')) {
+            return 'three';
           }
         },
       },

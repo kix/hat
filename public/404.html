@@ -7,8 +7,9 @@
       // Single Page Apps for GitHub Pages redirection script
       var pathSegmentsToKeep = 1; // /hat/ is 1 segment
       var l = window.location;
+      var is3D = l.pathname.indexOf('/3d') !== -1;
       var isGlass = l.pathname.indexOf('/glass') !== -1;
-      var redirectTarget = isGlass ? '/hat/glass/' : '/hat/';
+      var redirectTarget = is3D ? '/hat/3d/' : isGlass ? '/hat/glass/' : '/hat/';
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
         redirectTarget +

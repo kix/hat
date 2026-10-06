@@ -4,10 +4,11 @@ import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
 import './index.css';
 import './styles/liquidGlass.css';
+import './styles/spatial3d.css';
 import { theme } from './theme';
 import { I18nProvider } from './i18n/i18n';
 import { LiquidGlassProvider } from './theme/LiquidGlassContext';
-import { LiquidGlassBackground } from './components/liquidGlass/LiquidGlassBackground';
+import { BackgroundEffects } from './components/shared/BackgroundEffects';
 import App from './App.tsx';
 
 createRoot(document.getElementById('root')!).render(
@@ -15,7 +16,7 @@ createRoot(document.getElementById('root')!).render(
     <LiquidGlassProvider>
       <MantineProvider theme={theme} defaultColorScheme="auto">
         <I18nProvider>
-          <LiquidGlassBackground />
+          <BackgroundEffects />
           <App />
         </I18nProvider>
       </MantineProvider>
