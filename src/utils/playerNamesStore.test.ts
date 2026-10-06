@@ -7,7 +7,7 @@ describe('playerNamesStore', () => {
   beforeEach(() => {
     store.clear();
     // Polyfill localStorage in test environment
-    global.localStorage = {
+    globalThis.localStorage = {
       getItem: (key: string) => store.get(key) ?? null,
       setItem: (key: string, val: string) => store.set(key, val),
       removeItem: (key: string) => store.delete(key),

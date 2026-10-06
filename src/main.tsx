@@ -5,6 +5,7 @@ import '@mantine/core/styles.css';
 import './index.css';
 import './styles/liquidGlass.css';
 import './styles/spatial3d.css';
+import './styles/win95.css';
 import { theme } from './theme';
 import { I18nProvider } from './i18n/i18n';
 import { LiquidGlassProvider } from './theme/LiquidGlassContext';

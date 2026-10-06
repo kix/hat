@@ -164,6 +164,7 @@ export default defineConfig({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         glass: fileURLToPath(new URL('./glass/index.html', import.meta.url)),
         threeD: fileURLToPath(new URL('./3d/index.html', import.meta.url)),
+        win95: fileURLToPath(new URL('./win95/index.html', import.meta.url)),
       },
       output: {
         manualChunks(id) {

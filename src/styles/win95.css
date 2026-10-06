@@ -1,0 +1,273 @@
+/* =====================================================================
+   WINDOWS 95 EDITION DESIGN SYSTEM
+   Authentic 90s Retro OS Aesthetic: 3D Bevels, Teal Desktop & Classic UI
+   ===================================================================== */
+
+[data-theme="win95"] {
+  --win95-bg: #008080;
+  --win95-surface: #c0c0c0;
+  --win95-surface-light: #dfdfdf;
+  --win95-surface-dark: #808080;
+  --win95-surface-darker: #404040;
+  --win95-highlight: #ffffff;
+  --win95-shadow: #808080;
+  --win95-dark-shadow: #000000;
+  --win95-titlebar: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  --win95-titlebar-inactive: linear-gradient(90deg, #808080 0%, #b0b0b0 100%);
+  --win95-text: #000000;
+  --win95-title-text: #ffffff;
+  --win95-font: "MS Sans Serif", Tahoma, "Segoe UI", Arial, sans-serif;
+  
+  font-family: var(--win95-font) !important;
+  image-rendering: pixelated;
+}
+
+[data-theme="win95"] body {
+  background-color: var(--win95-bg) !important;
+  color: var(--win95-text) !important;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.12) 15%, transparent 16%) !important;
+  background-size: 4px 4px !important;
+  font-family: var(--win95-font) !important;
+  user-select: none;
+}
+
+/* Reset all roundings to crisp 90s sharp corners */
+[data-theme="win95"] * {
+  border-radius: 0px !important;
+}
+
+/* =====================================================================
+   RETRO 3D BEVELS & CONTAINERS
+   ===================================================================== */
+
+/* Outset window / card container */
+[data-theme="win95"] .mantine-Card-root,
+[data-theme="win95"] .mantine-Paper-root,
+[data-theme="win95"] .mantine-Modal-content,
+[data-theme="win95"] .mantine-Popover-dropdown,
+[data-theme="win95"] .mantine-Menu-dropdown {
+  background-color: var(--win95-surface) !important;
+  color: var(--win95-text) !important;
+  border-top: 2px solid var(--win95-highlight) !important;
+  border-left: 2px solid var(--win95-highlight) !important;
+  border-right: 2px solid var(--win95-dark-shadow) !important;
+  border-bottom: 2px solid var(--win95-dark-shadow) !important;
+  box-shadow: inset 1px 1px 0px var(--win95-surface-light),
+              inset -1px -1px 0px var(--win95-shadow),
+              2px 2px 0px rgba(0, 0, 0, 0.3) !important;
+  padding: 8px !important;
+}
+
+/* Window Titlebar for Cards & Modals */
+[data-theme="win95"] .mantine-Modal-header {
+  background: var(--win95-titlebar) !important;
+  color: var(--win95-title-text) !important;
+  padding: 4px 8px !important;
+  margin-bottom: 8px !important;
+  min-height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.5px !important;
+}
+
+[data-theme="win95"] .mantine-Modal-title {
+  color: #ffffff !important;
+  font-weight: bold !important;
+  font-size: 13px !important;
+}
+
+[data-theme="win95"] .mantine-Modal-close {
+  background: var(--win95-surface) !important;
+  color: #000000 !important;
+  border-top: 2px solid var(--win95-highlight) !important;
+  border-left: 2px solid var(--win95-highlight) !important;
+  border-right: 2px solid var(--win95-dark-shadow) !important;
+  border-bottom: 2px solid var(--win95-dark-shadow) !important;
+  box-shadow: inset 1px 1px 0 var(--win95-surface-light), inset -1px -1px 0 var(--win95-shadow) !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  font-weight: bold !important;
+}
+
+[data-theme="win95"] .mantine-Modal-close:active {
+  border-top: 2px solid var(--win95-dark-shadow) !important;
+  border-left: 2px solid var(--win95-dark-shadow) !important;
+  border-right: 2px solid var(--win95-highlight) !important;
+  border-bottom: 2px solid var(--win95-highlight) !important;
+  transform: translate(1px, 1px) !important;
+}
+
+/* =====================================================================
+   HERO BANNER IN WIN95 MODE
+   ===================================================================== */
+[data-theme="win95"] ._hero_12g7l_13,
+[data-theme="win95"] [class*="SetupHero_hero"] {
+  background: var(--win95-surface) !important;
+  border-top: 2px solid var(--win95-highlight) !important;
+  border-left: 2px solid var(--win95-highlight) !important;
+  border-right: 2px solid var(--win95-dark-shadow) !important;
+  border-bottom: 2px solid var(--win95-dark-shadow) !important;
+  box-shadow: inset 1px 1px 0 var(--win95-surface-light),
+              inset -1px -1px 0 var(--win95-shadow),
+              2px 2px 0 rgba(0, 0, 0, 0.4) !important;
+  animation: none !important;
+  padding: 18px 16px !important;
+}
+
+[data-theme="win95"] [class*="SetupHero_title"] {
+  color: #000080 !important;
+  text-shadow: 1px 1px 0px #ffffff !important;
+  font-family: var(--win95-font) !important;
+  letter-spacing: -0.5px !important;
+  font-weight: 800 !important;
+}
+
+/* =====================================================================
+   WIN95 BUTTONS
+   ===================================================================== */
+[data-theme="win95"] .mantine-Button-root,
+[data-theme="win95"] .mantine-ActionIcon-root {
+  background-color: var(--win95-surface) !important;
+  color: var(--win95-text) !important;
+  border-top: 2px solid var(--win95-highlight) !important;
+  border-left: 2px solid var(--win95-highlight) !important;
+  border-right: 2px solid var(--win95-dark-shadow) !important;
+  border-bottom: 2px solid var(--win95-dark-shadow) !important;
+  box-shadow: inset 1px 1px 0px var(--win95-surface-light),
+              inset -1px -1px 0px var(--win95-shadow) !important;
+  font-family: var(--win95-font) !important;
+  font-weight: 600 !important;
+  transition: none !important;
+}
+
+[data-theme="win95"] .mantine-Button-root:hover,
+[data-theme="win95"] .mantine-ActionIcon-root:hover {
+  background-color: var(--win95-surface) !important;
+  transform: none !important;
+}
+
+[data-theme="win95"] .mantine-Button-root:active,
+[data-theme="win95"] .mantine-ActionIcon-root:active {
+  border-top: 2px solid var(--win95-dark-shadow) !important;
+  border-left: 2px solid var(--win95-dark-shadow) !important;
+  border-right: 2px solid var(--win95-highlight) !important;
+  border-bottom: 2px solid var(--win95-highlight) !important;
+  box-shadow: inset 1px 1px 0px var(--win95-shadow),
+              inset -1px -1px 0px var(--win95-surface-light) !important;
+  transform: translate(1px, 1px) !important;
+}
+
+/* Gameplay Action Buttons (Guessed / Skip / Foul) */
+[data-theme="win95"] button[color="green"],
+[data-theme="win95"] button[data-action="guessed"] {
+  background-color: #008000 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="win95"] button[color="orange"],
+[data-theme="win95"] button[data-action="skip"] {
+  background-color: #c08000 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="win95"] button[color="red"],
+[data-theme="win95"] button[data-action="foul"] {
+  background-color: #a00000 !important;
+  color: #ffffff !important;
+}
+
+/* =====================================================================
+   SUNKEN INSET FIELDS (Inputs, Textarea, Wells)
+   ===================================================================== */
+[data-theme="win95"] .mantine-Input-input,
+[data-theme="win95"] .mantine-TextInput-input,
+[data-theme="win95"] .mantine-NumberInput-input,
+[data-theme="win95"] .mantine-Textarea-input,
+[data-theme="win95"] .mantine-Select-input,
+[data-theme="win95"] .mantine-SegmentedControl-root {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-top: 2px solid var(--win95-dark-shadow) !important;
+  border-left: 2px solid var(--win95-dark-shadow) !important;
+  border-right: 2px solid var(--win95-highlight) !important;
+  border-bottom: 2px solid var(--win95-highlight) !important;
+  box-shadow: inset 1px 1px 0px var(--win95-shadow) !important;
+  font-family: var(--win95-font) !important;
+}
+
+/* Segmented Control indicators in Win95 */
+[data-theme="win95"] .mantine-SegmentedControl-indicator {
+  background-color: var(--win95-surface) !important;
+  border-top: 2px solid var(--win95-highlight) !important;
+  border-left: 2px solid var(--win95-highlight) !important;
+  border-right: 2px solid var(--win95-dark-shadow) !important;
+  border-bottom: 2px solid var(--win95-dark-shadow) !important;
+  box-shadow: inset 1px 1px 0px var(--win95-surface-light),
+              inset -1px -1px 0px var(--win95-shadow) !important;
+}
+
+/* =====================================================================
+   GAMEPLAY WORD CARD IN WIN95 MODE (Retro Notepad style)
+   ===================================================================== */
+[data-theme="win95"] .liquid-glass-word-card,
+[data-theme="win95"] [class*="WordDisplay"],
+[data-theme="win95"] [class*="SwipeableWordCard"] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-top: 3px solid var(--win95-dark-shadow) !important;
+  border-left: 3px solid var(--win95-dark-shadow) !important;
+  border-right: 3px solid var(--win95-highlight) !important;
+  border-bottom: 3px solid var(--win95-highlight) !important;
+  box-shadow: inset 2px 2px 0px var(--win95-shadow),
+              inset -2px -2px 0px var(--win95-surface-light),
+              4px 4px 0px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="win95"] .liquid-glass-word-text {
+  color: #000080 !important;
+  font-weight: 800 !important;
+  font-family: var(--win95-font) !important;
+  letter-spacing: -0.5px !important;
+  text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Badges */
+[data-theme="win95"] .mantine-Badge-root {
+  background-color: var(--win95-surface) !important;
+  color: var(--win95-text) !important;
+  border-top: 1px solid var(--win95-highlight) !important;
+  border-left: 1px solid var(--win95-highlight) !important;
+  border-right: 1px solid var(--win95-dark-shadow) !important;
+  border-bottom: 1px solid var(--win95-dark-shadow) !important;
+  box-shadow: inset 1px 1px 0px var(--win95-surface-light) !important;
+  font-weight: bold !important;
+  text-transform: none !important;
+}
+
+/* Progress bar in Win95 (Classic chunked blocks) */
+[data-theme="win95"] .mantine-Progress-root {
+  background-color: #ffffff !important;
+  border-top: 2px solid var(--win95-dark-shadow) !important;
+  border-left: 2px solid var(--win95-dark-shadow) !important;
+  border-right: 2px solid var(--win95-highlight) !important;
+  border-bottom: 2px solid var(--win95-highlight) !important;
+  box-shadow: inset 1px 1px 0px var(--win95-shadow) !important;
+  height: 20px !important;
+}
+
+[data-theme="win95"] .mantine-Progress-section {
+  background-color: #000080 !important;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #000080 0px,
+    #000080 8px,
+    #c0c0c0 8px,
+    #c0c0c0 10px
+  ) !important;
+}

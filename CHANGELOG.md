@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-10-06
+
+### Added & Improved
+
+- **💾 Дизайн в стиле Windows 95 (Retro Windows 95 Edition):**
+  - **Аутентичная эстетика 90-х:** Серые 3D-рамки с глубокими скосами (bevels), фирменная синяя полоса заголовков окон, монохромные кнопки и классический бирюзовый рабочий стол (`#008080`).
+  - **Ретро-карточка слов:** Карточка текущего слова стилизована под классическое окно «Блокнота» Windows 95 с характерным шрифтом и утопленной белой рабочей областью.
+  - **Выбор в студии оформления:** Быстрое переключение между Classic, Liquid Glass, 3D Spatial и Windows 95 в окне настроек.
+  - **Отдельный URL:** Выделенная версия доступна по ссылке `/hat/win95/` и через параметр `?theme=win95`.
+
 ## [1.17.2] - 2026-10-06
 
 ### Fixed

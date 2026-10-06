@@ -10,7 +10,7 @@ describe('wordTimingsStore', () => {
 
   beforeEach(() => {
     store.clear();
-    global.localStorage = {
+    globalThis.localStorage = {
       getItem: (key: string) => store.get(key) ?? null,
       setItem: (key: string, val: string) => store.set(key, val),
       removeItem: (key: string) => store.delete(key),

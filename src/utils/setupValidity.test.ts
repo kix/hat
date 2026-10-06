@@ -47,18 +47,19 @@ describe('setupValidity', () => {
   });
 
   describe('getSetupValidity', () => {
-    const baseContext: HatContext = {
+    const baseContext = {
       settings: {
-        gameMode: 'teams',
-        wordsPerPlayer: 5,
-        turnDurationSec: 30,
-        dictionaryDifficulty: 0.5,
-        dictionaryVariant: 'standard',
-        language: 'ru',
-        stagesCount: 3,
+        roundDurationSec: 30,
+        allowSkip: true,
+        wordCount: 20,
+        difficultyLevel: 0.5,
         rolesMode: 'alternate',
-        partyModifiers: false,
-        wordPackId: 'all',
+        soundEnabled: true,
+        vibrationEnabled: true,
+        wordPack: 'standard',
+        customWords: [],
+        gameMode: 'teams',
+        enableReview: true,
       },
       teams: [
         {
@@ -87,7 +88,7 @@ describe('setupValidity', () => {
       history: [],
       stage: 1,
       partyModifier: null,
-    };
+    } as unknown as HatContext;
 
     it('allows valid teams setup', () => {
       const validity = getSetupValidity(baseContext);

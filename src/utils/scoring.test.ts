@@ -30,14 +30,14 @@ describe('scoring', () => {
     });
 
     it('sums scores for the specific team only', () => {
-      const history: History = [
+      const history = [
         { word: 'яблоко', result: 'guessed', teamId: 'team-1' },
         { word: 'груша', result: 'skipped', teamId: 'team-1' },
         { word: 'банан', result: 'guessed', teamId: 'team-1' },
         { word: 'апельсин', result: 'foul', teamId: 'team-1' },
         { word: 'киви', result: 'timeout', teamId: 'team-1' },
         { word: 'слива', result: 'guessed', teamId: 'team-2' },
-      ];
+      ] as unknown as History;
 
       // 1 - 1 + 1 - 1 + 0 = 0
       expect(getTeamScore(history, 'team-1')).toBe(0);
@@ -48,9 +48,9 @@ describe('scoring', () => {
 
   describe('getPlayerIndividualScore', () => {
     it('awards +1 to guesser and +1 to describer when guessed', () => {
-      const history: History = [
+      const history = [
         { word: 'кот', result: 'guessed', teamId: 't1', describerId: 'p1', guesserId: 'p2' },
-      ];
+      ] as unknown as History;
 
       expect(getPlayerIndividualScore(history, 'p1')).toBe(1);
       expect(getPlayerIndividualScore(history, 'p2')).toBe(1);
@@ -58,11 +58,11 @@ describe('scoring', () => {
     });
 
     it('deducts -1 from describer when skipped or foul, but leaves guesser untouched', () => {
-      const history: History = [
+      const history = [
         { word: 'собака', result: 'skipped', teamId: 't1', describerId: 'p1', guesserId: 'p2' },
         { word: 'лиса', result: 'foul', teamId: 't1', describerId: 'p1', guesserId: 'p2' },
         { word: 'волк', result: 'timeout', teamId: 't1', describerId: 'p1', guesserId: 'p2' },
-      ];
+      ] as unknown as History;
 
       // p1 was describer for skipped (-1), foul (-1), timeout (0) -> total -2
       expect(getPlayerIndividualScore(history, 'p1')).toBe(-2);
@@ -73,11 +73,11 @@ describe('scoring', () => {
 
   describe('getTeamStageScore and getPlayerIndividualStageScore', () => {
     it('filters history by stageIndex', () => {
-      const history: History = [
+      const history = [
         { word: 'слово 1', result: 'guessed', teamId: 't1', describerId: 'p1', guesserId: 'p2', stageIndex: 1 },
         { word: 'слово 2', result: 'guessed', teamId: 't1', describerId: 'p1', guesserId: 'p2', stageIndex: 2 },
         { word: 'слово 3', result: 'skipped', teamId: 't1', describerId: 'p1', guesserId: 'p2', stageIndex: 2 },
-      ];
+      ] as unknown as History;
 
       expect(getTeamStageScore(history, 't1', 1)).toBe(1);
       expect(getTeamStageScore(history, 't1', 2)).toBe(0);
@@ -88,9 +88,9 @@ describe('scoring', () => {
     });
 
     it('defaults stageIndex to 1 when stageIndex is missing', () => {
-      const history: History = [
+      const history = [
         { word: 'слово', result: 'guessed', teamId: 't1', describerId: 'p1', guesserId: 'p2' },
-      ];
+      ] as unknown as History;
 
       expect(getTeamStageScore(history, 't1', 1)).toBe(1);
       expect(getTeamStageScore(history, 't1', 2)).toBe(0);
