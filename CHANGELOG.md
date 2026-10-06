@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.2] - 2026-10-06
+
+### Fixed
+
+- **Исправление позиционирования кнопок в шапке:**
+  - Устранено наложение кнопки профиля на кнопку выбора дизайна (3D / Liquid Glass) на стартовом экране.
+  - Кнопки теперь корректно выровнены в едином flex-контейнере с адаптивными отступами.
+
 ## [1.17.1] - 2026-10-06
 
 ### Added & Improved
