@@ -1,5 +1,15 @@
 .trigger {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.trigger:hover {
+  transform: scale(1.05);
+}
+
+.trigger:active {
+  transform: scale(0.95);
 }
