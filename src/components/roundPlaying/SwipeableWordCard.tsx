@@ -127,6 +127,7 @@ export function SwipeableWordCard({
         withBorder
         shadow="lg"
         radius="lg"
+        className="liquid-glass-word-card"
         padding="xl"
         onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
         onTouchStart={(e) => {
@@ -144,9 +145,8 @@ export function SwipeableWordCard({
           cursor: hidden ? 'default' : isDragging ? 'grabbing' : 'grab',
           transform,
           borderColor,
-          backgroundColor: 'var(--mantine-color-body)',
           transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease',
-          boxShadow: isDragging ? '0 15px 30px rgba(0,0,0,0.15)' : 'var(--mantine-shadow-md)',
+          boxShadow: isDragging ? '0 15px 30px rgba(0,0,0,0.15)' : undefined,
           zIndex: 10,
           touchAction: 'none',
           userSelect: 'none',

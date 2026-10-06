@@ -28,6 +28,7 @@ const TournamentScreen = lazy(() => import('./components/tournament/TournamentSc
 import { AuthMenu, signInWithTelegram } from './components/auth/AuthMenu';
 import { ColorSchemeToggle } from './components/ColorSchemeToggle';
 import { LanguageToggle } from './components/LanguageToggle';
+import { LiquidGlassToggle } from './components/liquidGlass/LiquidGlassToggle';
 import { useI18n } from './i18n/i18n';
 import { useAuthSession } from './auth/useAuthSession';
 import { supabase } from './auth/supabaseClient';
@@ -410,6 +411,7 @@ function App() {
               {t('app.title')}
             </Title>
             <Group gap="xs">
+              <LiquidGlassToggle />
               <LanguageToggle />
               <ColorSchemeToggle />
               <AuthMenu

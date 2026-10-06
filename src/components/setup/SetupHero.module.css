@@ -19,6 +19,30 @@
   padding: 28px 16px;
 }
 
+:global([data-theme="liquid-glass"]) .hero {
+  background: linear-gradient(135deg, rgba(174, 62, 201, 0.35) 0%, rgba(34, 158, 217, 0.35) 50%, rgba(230, 73, 128, 0.35) 100%) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 16px 40px -8px rgba(174, 62, 201, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+}
+
+:global([data-theme="liquid-glass"][data-mantine-color-scheme="light"]) .hero {
+  background: linear-gradient(135deg, rgba(204, 93, 232, 0.35) 0%, rgba(77, 171, 247, 0.35) 50%, rgba(255, 135, 135, 0.35) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 16px 40px -8px rgba(77, 171, 247, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+.topActions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 5;
+}
+
 .title {
   color: #fff;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);

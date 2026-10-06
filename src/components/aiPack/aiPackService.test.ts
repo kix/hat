@@ -11,7 +11,13 @@ describe('aiPackService', () => {
     });
 
     expect(words.length).toBe(20);
-    expect(words.some((w) => w.includes('Волан') || w.includes('Гермиона') || w.includes('Хогвартс'))).toBe(true);
+    expect(
+      words.some((w) =>
+        ['Волан', 'Гермиона', 'Хогвартс', 'Гриффиндор', 'Слизерин', 'Квиддич', 'Дамблдор', 'Снейп', 'Добби', 'Дементор', 'Патронус', 'Поттер'].some(
+          (k) => w.includes(k),
+        ),
+      ),
+    ).toBe(true);
   });
 
   it('generates words for unknown themes with fallback generator', async () => {

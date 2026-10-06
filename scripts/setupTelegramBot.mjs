@@ -3,7 +3,7 @@
 /**
  * Utility script to configure the Telegram Bot for the "Hat" game:
  * 1. Sets Chat Menu Button to open Telegram Mini App ("🎮 Играть")
- * 2. Registers bot commands (/start, /help)
+ * 2. Registers bot commands (/start, /stats, /top, /word, /hardest, /rules, /help)
  * 3. Sets bot description
  * 4. (Optional) Sets webhook URL if provided
  *
@@ -76,12 +76,16 @@ async function main() {
     console.log('   ✅ Menu Button успешно установлена!');
 
     // 3. Настраиваем список команд бота
-    console.log('⚙️ 2. Настройка команд бота (/start, /hardest, /help)...');
+    console.log('⚙️ 2. Настройка команд бота (/start, /stats, /top, /word, /hardest, /rules, /help)...');
     await tgCall('setMyCommands', {
       commands: [
-        { command: 'start', description: '🎮 Запустить игру «Шляпа»' },
-        { command: 'hardest', description: '🧠 Топ сложных слов недели' },
-        { command: 'help', description: 'ℹ️ Правила игры и информация' },
+        { command: 'start', description: '🎮 Главное меню игры' },
+        { command: 'stats', description: '📊 Мой профиль и статистика' },
+        { command: 'top', description: '🏆 Таблица лидеров' },
+        { command: 'word', description: '💡 Слово для тренировки' },
+        { command: 'hardest', description: '🧠 Сложнейшие слова недели' },
+        { command: 'rules', description: '📖 Правила игры' },
+        { command: 'help', description: 'ℹ️ Помощь и список команд' },
       ],
     });
     console.log('   ✅ Список команд успешно обновлен!');
@@ -89,7 +93,7 @@ async function main() {
     // 4. Настраиваем описание бота
     console.log('⚙️ 3. Настройка описания бота...');
     await tgCall('setMyDescription', {
-      description: '🎩 Игра «Шляпа» — классическая интеллектуальная салонная игра для весёлой компании и вечеринок!\n\nОбъясняйте и отгадывайте слова на скорость, играйте вдвоем, командами или онлайн!',
+      description: '🎩 Игра «Шляпа» — классическая интеллектуальная салонная игра для весёлой компании и вечеринок!\n\nОбъясняйте и отгадывайте слова на скорость, играйте вдвоем, командами или онлайн!\n\nИспользуйте меню или команды: /stats, /top, /rules, /word.',
     });
     await tgCall('setMyShortDescription', {
       short_description: '🎩 Игра «Шляпа» для компании и вечеринок прямо в Telegram!',
@@ -102,7 +106,7 @@ async function main() {
       await tgCall('setWebhook', {
         url: webhookUrl,
         drop_pending_updates: false,
-        allowed_updates: ['message'],
+        allowed_updates: ['message', 'callback_query'],
       });
       console.log('   ✅ Webhook успешно установлен!');
     } else {

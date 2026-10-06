@@ -10,6 +10,7 @@ import { isLocalDevEnvironment } from '../utils/isLocalDevEnvironment';
 import { tr } from '../i18n/lang';
 
 import type { ThematicPackId } from '../data/thematicPacks';
+import { getRandomModifierId } from '../data/partyModifiers';
 
 export type { DifficultyLevel } from '../data/dictionary';
 
@@ -63,6 +64,7 @@ export interface Settings {
   gameMode?: 'teams' | 'pairs' | 'individual';
   gameFormat?: 'single' | 'classic3';
   enableReview: boolean;
+  enableModifiers?: boolean;
 }
 
 export interface HatContext {
@@ -81,6 +83,7 @@ export interface HatContext {
   currentTeamIndex: number;
   history: History;
   isLocalLobby?: boolean;
+  currentModifier?: string | null;
 }
 
 export type HatEvent =
@@ -101,6 +104,7 @@ export type HatEvent =
   | { type: 'SET_SOUND_ENABLED'; soundEnabled: boolean }
   | { type: 'SET_VIBRATION_ENABLED'; vibrationEnabled: boolean }
   | { type: 'SET_ENABLE_REVIEW'; enableReview: boolean }
+  | { type: 'SET_ENABLE_MODIFIERS'; enableModifiers: boolean }
   | { type: 'SET_WORD_PACK'; wordPack: WordPack }
   | { type: 'SET_CUSTOM_WORDS'; customWords: string[] }
   | { type: 'ADD_CUSTOM_WORDS'; words: string[] }
@@ -109,6 +113,7 @@ export type HatEvent =
   | { type: 'DICTIONARY_LOADED'; entries: DictionaryEntry[] }
   | { type: 'START_GAME' }
   | { type: 'START_ROUND' }
+  | { type: 'REROLL_MODIFIER' }
   | { type: 'PROCEED_TO_NEXT_STAGE' }
   | { type: 'WORD_GUESSED' }
   | { type: 'WORD_SKIPPED' }
@@ -184,6 +189,7 @@ export function createInitialContext(): HatContext {
       soundEnabled: true,
       vibrationEnabled: false,
       enableReview: true,
+      enableModifiers: false,
       wordPack: 'frequent',
       customWords: [],
       gameMode: 'teams',
@@ -198,6 +204,7 @@ export function createInitialContext(): HatContext {
     timeRemainingSec: 0,
     currentTeamIndex: 0,
     history: [],
+    currentModifier: null,
   };
 }
 
@@ -284,6 +291,7 @@ function resetToSetup(context: HatContext): Partial<HatContext> {
     currentWord: null,
     wordShownAt: null,
     currentTeamIndex: 0,
+    currentModifier: null,
     teams: context.teams.map((team) => ({ ...team, roundsPlayed: 0 })),
   };
 }
@@ -472,6 +480,11 @@ export const hatMachine = setup({
             settings: { ...context.settings, enableReview: event.enableReview },
           })),
         },
+        SET_ENABLE_MODIFIERS: {
+          actions: assign(({ context, event }) => ({
+            settings: { ...context.settings, enableModifiers: event.enableModifiers },
+          })),
+        },
         SET_WORD_PACK: {
           actions: assign(({ context, event }) => ({
             settings: { ...context.settings, wordPack: event.wordPack },
@@ -592,6 +605,14 @@ export const hatMachine = setup({
     },
 
     roundIntro: {
+      entry: assign(({ context }) => {
+        if (!context.settings.enableModifiers) {
+          return { currentModifier: null };
+        }
+        return {
+          currentModifier: getRandomModifierId(context.currentModifier),
+        };
+      }),
       on: {
         START_ROUND: {
           actions: assign(({ context }) => {
@@ -604,6 +625,11 @@ export const hatMachine = setup({
             };
           }),
           target: 'roundPlaying',
+        },
+        REROLL_MODIFIER: {
+          actions: assign(({ context }) => ({
+            currentModifier: getRandomModifierId(context.currentModifier),
+          })),
         },
         EXIT_GAME: {
           target: 'setup',

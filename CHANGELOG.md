@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2026-10-06
+
+### Added & Improved
+
+- **✨ Дизайн «Жидкое стекло» (Liquid Glass UI & Glassmorphism):**
+  - Полностью обновленный современный интерфейс в эстетике Apple VisionOS / macOS Liquid Glass с динамическими эффектами размытия (`backdrop-filter: blur(...)`) и зеркальными бликами (`specular reflections`).
+  - **Атмосферный жидкостный фон:** Живые светящиеся градиентные сферы с плавной органической анимацией, мягко переливающиеся под полупрозрачными карточками.
+  - **Интерактивные стеклянные карточки со словами:** Эффект полированного стекла при свайпах с тактильным откликом.
+  - **Отдельный URL для экономии ресурсов:** Версия «Жидкое стекло» развернута по выделенной ссылке `/hat/glass/` (`?ui=glass`), сохраняя базовую версию максимально легковесной.
+  - **Энергосберегающий режим (Eco Mode):** Встроенный переключатель в настройках, снижающий нагрузку на GPU и экономящий заряд батареи на мобильных устройствах.
+- **⚡️ Обновление зависимостей:**
+  - Обновлены Mantine 9.7, React 19.3, Supabase JS, Tabler Icons, Vite 8.3, TypeScript 7 и Vitest 5.
+
 ## [1.15.1] - 2026-09-23
 
 ### Fixed & Improved
