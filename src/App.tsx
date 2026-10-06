@@ -31,6 +31,7 @@ import { LanguageToggle } from './components/LanguageToggle';
 import { LiquidGlassToggle } from './components/liquidGlass/LiquidGlassToggle';
 import { useDesignTheme } from './theme/LiquidGlassContext';
 import { Interactive3DHat } from './components/3d/Interactive3DHat';
+import { AnimatedHatEmoji } from './components/setup/AnimatedHatEmoji';
 import { useI18n } from './i18n/i18n';
 import { useAuthSession } from './auth/useAuthSession';
 import { supabase } from './auth/supabaseClient';
@@ -410,9 +411,12 @@ function App() {
       <Container size="xs" py="xl" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
         <Stack gap="lg" style={{ width: '100%' }}>
           <Group justify="space-between" align="center">
-            <Title order={1} size={36} fw={800} style={{ letterSpacing: -1 }}>
-              {t('app.title')}
-            </Title>
+            <Group gap="xs" align="center">
+              <AnimatedHatEmoji size={34} />
+              <Title order={1} size={36} fw={800} style={{ letterSpacing: -1 }}>
+                {t('app.title')}
+              </Title>
+            </Group>
             <Group gap="xs">
               <LiquidGlassToggle />
               <LanguageToggle />

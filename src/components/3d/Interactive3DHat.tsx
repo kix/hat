@@ -1,5 +1,6 @@
 import { useEffect, useRef, memo } from 'react';
 import * as THREE from 'three';
+import confetti from 'canvas-confetti';
 import { vibrate } from '../../utils/haptics';
 
 interface Interactive3DHatProps {
@@ -239,10 +240,27 @@ export const Interactive3DHat = memo(function Interactive3DHat({
     };
 
     const handleClick = () => {
-      // Hat tip & bounce pulse
-      bounceAnimRef.current.velocity = 0.22;
-      bounceAnimRef.current.tipVelocity = 0.35;
-      vibrate(15);
+      // Hat tip, spring jump & 360 spin trick
+      bounceAnimRef.current.velocity = 0.36;
+      bounceAnimRef.current.tipVelocity = 0.55;
+      targetRotationRef.current.y += Math.PI * 2;
+      vibrate([15, 30, 25]);
+
+      try {
+        const rect = domElem.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+        confetti({
+          particleCount: 28,
+          spread: 70,
+          origin: { x, y },
+          colors: ['#ae3ec9', '#4dabf7', '#fcc419', '#38d9a9', '#ff8787'],
+          disableForReducedMotion: true,
+        });
+      } catch {
+        // Fallback
+      }
+
       onHatClick?.();
     };
 
