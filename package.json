@@ -9,6 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
+    "cljs:test": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" shadow-cljs compile test",
+    "cljs:watch": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" shadow-cljs watch app",
+    "cljs:build": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" shadow-cljs release app",
     "setup:bot": "node scripts/setupTelegramBot.mjs",
     "broadcast:news": "node scripts/broadcastNews.mjs",
     "broadcast:latest": "node scripts/broadcastLatestRelease.mjs"
@@ -35,6 +38,7 @@
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.87.0",
+    "shadow-cljs": "^3.5.7",
     "typescript": "~7.0.2",
     "vite": "^8.3.3",
     "vite-plugin-pwa": "^2.0.0",

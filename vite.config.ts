@@ -192,5 +192,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    include: ['src/**/*.test.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/.shadow-cljs/**', '**/out/**', '**/public/**'],
   },
 })

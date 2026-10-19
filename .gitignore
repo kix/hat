@@ -25,5 +25,9 @@ dev-dist
 *.sw?
 .gemini
 .agents
-.claude
 skills-lock.json
+
+# ClojureScript / shadow-cljs artifacts
+.shadow-cljs
+out/
+public/cljs/
