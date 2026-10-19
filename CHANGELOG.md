@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] - 2026-10-19
+
+### Added & Improved
+
+- **⚡ Архитектура и запуск ClojureScript Edition:**
+  - **Инфраструктура shadow-cljs:** Добавлена полноценная среда компиляции ClojureScript с nREPL и hot-reload.
+  - **Функциональное ядро игры:** Стейт-машина (`hat.game`), система скоринга (`hat.scoring`), уровни XP (`hat.levels`) и статистика (`hat.stats`) реализованы на чистых неизменяемых структурах данных Clojure.
+  - **Интероп с Mantine UI и React 19:** Экраны настройки, игрового раунда с таймером, проверки слов и итогов на Reagent и Mantine UI.
+  - **Автоматические тесты:** Интегрирован тестовый набор на `cljs.test` с параллельной поддержкой существующих Vitest-тестов.
+
 ## [1.18.0] - 2026-10-06
 
 ### Added & Improved
