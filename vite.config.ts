@@ -136,6 +136,7 @@ export default defineConfig({
       workbox: {
         maximumFileSizeToCacheInBytes: MAX_PRECACHE_ENTRY_BYTES,
         navigateFallback: '/hat/index.html',
+        globIgnores: ['**/cljs/**', '**/cljs.html'],
         // Lets the game keep working offline after the fonts are fetched
         // once — same recipe Workbox documents for Google Fonts.
         runtimeCaching: [
